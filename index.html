@@ -1,274 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PPWPV4Z');</script>
-<!-- End Google Tag Manager -->
-
-<script src="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.js"></script>
-<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.css" />
-
-
-    <title>Whoz - simulateur ESN</title>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
-    <style>
-	
-	.chart-number {
-		font-size: 32px;
-		font-weight: 600;
-		line-height: 27px;
-	}
-	
-	.chart-number-small {
-		font-size: 24px;
-		font-weight: 600;
-		line-height: 18px;
-	}
-	
-	.chart-number-wrapper {
-		display: flex;
-	}
-	
-	.input {
-		width: 40px;
-	}
-	
-	.billable {
-		color: #0038a5;
-	}
-	
-	.interco {
-		color: #FFBE3E;
-	}
-	
-	.whoz-price {
-		color: #cccccc;
-	}
-	
-	.on-boarding {
-		color: #935116;
-	}
-	
-	.shadow-staffing {
-		color: #c51b8a
-	}
-	.lean-start {
-		color: #117A65;
-	}
-	
-	.lean-back {
-		color: #CB4335;
-	}
-	
-	.kpi {
-		margin-right: 30px;
-	}
-	
-	.line1 {
-		width: 14%;
-		height: 70px;
-	}
-	
-	.line2 {
-		width: 16%;
-		height: 70px;
-	}
-	
-	.line3 {
-		width: 16%;
-		height: 70px;
-	}
-	
-	.esn {
-		margin-left: 10px;
-	}
-	
-    .heat-box {
-        stroke: #ffffff;
-        stroke-width: 1px;
-    }
-	
-	.hideCompare {
-		display: none;
-	}
-	
-	.showCompare {
-		display: flex;
-	}
-	  
-    </style>
-</head>
-<body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PPWPV4Z"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-<div class="esn">
-
-<h2>Whoz - simulateur ESN</h2>
-    <div id="firebaseui-auth-container"></div>
-	<div id="loader">Loading...</div>
-
-<div id="esn-main" style="display: none;">
-<div style="display: flex;">
-<div style="float: left; width: 20%;">
-	<label for="name">Période de simulation : <input class="input" type="number" id="nbDays" value=218> jours</label>
-	<label for="name">Nombre de consultants staffables : <input class="input" type="number" id="nbConsultant" value=75></label>
-	<label for="name">TJM : <input class="input" type="number" id="TJM" value=550>€ et Marge sur coût direct : <input class="input" type="number" id="Margin" value=22>%</label>
-</div>
-<div style="float: center; width: 20%;">
-	<label for="name">Taux d'embauche sur la période : <input class="input" type="number" id="ratioHires" value=15>%</label>
-	<label for="name">Taux de départ sur la période : <input class="input" type="number" id="ratioLeavers" value=10>%</label>
-	<label for="name">Durée moyenne d'une mission : <input class="input" type="number" id="avgTaskDays" value=140> jours</label>
-</div>
-<div style="float: right; width: 30%;">
-	<label for="name">1er staffing d'un nouvel embauché intervient après : <input class="input" type="number" id="avgDaysFirstStaffing" value=20> jours</label>
-	<label for="name">Délai d'interco (entre 2 missions hors reconduction) : <input class="input" type="number" id="taskDelay" value=30> jours</label>
-	<label for="name">1 mission sur <input class="input" type="number" id="ratioShadowStaffing" value=30> est sujette au shadow staffing pour <input class="input" type="number" id="shadowStaffingDuration" value=20> jours</label>
-</div>
-<div style="float: right; width: 30%;">
-	<label for="name"><input class="input" type="number" id="ratioTaskRenewNum" value=2> mission(s) sur <input class="input" type="number" id="ratioTaskRenewDenum" value=3> est reconduite pour une durée de <input class="input" type="number" id="ratioTaskRenewDuration" value=50>%</label>
-	<label for="name">1 mission sur <input class="input" type="number" id="ratioBeginDelayed" value=9> démarre <input class="input" type="number" id="beginDelayed" value=7> jours de retard par rapport à la planification</label>
-	<label for="name">1 mission sur <input class="input" type="number" id="ratioEndBefore" value=19> se termine <input class="input" type="number" id="endBefore" value=10> jours avant la fin planifiée</label>
-</div>
-</div>
-<div style="display: flex; margin-top: 30px;margin-bottom: 30px;">
-	<div style="height: 60px; margin-right: 60px;">
-		<button id="simulation" onclick="saveSimulation1()">Simulation de référence</button>
-		<button id="compare" onclick="saveSimulation2()">Scénario cible</button>
-	</div>
-	<div class="resultCompare hideCompare">	
-		<div class="kpi">
-			<span>CA (Cible-Référence)</span>
-			<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
+	<head>
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-PPWPV4Z');</script>
+	<!-- End Google Tag Manager -->
+		<meta charset="UTF-8">
+		<title>WhozUp</title>
+		<script src="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.js"></script>
+		<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.css"/>
+		<link rel="shortcut icon" href="https://www.whoz.com/static/favicon/favicon.ico"/>
+		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
+		<link type="text/css" rel="stylesheet" href="./app.css"/>
+	</head>
+	<body>
+		<!-- Google Tag Manager (noscript) -->
+		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PPWPV4Z" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<!-- End Google Tag Manager (noscript) -->
+		<h2 class="whoz-title">WhozUp</h2>
+		<div class="esn">
+			<div class="whoz-sub-title">Outils de diagnostique et de recommandations de l’amélioration de la performance opérationnelle des sociétés et des centres de services.</div>
+			<div id="whozup-description" class="whoz-description">
+			</br>
+			Société de services, centres de services, découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
+			</br>
+			Le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc de Whoz</u></a> décrit en détail les leviers possibles d’amélioration de la marge et du revenu pour les sociétés de service, de l’efficacité opérationnelle pour les centres de services.</br>
+			</br>
+			Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de service. Il recalcule l’ensemble des indicateurs clefs de performance (tace, ca, marge,...)en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence, de modifier un ou plusieurs leviers pour modéliser et recalculer les indicateurs de performance d’un scénario cible et visualiser la différence sur la performance entre les scénarios.</br>
+			</br>
+			Le simulateur est une version Bêta que nous continuons à améliorer.
+			</div>
+			
+			<div id="firebaseui-auth-container"></div>
+			<div id="loader">Loading...</div>
+			
+			<div id="esn-main" style="display: none;">
+			<div style="display: flex;">
+				<div style="float: left; width: 20%;">
+					<label for="name">Période de simulation : <input class="input" type="number" id="nbDays" value=218> jours</label>
+					<label for="name">Nombre de consultants staffables : <input class="input" type="number" id="nbConsultant" value=75></label>
+					<label for="name">TJM : <input class="input" type="number" id="TJM" value=550>€ et Marge sur coût direct : <input class="input" type="number" id="Margin" value=22>%</label>
+				</div>
+				<div style="float: center; width: 20%;">
+					<label for="name">Taux d'embauche sur la période : <input class="input" type="number" id="ratioHires" value=15>%</label>
+					<label for="name">Taux de départ sur la période : <input class="input" type="number" id="ratioLeavers" value=10>%</label>
+					<label for="name">Durée moyenne d'une mission : <input class="input" type="number" id="avgTaskDays" value=140> jours</label>
+				</div>
+				<div style="float: right; width: 30%;">
+					<label for="name">1er staffing d'un nouvel embauché intervient après : <input class="input" type="number" id="avgDaysFirstStaffing" value=20> jours</label>
+					<label for="name">Délai d'interco (entre 2 missions hors reconduction) : <input class="input" type="number" id="taskDelay" value=30> jours</label>
+					<label for="name">1 mission sur <input class="input" type="number" id="ratioShadowStaffing" value=30> est sujette au shadow staffing pour <input class="input" type="number" id="shadowStaffingDuration" value=20> jours</label>
+				</div>
+				<div style="float: right; width: 30%;">
+					<label for="name"><input class="input" type="number" id="ratioTaskRenewNum" value=2> mission(s) sur <input class="input" type="number" id="ratioTaskRenewDenum" value=3> est reconduite pour une durée de <input class="input" type="number" id="ratioTaskRenewDuration" value=50>%</label>
+					<label for="name">1 mission sur <input class="input" type="number" id="ratioBeginDelayed" value=9> démarre <input class="input" type="number" id="beginDelayed" value=7> jours de retard par rapport à la planification</label>
+					<label for="name">1 mission sur <input class="input" type="number" id="ratioEndBefore" value=19> se termine <input class="input" type="number" id="endBefore" value=10> jours avant la fin planifiée</label>
+				</div>
+			</div>
+			<div style="display: flex; margin-top: 30px;margin-bottom: 30px;">
+				<div style="height: 60px; margin-right: 60px;">
+					<button id="simulation" onclick="saveSimulation1()">Simulation de référence</button>
+					<button id="compare" onclick="saveSimulation2()">Scénario cible</button>
+				</div>
+				<div class="resultCompare hideCompare">	
+					<div class="kpi">
+						<span>CA (Cible-Référence)</span>
+						<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi">
+						<span>Marge staffable (Cible-Référence)</span>
+						<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
+					</div>
+					<div class="kpi">
+						<span>Interco Coût (Cible-Référence)</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
+					</div>
+					<div class="kpi">
+						<span>Whoz Cost</span>
+						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
+					</div>
+				</div>
+			</div>
+			
+			<h3>Les KPIs</h3>
+			<div style="display: flex;margin-left: 40px;">
+				<div class="kpi line1">
+					<span>TACE</span>
+					<div class="chart-number billable" id="esnNumberTACE"></div>
+				</div>
+				<div class="kpi line1">
+					<span>Billable</span>
+					<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
+				</div>
+				<div class="kpi line1">
+					<span>CA</span>
+					<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCA"></div><div>€</div></div>
+				</div>
+				<div class="kpi line1">
+					<span>Coût global</span>
+					<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line1">
+					<span>Marge staffable</span>
+					<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
+				</div>
+				<div class="kpi line1">
+					<span>Interco</span>
+					<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
+				</div>
+				<div class="kpi line1">
+					<span>Interco Coût</span>
+					<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line1">
+					<span>Interco CA</span>
+					<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
+				</div>
+			</div>
+			<div style="display: flex;margin-left: 40px;">
+				<div class="kpi line2">
+					<span>First staff</span>
+					<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
+				</div>
+				<div class="kpi line2">
+					<span>First staff Cost</span>
+					<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line2">
+					<span>First staff CA</span>
+					<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
+				</div>
+				<div class="kpi line2">
+					<span>Lean Start</span>
+					<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
+				</div>
+				<div class="kpi line2">
+					<span>Lean Start Cost</span>
+					<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line2">
+					<span>Lean Start CA</span>
+					<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
+				</div>
+			</div>
+			<div style="display: flex;margin-left: 40px;">
+				<div class="kpi line3">
+					<span>Shadow staffing</span>
+					<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
+				</div>
+				<div class="kpi line3">
+					<span>Shadow staffing Cost</span>
+					<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line3">
+					<span>Shadow staffing CA</span>
+					<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
+				</div>
+				<div class="kpi line3">
+					<span>Lean Back</span>
+					<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
+				</div>
+				<div class="kpi line3">
+					<span>Lean Back Cost</span>
+					<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCost"></div><div>€</div></div>
+				</div>
+				<div class="kpi line3">
+					<span>Lean Back CA</span>
+					<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
+				</div>
+			</div>
+			
+			<h3>Matérialisation détaillée des jours considérés</h3>
+			<div id="esnHeatmap"></div>
+			</div>
+			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
+			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
+			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/dc.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-auth.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-analytics.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-firestore.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
+			<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.css" />
+			<script src="./app.js" type="text/javascript"></script>
 		</div>
-		<div class="kpi">
-			<span>Marge staffable (Cible-Référence)</span>
-			<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
-		</div>
-		<div class="kpi">
-			<span>Interco Coût (Cible-Référence)</span>
-			<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
-		</div>
-		<div class="kpi">
-			<span>Whoz Cost</span>
-			<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
-		</div>
-	</div>
-</div>
-
-<h3>Les KPIs</h3>
-<div style="display: flex;margin-left: 40px;">
-	<div class="kpi line1">
-		<span>TACE</span>
-		<div class="chart-number billable" id="esnNumberTACE"></div>
-	</div>
-	<div class="kpi line1">
-		<span>Billable</span>
-		<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
-	</div>
-	<div class="kpi line1">
-		<span>CA</span>
-		<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCA"></div><div>€</div></div>
-	</div>
-	<div class="kpi line1">
-		<span>Coût global</span>
-		<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line1">
-		<span>Marge staffable</span>
-		<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
-	</div>
-	<div class="kpi line1">
-		<span>Interco</span>
-		<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
-	</div>
-	<div class="kpi line1">
-		<span>Interco Coût</span>
-		<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line1">
-		<span>Interco CA</span>
-		<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
-	</div>
-</div>
-<div style="display: flex;margin-left: 40px;">
-	<div class="kpi line2">
-		<span>First staff</span>
-		<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
-	</div>
-	<div class="kpi line2">
-		<span>First staff Cost</span>
-		<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line2">
-		<span>First staff CA</span>
-		<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
-	</div>
-	<div class="kpi line2">
-		<span>Lean Start</span>
-		<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
-	</div>
-	<div class="kpi line2">
-		<span>Lean Start Cost</span>
-		<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line2">
-		<span>Lean Start CA</span>
-		<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
-	</div>
-</div>
-<div style="display: flex;margin-left: 40px;">
-	<div class="kpi line3">
-		<span>Shadow staffing</span>
-		<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
-	</div>
-	<div class="kpi line3">
-		<span>Shadow staffing Cost</span>
-		<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line3">
-		<span>Shadow staffing CA</span>
-		<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
-	</div>
-	<div class="kpi line3">
-		<span>Lean Back</span>
-		<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
-	</div>
-	<div class="kpi line3">
-		<span>Lean Back Cost</span>
-		<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCost"></div><div>€</div></div>
-	</div>
-	<div class="kpi line3">
-		<span>Lean Back CA</span>
-		<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
-	</div>
-</div>
-
-<h3>Matérialisation détaillée des jours considérés</h3>
-<div id="esnHeatmap"></div>
-</div>
-<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
-<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
-<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/dc.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-analytics.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-firestore.js"></script>
-
- <script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
- <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.css" />
-
-
-<script src="./app.js" type="text/javascript"></script>
-
-</div>
-</body>
+	</body>
 </html>
