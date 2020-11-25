@@ -1,0 +1,101 @@
+	
+	.whoz-title {
+		color: #001442;
+		font: 900 45px/55px Montserrat,sans-serif;
+		letter-spacing: normal;
+	}
+	
+	.whoz-sub-title {
+		color: #3c3c3b;
+		font: 400 16px/24px Montserrat,sans-serif;
+		font-weight: bold;
+		letter-spacing: normal;
+	}
+	
+	.whoz-description {
+		font: 400 16px/24px Montserrat,sans-serif;
+		letter-spacing: normal;
+	}
+	
+	.chart-number {
+		font-size: 32px;
+		font-weight: 600;
+		line-height: 27px;
+	}
+	
+	.chart-number-small {
+		font-size: 24px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+	
+	.esn {
+		margin-left: 10px;
+	}
+	
+	.chart-number-wrapper {
+		display: flex;
+	}
+	
+	.input {
+		width: 40px;
+	}
+	
+	.billable {
+		color: #0038a5;
+	}
+	
+	.interco {
+		color: #FFBE3E;
+	}
+	
+	.whoz-price {
+		color: #cccccc;
+	}
+	
+	.on-boarding {
+		color: #935116;
+	}
+	
+	.shadow-staffing {
+		color: #c51b8a
+	}
+	.lean-start {
+		color: #117A65;
+	}
+	
+	.lean-back {
+		color: #CB4335;
+	}
+	
+	.kpi {
+		margin-right: 30px;
+	}
+	
+	.line1 {
+		width: 14%;
+		height: 70px;
+	}
+	
+	.line2 {
+		width: 16%;
+		height: 70px;
+	}
+	
+	.line3 {
+		width: 16%;
+		height: 70px;
+	}
+	
+    .heat-box {
+        stroke: #ffffff;
+        stroke-width: 1px;
+    }
+	
+	.hideCompare {
+		display: none;
+	}
+	
+	.showCompare {
+		display: flex;
+	}
