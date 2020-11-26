@@ -49,6 +49,7 @@
 	
 	.input {
 		width: 40px;
+		font-weight: bold;
 		font-size: 12px!important;
 		margin-top: 0px!important;
 		margin-bottom: 0px!important;
@@ -101,7 +102,7 @@
 	}
 	
 	.line2 {
-		width: 16%;
+		width: 33%;
 		height: 70px;
 	}
 	
@@ -121,4 +122,19 @@
 	
 	.showCompare {
 		display: flex;
+	}
+	
+	.whoz-button {
+    background-color:#2863D1;
+    border: #ffffff;
+  	font-family: Arial, Geneva, Arial, Helvetica,  sans-serif;
+	font-size: 15px;
+    color: #fff;
+    letter-spacing: 1px;
+    padding: 4px 4px 4px 4px;
+    font-size: 12px;
+    font-weight: normal;
+    border-radius: 4px;
+    line-height: 1.5;
+    text-decoration:none;
 	}
