@@ -37,8 +37,31 @@
 		display: flex;
 	}
 	
+	.input-block {
+		display: contents;
+		margin-bottom: 10px;
+	}
+	
+	.whoz-label {
+		font-size: 11px!important;
+	    margin-bottom: 16px;
+	}
+	
 	.input {
 		width: 40px;
+		font-size: 12px!important;
+		margin-top: 0px!important;
+		margin-bottom: 0px!important;
+		padding-top: 0px!important;
+		padding-bottom: 0px!important;
+		color: green!important;
+	}
+	
+	.hint {
+		color: gray;
+		position: absolute;
+		transform: translate(-50px, 20px);
+		font-size: 10px!important;
 	}
 	
 	.billable {
