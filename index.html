@@ -41,42 +41,42 @@
 			<div id="esn-main" style="display: none;">
 			<div style="display: flex;">
 				<div style="float: left; width: 20%;">
-					<label for="name">Période de simulation : <input class="input" type="number" id="nbDays" value=218> jours</label>
-					<label for="name">Nombre de consultants staffables : <input class="input" type="number" id="nbConsultant" value=75></label>
-					<label for="name">TJM : <input class="input" type="number" id="TJM" value=550>€ et Marge sur coût direct : <input class="input" type="number" id="Margin" value=22>%</label>
+					<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays" value=218><span id="nbDaysHint" class="hint"></span></div> jours</label>
+					<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="nbConsultant" value=75><span id="nbConsultantHint" class="hint"></span></div></label>
+					<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="TJM" value=550><span id="TJMHint" class="hint"></span></div>€ et Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="margin" value=22><span id="marginHint" class="hint"></span></div>%</label>
 				</div>
 				<div style="float: center; width: 20%;">
-					<label for="name">Taux d'embauche sur la période : <input class="input" type="number" id="ratioHires" value=15>%</label>
-					<label for="name">Taux de départ sur la période : <input class="input" type="number" id="ratioLeavers" value=10>%</label>
-					<label for="name">Durée moyenne d'une mission : <input class="input" type="number" id="avgTaskDays" value=140> jours</label>
+					<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="ratioHires" value=15><span id="ratioHiresHint" class="hint"></span></div>%</label>
+					<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="ratioLeavers" value=10><span id="ratioLeaversHint" class="hint"></span></div>%</label>
+					<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="avgTaskDays" value=140><span id="avgTaskDaysHint" class="hint"></span></div> jours</label>
 				</div>
 				<div style="float: right; width: 30%;">
-					<label for="name">1er staffing d'un nouvel embauché intervient après : <input class="input" type="number" id="avgDaysFirstStaffing" value=20> jours</label>
-					<label for="name">Délai d'interco (entre 2 missions hors reconduction) : <input class="input" type="number" id="taskDelay" value=30> jours</label>
-					<label for="name">1 mission sur <input class="input" type="number" id="ratioShadowStaffing" value=30> est sujette au shadow staffing pour <input class="input" type="number" id="shadowStaffingDuration" value=20> jours</label>
+					<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="avgDaysFirstStaffing" value=20><span id="avgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
+					<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="taskDelay" value=30><span id="taskDelayHint" class="hint"></span></div> jours</label>
+					<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioShadowStaffing" value=30><span id="ratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="shadowStaffingDuration" value=20><span id="shadowStaffingDurationHint" class="hint"></span></div> jours</label>
 				</div>
 				<div style="float: right; width: 30%;">
-					<label for="name"><input class="input" type="number" id="ratioTaskRenewNum" value=2> mission(s) sur <input class="input" type="number" id="ratioTaskRenewDenum" value=3> est reconduite pour une durée de <input class="input" type="number" id="ratioTaskRenewDuration" value=50>%</label>
-					<label for="name">1 mission sur <input class="input" type="number" id="ratioBeginDelayed" value=9> démarre <input class="input" type="number" id="beginDelayed" value=7> jours de retard par rapport à la planification</label>
-					<label for="name">1 mission sur <input class="input" type="number" id="ratioEndBefore" value=19> se termine <input class="input" type="number" id="endBefore" value=10> jours avant la fin planifiée</label>
+					<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioTaskRenewNum" value=2><span id="ratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDenum" value=3><span id="ratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDuration" value=50><span id="ratioTaskRenewDurationHint" class="hint"></span></div>%</label>
+					<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioBeginDelayed" value=9><span id="ratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="beginDelayed" value=7><span id="beginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
+					<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioEndBefore" value=19><span id="ratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="endBefore" value=10><span id="endBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
 				</div>
 			</div>
 			<div style="display: flex; margin-top: 30px;margin-bottom: 30px;">
 				<div style="height: 60px; margin-right: 60px;">
-					<button id="simulation" onclick="saveSimulation1()">Simulation de référence</button>
-					<button id="compare" onclick="saveSimulation2()">Scénario cible</button>
+					<button id="simulation" onclick="saveSimulation1()">Simulation de référence (R)</button>
+					<button id="compare" onclick="saveSimulation2()">Scénario cible (C)</button>
 				</div>
 				<div class="resultCompare hideCompare">	
 					<div class="kpi">
-						<span>CA (Cible-Référence)</span>
+						<span>CA (C-R)</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
 					</div>
 					<div class="kpi">
-						<span>Marge staffable (Cible-Référence)</span>
+						<span>Marge staffable (C-R)</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
 					</div>
 					<div class="kpi">
-						<span>Interco Coût (Cible-Référence)</span>
+						<span>Interco Coût (C-R)</span>
 						<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
 					</div>
 					<div class="kpi">
@@ -86,7 +86,8 @@
 				</div>
 			</div>
 			
-			<h3>Les KPIs</h3>
+			<span id="simulationType"></span>
+			<h3>Les KPIs </h3>
 			<div style="display: flex;margin-left: 40px;">
 				<div class="kpi line1">
 					<span>TACE</span>
