@@ -86,11 +86,14 @@
 							<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
 						</div>
 					</div>
-					<div style="margin: auto;">
+					<div id="defaultButton" style="margin: auto;display:block">
 						<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Simulation de référence (R)</button>
 						<button id="compare" class="whoz-button" onclick="saveSimulation2()">Scénario cible personnalisé (C)</button>
 						<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario cible 🏃💨 (C)</button>
 						<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario cible 💪 (C)</button>
+					</div>
+					<div id="simulationSentButton" style="margin: auto;display: none;">
+						<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Jouer le scénario Cible (C)</button>
 					</div>
 				</div>
 				
