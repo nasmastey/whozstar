@@ -1,4 +1,12 @@
 	
+	#sharedBy {
+		color: #3c3c3b;
+		font: 400 16px/24px Montserrat,sans-serif;
+		font-weight: bold;
+		letter-spacing: normal;
+		font-style: italic;
+	}
+	
 	.whoz-title {
 		color: #001442;
 		font: 900 45px/55px Montserrat,sans-serif;
