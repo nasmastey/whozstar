@@ -1,7 +1,8 @@
-	#urlToShare {
+	.urlToShare {
 		align-self: flex-end;
 		margin-right: 10px;
 	}
+
 	#sharedBy {
 		color: #3c3c3b;
 		font: 400 16px/24px Montserrat,sans-serif;
