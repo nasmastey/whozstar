@@ -23,7 +23,7 @@
 		<!-- End Google Tag Manager (noscript) -->
 		<h2 class="whoz-title">WhozUp</h2>
 		<div class="esn">
-			<span id="sharedBy"></span>
+			<!--<span id="sharedBy"></span>-->
 			<div class="whoz-sub-title">Outils de diagnostique et de recommandations de l’amélioration de la performance opérationnelle des sociétés et des centres de services.</div>
 				<div id="whozup-description" style="display: block"; class="whoz-description">
 				</br>
@@ -92,6 +92,10 @@
 						<button id="compare" class="whoz-button" onclick="saveSimulation2()">Scénario cible personnalisé (C)</button>
 						<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario cible 🏃💨 (C)</button>
 						<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario cible 💪 (C)</button>
+						<div id="share" style="margin: auto;display:none">
+							<div id="urlToShare">test</div>
+							<button id="copyClipboard" class="whoz-button" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
+						</div>
 					</div>
 					<div id="simulationSentButton" style="margin: auto;display: none;">
 						<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé (C)</button>
