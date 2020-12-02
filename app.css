@@ -15,6 +15,7 @@
 		color: #001442;
 		font: 900 45px/55px Montserrat,sans-serif;
 		letter-spacing: normal;
+		margin-left: 12px;
 	}
 	
 	.whoz-sub-title {
@@ -22,11 +23,25 @@
 		font: 400 16px/24px Montserrat,sans-serif;
 		font-weight: bold;
 		letter-spacing: normal;
+		display: flex;
 	}
 	
 	.whoz-description {
 		font: 400 16px/24px Montserrat,sans-serif;
 		letter-spacing: normal;
+	}
+	
+	.showmore {
+		cursor: pointer;
+		font-weight: bold;
+		font-size: 12px;
+		margin-left: 12px;
+	}
+
+	.esn-block {
+		border: 0.25rem solid #001442;
+		max-width: 100%;
+		width: 98%;
 	}
 	
 	.chart-number {
@@ -56,7 +71,8 @@
 	
 	.whoz-label {
 		font-size: 11px!important;
-	    margin-bottom: 16px;
+		margin-bottom: 16px;
+		color: #001442;
 	}
 	
 	.input {
@@ -122,6 +138,11 @@
 		width: 16%;
 		height: 70px;
 	}
+
+	.line4 {
+		width: 20%;
+		height: 70px;
+	}
 	
     .heat-box {
         stroke: #ffffff;
@@ -133,10 +154,11 @@
 	}
 	
 	.showCompare {
-		display: flex;
+		display: block;
 	}
 	
-	.result-compare {
+	.kpi-compare {
+		display: flex;
 	}
 	
 	.whoz-button {
@@ -153,4 +175,5 @@
     line-height: 1.5;
     text-decoration:none;
 	margin-top: 20px;
+	margin: auto;
 	}
