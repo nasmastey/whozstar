@@ -16,6 +16,7 @@
 		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
 		<link type="text/css" rel="stylesheet" href="./app.css"/>
+		<link type="text/css" rel="stylesheet" href="./tabs.css"/>
 	</head>
 	<body>
 		<!-- Google Tag Manager (noscript) -->
@@ -24,87 +25,27 @@
 		<h2 class="whoz-title">WhozUp</h2>
 		<div class="esn">
 			<!--<span id="sharedBy"></span>-->
-			<div class="whoz-sub-title">Outils de diagnostique et de recommandations de l’amélioration de la performance opérationnelle des sociétés et des centres de services.</div>
-				<div id="whozup-description" style="display: block"; class="whoz-description">
+			<div class="whoz-sub-title">Diagnostic Staffing des sociétés & centres de services <div id="hideDescription" class="showmore"><a onClick="hideDescription()">Masquer l'introduction</a></div><div id="showDescription" class="showmore" style="display: none;"><a onClick="showDescription()">Afficher l'introduction</a></div></div>
+				<div id="whozup-description" class="whoz-description">
 				</br>
-				Société de services, centres de services, découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
+				<span id="toto">Société de services</span>, centres de services, découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
 				</br>
 				Le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc de Whoz</u></a> décrit en détail les leviers possibles d’amélioration de la marge et du revenu pour les sociétés de service, de l’efficacité opérationnelle pour les centres de services.</br>
 				</br>
-				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de service. Il recalcule l’ensemble des indicateurs clefs de performance (tace, ca, marge,...)en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence, de modifier un ou plusieurs leviers pour modéliser et recalculer les indicateurs de performance d’un scénario cible et visualiser la différence sur la performance entre les scénarios.</br>
+				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de services. Il recalcule l’ensemble des indicateurs clefs de performance (TACE, production, marge,...)en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence et de le comparer à un scénario cible. Ajustez les leviers du scénario cible et mesurez les différences de performance avec le scénario de référence.</br>
 				</br>
 				Le simulateur est une version Bêta que nous continuons à améliorer.</br>
 				</br>
-				Pour nos clients, l’ensemble des paramètres en entrée du modèle sont initialisés avec les indicateurs réels de performance mesurés par whoz et les scénarios d’optimisation sont basés sur les données réelles de production. Pour activer la fonction, rendez-vous dans les paramètres de votre espace.
-				</div>
-				
+				Pour nos clients, l’ensemble des paramètres en entrée du modèle sont initialisés avec les indicateurs réels de performance mesurés par Whoz et les scénarios d’optimisation sont basés sur les données réelles de production. Pour activer la fonction, rendez-vous dans les paramètres de votre espace.
+				</div>				
 				<div id="firebaseui-auth-container"></div>
 				<div id="loader">Loading...</div>
 				
 				<div id="esn-main" style="display: none;">
-				<div style="display: flex;">
-					<div style="float: left; width: 20%;">
-						<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays"><span id="nbDaysHint" class="hint"></span></div> jours</label>
-						<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="nbConsultant"><span id="nbConsultantHint" class="hint"></span></div></label>
-						<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="TJM"><span id="TJMHint" class="hint"></span></div>€ et Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="margin"><span id="marginHint" class="hint"></span></div>%</label>
-					</div>
-					<div style="float: center; width: 20%;">
-						<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="ratioHires"><span id="ratioHiresHint" class="hint"></span></div>%</label>
-						<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="ratioLeavers"><span id="ratioLeaversHint" class="hint"></span></div>%</label>
-						<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="avgTaskDays"><span id="avgTaskDaysHint" class="hint"></span></div> jours</label>
-					</div>
-					<div style="float: right; width: 30%;">
-						<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="avgDaysFirstStaffing"><span id="avgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
-						<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="taskDelay"><span id="taskDelayHint" class="hint"></span></div> jours</label>
-						<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioShadowStaffing"><span id="ratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="shadowStaffingDuration"><span id="shadowStaffingDurationHint" class="hint"></span></div> jours</label>
-					</div>
-					<div style="float: right; width: 30%;">
-						<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioTaskRenewNum"><span id="ratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDenum"><span id="ratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDuration"><span id="ratioTaskRenewDurationHint" class="hint"></span></div>%</label>
-						<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioBeginDelayed"><span id="ratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="beginDelayed"><span id="beginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
-						<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioEndBefore"><span id="ratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="endBefore"><span id="endBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
-					</div>
-				</div>
-				<div style="display: block; margin-top: 30px;margin-bottom: 30px;">
-					<div class="resultCompare hideCompare">	
-						<div class="kpi">
-							<span>CA (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
-						</div>
-						<div class="kpi">
-							<span># Missions (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
-						</div>
-						<div class="kpi">
-							<span>Marge staffable (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
-						</div>
-						<div class="kpi">
-							<span>Interco Coût (C-R)</span>
-							<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
-						</div>
-						<div class="kpi">
-							<span>Whoz Cost</span>
-							<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
-						</div>
-					</div>
-					<div id="defaultButton" style="margin: auto;display:block">
-						<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Simulation de référence (R)</button>
-						<button id="compare" class="whoz-button" onclick="saveSimulation2()">Scénario cible personnalisé (C)</button>
-						<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario cible 🏃💨 (C)</button>
-						<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario cible 💪 (C)</button>
-						<div id="share" style="margin: auto;display:none">
-							<span class="urlToShare">Lien pour partager votre dernière comparaison de scénario : </span>
-							<div id="urlToShare" class="urlToShare"></div>
-							<button id="copyClipboard" class="whoz-button" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
-						</div>
-					</div>
-					<div id="simulationSentButton" style="margin: auto;display: none;">
-						<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé (C)</button>
-					</div>
-				</div>
 				
-				<span id="simulationType"></span>
-				<h3>Les KPIs </h3>
+
+				<h3 id="simulationType">Les KPIs du scenario de Référence</h3>
+				<div class="esn-block">
 				<div style="display: flex;margin-left: 40px;">
 					<div class="kpi line1">
 						<span>TACE</span>
@@ -213,13 +154,124 @@
 						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
 					</div>
 				</div>
+				</div>
 				
+				<div class="resultCompare hideCompare">
+				<h3>Résultats</h3>
+				<div class="esn-block">
+				<div style="display: block; margin-top: 30px;margin-bottom: 30px;margin-left: 40px;">
+					<div class="kpi-compare">	
+						<div class="kpi line4">
+							<span>CA (C-R)</span>
+							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
+						</div>
+						<div class="kpi line4">
+							<span># Missions (C-R)</span>
+							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
+						</div>
+						<div class="kpi line4">
+							<span>Marge staffable (C-R)</span>
+							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
+						</div>
+						<div class="kpi line4">
+							<span>Interco Coût (C-R)</span>
+							<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
+						</div>
+						<div class="kpi line4">
+							<span>Whoz Cost</span>
+							<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
+						</div>
+					</div>
+					<div id="defaultResultButton" style="margin: auto;display:block">
+						<div id="share" style="margin: auto;display:none">
+							<span class="urlToShare">Lien pour partager votre dernière comparaison de scénario : </span>
+							<div id="urlToShare" class="urlToShare"></div>
+							<button id="copyClipboard" class="whoz-button" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
+						</div>
+					</div>
+				</div>
+				</div>
+				</div>
+				
+				<h3>Les leviers</h3>
+				<div class="wrapper">
+  				<div class="tabs">
+    				<div class="tab">
+      					<input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
+      					<label for="tab-1" class="tab-label">Référence</label>
+      					<div class="tab-content">
+							<div style="display: flex;">
+								<div style="float: left; width: 30%;">
+									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays"><span id="nbDaysHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="nbConsultant"><span id="nbConsultantHint" class="hint"></span></div></label>
+									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="TJM"><span id="TJMHint" class="hint"></span></div>€</label>
+									<label class="whoz-label" for="name">Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="margin"><span id="marginHint" class="hint"></span></div>%</label>
+								</div>
+								<div style="float: center; width: 35%;">
+									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="ratioHires"><span id="ratioHiresHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="ratioLeavers"><span id="ratioLeaversHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="avgTaskDays"><span id="avgTaskDaysHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="avgDaysFirstStaffing"><span id="avgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="taskDelay"><span id="taskDelayHint" class="hint"></span></div> jours</label>
+								</div>
+								<div style="float: right; width: 35%;">
+									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioTaskRenewNum"><span id="ratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDenum"><span id="ratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDuration"><span id="ratioTaskRenewDurationHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioBeginDelayed"><span id="ratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="beginDelayed"><span id="beginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioEndBefore"><span id="ratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="endBefore"><span id="endBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioShadowStaffing"><span id="ratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="shadowStaffingDuration"><span id="shadowStaffingDurationHint" class="hint"></span></div> jours</label>
+								</div>
+							</div>
+							<div id="simulationSentButton" style="margin: auto;display: none;">
+								<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé (C)</button>
+							</div>
+							<div id="defaultSimulationButton" style="margin: auto;display: block;">
+								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Simulation de référence (R)</button>
+							</div>
+						</div>
+    				</div>
+    				<div class="tab">
+      					<input type="radio" name="css-tabs" id="tab-2" class="tab-switch" onClick="init('c',self?.simulation2?.variables || self?.simulation1?.variables)">
+      					<label for="tab-2" class="tab-label">Cible</label>
+      					<div class="tab-content">
+					  		<div style="display: flex;">
+								<div style="float: left; width: 30%;">
+									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="cnbDays"><span id="cnbDaysHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="cnbConsultant"><span id="cnbConsultantHint" class="hint"></span></div></label>
+									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="cTJM"><span id="cTJMHint" class="hint"></span></div>€</label>
+									<label class="whoz-label" for="name">Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="cmargin"><span id="cmarginHint" class="hint"></span></div>%</label>
+								</div>
+								<div style="float: center; width: 35%;">
+									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="cratioHires"><span id="cratioHiresHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="cratioLeavers"><span id="cratioLeaversHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="cavgTaskDays"><span id="cavgTaskDaysHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="cavgDaysFirstStaffing"><span id="cavgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
+									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="ctaskDelay"><span id="ctaskDelayHint" class="hint"></span></div> jours</label>
+								</div>
+								<div style="float: right; width: 35%;">
+									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="cratioTaskRenewNum"><span id="cratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDenum"><span id="cratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDuration"><span id="cratioTaskRenewDurationHint" class="hint"></span></div>%</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioBeginDelayed"><span id="cratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="cbeginDelayed"><span id="cbeginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioEndBefore"><span id="cratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="cendBefore"><span id="cendBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
+									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioShadowStaffing"><span id="cratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="cshadowStaffingDuration"><span id="cshadowStaffingDurationHint" class="hint"></span></div> jours</label>
+								</div>
+							</div>
+							<div id="defaultCompareButton" style="margin: auto;display: block;">
+								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Scénario cible personnalisé (C)</button>
+								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario cible 🏃💨 (C)</button>
+								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario cible 💪 (C)</button>
+							</div>
+	  					</div>
+    				</div>
+  				</div>
+				</div>
+
 				<h3>Matérialisation détaillée des jours considérés</h3>
 				<div id="esnHeatmap"></div>
 			</div>
 			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
 			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
 			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/dc.js"></script>
+			<script src="https://unpkg.com/@popperjs/core@2"></script>
+			<script src="https://unpkg.com/tippy.js@6"></script>
 			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
 			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-auth.js"></script>
 			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-analytics.js"></script>
