@@ -28,11 +28,11 @@
 			<div class="whoz-sub-title">Diagnostic Staffing des sociétés & centres de services <div id="hideDescription" class="showmore"><a onClick="hideDescription()">Masquer l'introduction</a></div><div id="showDescription" class="showmore" style="display: none;"><a onClick="showDescription()">Afficher l'introduction</a></div></div>
 				<div id="whozup-description" class="whoz-description">
 				</br>
-				<span id="toto">Société de services</span>, centres de services, découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
+				Découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
 				</br>
 				Le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc de Whoz</u></a> décrit en détail les leviers possibles d’amélioration de la marge et du revenu pour les sociétés de service, de l’efficacité opérationnelle pour les centres de services.</br>
 				</br>
-				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de services. Il recalcule l’ensemble des indicateurs clefs de performance (TACE, production, marge,...)en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence et de le comparer à un scénario cible. Ajustez les leviers du scénario cible et mesurez les différences de performance avec le scénario de référence.</br>
+				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de services. Il recalcule l’ensemble des indicateurs clefs de performance (TACE, production, marge...) en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence et de le comparer à un scénario cible. Ajustez les leviers du scénario cible et mesurez les différences de performance avec le scénario de référence.</br>
 				</br>
 				Le simulateur est une version Bêta que nous continuons à améliorer.</br>
 				</br>
@@ -45,7 +45,7 @@
 				
 
 				<div style="display: flex;">
-					<h3 id="simulationType">Les KPIs du scenario de Référence</h3>
+					<h3 id="simulationType">Les KPIs du scénario de Référence (R)</h3>
 					<div id="defaultKPIsTip" class="tips">⚠️ Ces KPIs ont été obtenus uniquement sur la base des leviers business ci-dessous. Pour avoir une idée de vos KPIs mettez à jour les leviers.</div>
 					<div id="sharedKPIsTip" class="tips">⚠️ Voici les KPIs de référence qui vous ont été partagés.</div>
 				</div>
@@ -86,23 +86,23 @@
 						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>First staff</span>
+						<span id="helpFirstStaff">First Staffing ❔</span>
 						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Délai entre missions</span>
+						<span id="helpNewStaffing">New Staffing ❔</span>
 						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelay"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Lean Start</span>
+						<span id="helpLeanStart">Lean Start ❔</span>
 						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Lean Back</span>
+						<span id="helpLeanBack">Lean Back ❔</span>
 						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Shadow staffing</span>
+						<span id="helpShadowStaffing">Shadow staffing ❔</span>
 						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
 					</div>
 				</div>
@@ -161,7 +161,7 @@
 				</div>
 				
 				<div class="resultCompare hideCompare">
-				<h3>Résultats</h3>
+				<h3>Les impacts : Cible (C) vs Référence (R)</h3>
 				<div class="esn-block">
 				<div style="display: block; margin-top: 30px;margin-bottom: 30px;margin-left: 40px;">
 					<div class="kpi-compare">	
@@ -190,7 +190,7 @@
 						<div id="share" style="margin: auto;display:none">
 							<span class="urlToShare">Lien pour partager votre dernière comparaison de scénario : </span>
 							<div id="urlToShare" class="urlToShare"></div>
-							<button id="copyClipboard" class="whoz-button" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
+							<button id="copyClipboard" class="whoz-button" style="margin: initial;" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
 						</div>
 					</div>
 				</div>
@@ -202,7 +202,7 @@
   				<div class="tabs">
     				<div class="tab">
       					<input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
-      					<label for="tab-1" class="tab-label">Référence</label>
+      					<label for="tab-1" class="tab-label">Scénario de Référence (R)</label>
       					<div class="tab-content">
 						  	<div id="defaultLeviersTip" class="tips">⚠️ Les leviers suivants ont été initialisés pour vous, mettez ces variables à jour en fonction de vos connaissances actuelles de votre Business puis cliquez sur le bouton.</div>
 							<div id="sharedLeviersTip" class="tips">⚠️ Les leviers de référence ont été initialisés pour vous par la personne qui vous a communiqué le lien. Cliquez sur le bouton pour découvrir le scénario cible et la comparaison.</div>
@@ -228,16 +228,16 @@
 								</div>
 							</div>
 							<div id="simulationSentButton" style="margin: auto;display: none;">
-								<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé (C)</button>
+								<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé</button>
 							</div>
 							<div id="defaultSimulationButton" style="margin: auto;display: block;">
-								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Lancer la simulation (R)</button>
+								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Lancer la simulation</button>
 							</div>
 						</div>
     				</div>
     				<div class="tab">
       					<input type="radio" name="css-tabs" id="tab-2" class="tab-switch" onClick="init('c',self?.simulation2?.variables || self?.simulation1?.variables)">
-      					<label for="tab-2" class="tab-label">Cible</label>
+      					<label for="tab-2" class="tab-label">Scénario Cible (C)</label>
       					<div class="tab-content">
 					  		<div style="display: flex;">
 								<div style="float: left; width: 30%;">
@@ -261,7 +261,7 @@
 								</div>
 							</div>
 							<div id="defaultCompareButton" style="margin: auto;display: block;">
-								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Lancer la simulation (C)</button>
+								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Lancer la simulation</button>
 								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario prudent 🎵 (C)</button>
 								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario aggressif 💪 (C)</button>
 							</div>
@@ -271,7 +271,7 @@
 				</div>
 
 				<div style="display: block;margin-top: 20px;">
-					<h3>Matérialisation détaillée des jours considérés</h3>
+					<h3 id="helpPlanDeCharge">La simulation du plan de charge des consultant ❔</h3>
 					<div class="esn-block">
 						<div id="esnHeatmap"></div>
 					</div>
