@@ -1,3 +1,12 @@
+	.tips {
+		align-self: center;
+		margin-left: 15px;
+		margin-bottom: 15px;
+		padding: 10px;
+		background-color: rgba(240, 206, 138, 0.425);
+		display: none;
+	}
+
 	.urlToShare {
 		align-self: flex-end;
 		margin-right: 10px;
@@ -39,7 +48,7 @@
 	}
 
 	.esn-block {
-		border: 0.25rem solid #001442;
+		border: 3px solid #001442;
 		max-width: 100%;
 		width: 98%;
 	}
@@ -130,12 +139,12 @@
 	}
 	
 	.line2 {
-		width: 33%;
+		width: 15%;
 		height: 70px;
 	}
 	
 	.line3 {
-		width: 16%;
+		width: 9%;
 		height: 70px;
 	}
 
