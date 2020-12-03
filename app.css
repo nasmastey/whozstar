@@ -1,317 +1,188 @@
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-	<!-- Google Tag Manager -->
-	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-	})(window,document,'script','dataLayer','GTM-PPWPV4Z');</script>
-	<!-- End Google Tag Manager -->
-		<meta charset="UTF-8">
-		<title>WhozUp</title>
-		<script src="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.js"></script>
-		<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.css"/>
-		<link rel="shortcut icon" href="https://www.whoz.com/static/favicon/favicon.ico"/>
-		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/bootstrap.min.css"/>
-		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
-		<link type="text/css" rel="stylesheet" href="./app.css"/>
-		<link type="text/css" rel="stylesheet" href="./tabs.css"/>
-	</head>
-	<body>
-		<!-- Google Tag Manager (noscript) -->
-		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PPWPV4Z" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-		<!-- End Google Tag Manager (noscript) -->
-		<h2 class="whoz-title">WhozUp</h2>
-		<div class="esn">
-			<!--<span id="sharedBy"></span>-->
-			<div class="whoz-sub-title">Diagnostic Staffing des sociétés & centres de services <div id="hideDescription" class="showmore"><a onClick="hideDescription()">Masquer l'introduction</a></div><div id="showDescription" class="showmore" style="display: none;"><a onClick="showDescription()">Afficher l'introduction</a></div></div>
-				<div id="whozup-description" class="whoz-description">
-				</br>
-				Découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
-				</br>
-				Le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc de Whoz</u></a> décrit en détail les leviers possibles d’amélioration de la marge et du revenu pour les sociétés de service, de l’efficacité opérationnelle pour les centres de services.</br>
-				</br>
-				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de services. Il recalcule l’ensemble des indicateurs clefs de performance (TACE, production, marge...) en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence et de le comparer à un scénario cible. Ajustez les leviers du scénario cible et mesurez les différences de performance avec le scénario de référence.</br>
-				</br>
-				Le simulateur est une version Bêta que nous continuons à améliorer.</br>
-				</br>
-				Pour nos clients, l’ensemble des paramètres en entrée du modèle sont initialisés avec les indicateurs réels de performance mesurés par Whoz et les scénarios d’optimisation sont basés sur les données réelles de production. Pour activer la fonction, rendez-vous dans les paramètres de votre espace.
-				</div>				
-				<div id="firebaseui-auth-container"></div>
-				<div id="loader">Loading...</div>
-				
-				<div id="esn-main" style="display: none;">
-				
+	.tips {
+		align-self: center;
+		margin-left: 15px;
+		margin-bottom: 15px;
+		padding: 10px;
+		background-color: rgba(240, 206, 138, 0.425);
+		display: none;
+	}
 
-				<div style="display: flex;">
-					<h3 id="simulationType">Les KPIs du scénario de Référence (R)</h3>
-					<div id="defaultKPIsTip" class="tips">⚠️ Ces KPIs ont été obtenus uniquement sur la base des leviers business ci-dessous. Pour avoir une idée de vos KPIs mettez à jour les leviers.</div>
-					<div id="sharedKPIsTip" class="tips">⚠️ Voici les KPIs de référence qui vous ont été partagés.</div>
-				</div>
-				<div class="esn-block">
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line1">
-						<span>TACE</span>
-						<div class="chart-number billable" id="esnNumberTACE"></div>
-					</div>
-					<div class="kpi line1">
-						<span>CA</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line1">
-						<span>Marge globale</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
-					</div>
-					<div class="kpi line1">
-						<span>Coût global</span>
-						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line1">
-						<span>Facturable</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
-					</div>
-					<div class="kpi line1">
-						<span>CA / Consultant</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCAbyConsultant"></div><div>€</div></div>
-					</div>
-					<div class="kpi line1">
-						<span># Missions</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnMissionCount"></div></div>
-					</div>
-					<div class="kpi line1">
-						<span># Consultants (fin)</span>
-						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnConsultantCount"></div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Interco total</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span id="helpFirstStaff">First Staffing ❔</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span id="helpNewStaffing">New Staffing ❔</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelay"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span id="helpLeanStart">Lean Start ❔</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span id="helpLeanBack">Lean Back ❔</span>
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span id="helpShadowStaffing">Shadow staffing ❔</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Coût</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Coût</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Coût</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Coût</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Coût</span>
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Coût</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Manque à gagner</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Potentiel</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Potentiel</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Potentiel</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Potentiel</span>
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Potentiel</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
-					</div>
-				</div>
-				</div>
-				
-				<div class="resultCompare hideCompare">
-				<h3>Les impacts : Cible (C) vs Référence (R)</h3>
-				<div class="esn-block">
-				<div style="display: block; margin-top: 30px;margin-bottom: 30px;margin-left: 40px;">
-					<div class="kpi-compare" style="display: block;">
-						<div style="display: flex;margin-left: 40px;">
-							<div class="kpi line4">
-								<span>TACE (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareTACE"></div><div>pts</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>CA (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Marge globale (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Coût d'interco (C-R)</span>
-								<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
-							</div>
-						</div>
-						<div style="display: flex;margin-left: 40px;">
-							<div class="kpi line4">
-								<span>Facturable (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareBillable"></div><div>J</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>CA / Consultant (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCAByConsultant"></div><div></div></div>
-							</div>
-							<div class="kpi line4">
-								<span># Missions (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Tarif Whoz</span>
-								<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
-							</div>
-						</div>
-					</div>
-					<div id="defaultResultButton" style="margin: auto;display:block">
-						<div id="share" style="margin: auto;display:none">
-							<span class="urlToShare">Lien pour partager votre dernière comparaison de scénario : </span>
-							<div id="urlToShare" class="urlToShare"></div>
-							<button id="copyClipboard" class="whoz-button" style="margin: initial;" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
-						</div>
-					</div>
-				</div>
-				</div>
-				</div>
-				
-				<h3>Les leviers</h3>
-				<div class="wrapper">
-  				<div class="tabs">
-    				<div class="tab">
-      					<input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
-      					<label for="tab-1" class="tab-label">Scénario de Référence (R)</label>
-      					<div class="tab-content">
-						  	<div id="defaultLeviersTip" class="tips">⚠️ Les leviers suivants ont été initialisés pour vous, mettez ces variables à jour en fonction de vos connaissances actuelles de votre Business puis cliquez sur le bouton.</div>
-							<div id="sharedLeviersTip" class="tips">⚠️ Les leviers de référence ont été initialisés pour vous par la personne qui vous a communiqué le lien. Cliquez sur le bouton pour découvrir le scénario cible et la comparaison.</div>
-							<div style="display: flex;">
-								<div style="float: left; width: 30%;">
-									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays"><span id="nbDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="nbConsultant"><span id="nbConsultantHint" class="hint"></span></div></label>
-									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="TJM"><span id="TJMHint" class="hint"></span></div>€</label>
-									<label class="whoz-label" for="name">Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="margin"><span id="marginHint" class="hint"></span></div>%</label>
-								</div>
-								<div style="float: center; width: 35%;">
-									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="ratioHires"><span id="ratioHiresHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="ratioLeavers"><span id="ratioLeaversHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="avgTaskDays"><span id="avgTaskDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="avgDaysFirstStaffing"><span id="avgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="taskDelay"><span id="taskDelayHint" class="hint"></span></div> jours</label>
-								</div>
-								<div style="float: right; width: 35%;">
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioTaskRenewNum"><span id="ratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDenum"><span id="ratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDuration"><span id="ratioTaskRenewDurationHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioBeginDelayed"><span id="ratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="beginDelayed"><span id="beginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioEndBefore"><span id="ratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="endBefore"><span id="endBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioShadowStaffing"><span id="ratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="shadowStaffingDuration"><span id="shadowStaffingDurationHint" class="hint"></span></div> jours</label>
-								</div>
-							</div>
-							<div id="simulationSentButton" style="margin: auto;display: none;">
-								<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé</button>
-							</div>
-							<div id="defaultSimulationButton" style="margin: auto;display: block;">
-								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Lancer la simulation</button>
-							</div>
-						</div>
-    				</div>
-    				<div class="tab">
-      					<input type="radio" name="css-tabs" id="tab-2" class="tab-switch" onClick="init('c',self?.simulation2?.variables || self?.simulation1?.variables)">
-      					<label for="tab-2" class="tab-label">Scénario Cible (C)</label>
-      					<div class="tab-content">
-					  		<div style="display: flex;">
-								<div style="float: left; width: 30%;">
-									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="cnbDays"><span id="cnbDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="cnbConsultant"><span id="cnbConsultantHint" class="hint"></span></div></label>
-									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="cTJM"><span id="cTJMHint" class="hint"></span></div>€</label>
-									<label class="whoz-label" for="name">Marge sur coût direct : <div class="input-block"><input class="input" type="number" id="cmargin"><span id="cmarginHint" class="hint"></span></div>%</label>
-								</div>
-								<div style="float: center; width: 35%;">
-									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="cratioHires"><span id="cratioHiresHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="cratioLeavers"><span id="cratioLeaversHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="cavgTaskDays"><span id="cavgTaskDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="cavgDaysFirstStaffing"><span id="cavgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="ctaskDelay"><span id="ctaskDelayHint" class="hint"></span></div> jours</label>
-								</div>
-								<div style="float: right; width: 35%;">
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="cratioTaskRenewNum"><span id="cratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDenum"><span id="cratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDuration"><span id="cratioTaskRenewDurationHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioBeginDelayed"><span id="cratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="cbeginDelayed"><span id="cbeginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioEndBefore"><span id="cratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="cendBefore"><span id="cendBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioShadowStaffing"><span id="cratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="cshadowStaffingDuration"><span id="cshadowStaffingDurationHint" class="hint"></span></div> jours</label>
-								</div>
-							</div>
-							<div id="defaultCompareButton" style="margin: auto;display: block;">
-								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Lancer la simulation</button>
-								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario prudent 🎵 (C)</button>
-								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario aggressif 💪 (C)</button>
-							</div>
-	  					</div>
-    				</div>
-  				</div>
-				</div>
+	.urlToShare {
+		align-self: flex-end;
+		margin-right: 10px;
+	}
 
-				<div style="display: block;margin-top: 20px;">
-					<h3 id="helpPlanDeCharge">La simulation du plan de charge des consultant ❔</h3>
-					<div class="esn-block">
-						<div id="esnHeatmap"></div>
-					</div>
-				</div>
-			</div>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/dc.js"></script>
-			<script src="https://unpkg.com/@popperjs/core@2"></script>
-			<script src="https://unpkg.com/tippy.js@6"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-auth.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-analytics.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-firestore.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
-			<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.css" />
-			<script src="./app.js" type="text/javascript"></script>
-		</div>
-	</body>
-</html>
+	#sharedBy {
+		color: #3c3c3b;
+		font: 400 16px/24px Montserrat,sans-serif;
+		font-weight: bold;
+		letter-spacing: normal;
+		font-style: italic;
+	}
+	
+	.whoz-title {
+		color: #001442;
+		font: 900 45px/55px Montserrat,sans-serif;
+		letter-spacing: normal;
+		margin-left: 12px;
+	}
+	
+	.whoz-sub-title {
+		color: #3c3c3b;
+		font: 400 16px/24px Montserrat,sans-serif;
+		font-weight: bold;
+		letter-spacing: normal;
+		display: flex;
+	}
+	
+	.whoz-description {
+		font: 400 16px/24px Montserrat,sans-serif;
+		letter-spacing: normal;
+	}
+	
+	.showmore {
+		cursor: pointer;
+		font-weight: bold;
+		font-size: 12px;
+		margin-left: 12px;
+	}
+
+	.esn-block {
+		border: 3px solid #001442;
+		max-width: 100%;
+		width: 98%;
+	}
+	
+	.chart-number {
+		font-size: 32px;
+		font-weight: 600;
+		line-height: 27px;
+	}
+	
+	.chart-number-small {
+		font-size: 24px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+	
+	.esn {
+		margin-left: 10px;
+	}
+	
+	.chart-number-wrapper {
+		display: flex;
+	}
+	
+	.input-block {
+		display: contents;
+		margin-bottom: 10px;
+	}
+	
+	.whoz-label {
+		font-size: 14px!important;
+		margin-bottom: 16px;
+		color: #001442;
+	}
+	
+	.input {
+		width: 40px;
+		font-weight: bold;
+		font-size: 12px!important;
+		margin-top: 0px!important;
+		margin-bottom: 0px!important;
+		padding-top: 0px!important;
+		padding-bottom: 0px!important;
+		color: green!important;
+	}
+	
+	.hint {
+		color: gray;
+		position: absolute;
+		transform: translate(-50px, 20px);
+		font-size: 10px!important;
+	}
+	
+	.billable {
+		color: #0038a5;
+	}
+	
+	.interco {
+		color: #FFBE3E;
+	}
+	
+	.whoz-price {
+		color: #cccccc;
+	}
+	
+	.on-boarding {
+		color: #935116;
+	}
+	
+	.shadow-staffing {
+		color: #c51b8a
+	}
+	.lean-start {
+		color: #117A65;
+	}
+	
+	.lean-back {
+		color: #CB4335;
+	}
+	
+	.kpi {
+		margin-right: 30px;
+	}
+	
+	.line1 {
+		width: 14%;
+		height: 70px;
+	}
+	
+	.line2 {
+		width: 15%;
+		height: 70px;
+	}
+	
+	.line3 {
+		width: 9%;
+		height: 70px;
+	}
+
+	.line4 {
+		width: 20%;
+		height: 70px;
+	}
+	
+    .heat-box {
+        stroke: #ffffff;
+        stroke-width: 1px;
+    }
+	
+	.hideCompare {
+		display: none;
+	}
+	
+	.showCompare {
+		display: block;
+	}
+	
+	.kpi-compare {
+		display: flex;
+	}
+	
+	.whoz-button {
+    background-color:#2863D1;
+    border: #ffffff;
+  	font-family: Arial, Geneva, Arial, Helvetica,  sans-serif;
+	font-size: 15px;
+    color: #fff;
+    letter-spacing: 1px;
+    padding: 4px 4px 4px 4px;
+    font-size: 12px;
+    font-weight: normal;
+    border-radius: 4px;
+    line-height: 1.5;
+    text-decoration:none;
+	margin-top: 20px;
+	margin: auto;
+	}
