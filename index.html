@@ -56,20 +56,26 @@
 						<div class="chart-number billable" id="esnNumberTACE"></div>
 					</div>
 					<div class="kpi line1">
-						<span>Facturable</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
-					</div>
-					<div class="kpi line1">
 						<span>CA</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line1">
+						<span>Marge globale</span>
+						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
 					</div>
 					<div class="kpi line1">
 						<span>Coût global</span>
 						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
 					</div>
+				</div>
+				<div style="display: flex;margin-left: 40px;">
 					<div class="kpi line1">
-						<span>Marge globale</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
+						<span>Facturable</span>
+						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
+					</div>
+					<div class="kpi line1">
+						<span>CA / Consultant</span>
+						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCAbyConsultant"></div><div>€</div></div>
 					</div>
 					<div class="kpi line1">
 						<span># Missions</span>
@@ -164,26 +170,42 @@
 				<h3>Les impacts : Cible (C) vs Référence (R)</h3>
 				<div class="esn-block">
 				<div style="display: block; margin-top: 30px;margin-bottom: 30px;margin-left: 40px;">
-					<div class="kpi-compare">	
-						<div class="kpi line4">
-							<span>CA (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
+					<div class="kpi-compare" style="display: block;">
+						<div style="display: flex;margin-left: 40px;">
+							<div class="kpi line4">
+								<span>TACE (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareTACE"></div><div>pts</div></div>
+							</div>
+							<div class="kpi line4">
+								<span>CA (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
+							</div>
+							<div class="kpi line4">
+								<span>Marge globale (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
+							</div>
+							<div class="kpi line4">
+								<span>Coût d'interco (C-R)</span>
+								<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
+							</div>
 						</div>
-						<div class="kpi line4">
-							<span># Missions (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
-						</div>
-						<div class="kpi line4">
-							<span>Marge globale (C-R)</span>
-							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
-						</div>
-						<div class="kpi line4">
-							<span>Coût d'interco (C-R)</span>
-							<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
-						</div>
-						<div class="kpi line4">
-							<span>Tarif Whoz</span>
-							<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
+						<div style="display: flex;margin-left: 40px;">
+							<div class="kpi line4">
+								<span>Facturable (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareBillable"></div><div>J</div></div>
+							</div>
+							<div class="kpi line4">
+								<span>CA / Consultant (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCAByConsultant"></div><div></div></div>
+							</div>
+							<div class="kpi line4">
+								<span># Missions (C-R)</span>
+								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
+							</div>
+							<div class="kpi line4">
+								<span>Tarif Whoz</span>
+								<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
+							</div>
 						</div>
 					</div>
 					<div id="defaultResultButton" style="margin: auto;display:block">
