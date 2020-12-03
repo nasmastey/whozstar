@@ -44,7 +44,11 @@
 				<div id="esn-main" style="display: none;">
 				
 
-				<h3 id="simulationType">Les KPIs du scenario de Référence</h3>
+				<div style="display: flex;">
+					<h3 id="simulationType">Les KPIs du scenario de Référence</h3>
+					<div id="defaultKPIsTip" class="tips">⚠️ Ces KPIs ont été obtenus uniquement sur la base des leviers business ci-dessous. Pour avoir une idée de vos KPIs mettez à jour les leviers.</div>
+					<div id="sharedKPIsTip" class="tips">⚠️ Voici les KPIs de référence qui vous ont été partagés.</div>
+				</div>
 				<div class="esn-block">
 				<div style="display: flex;margin-left: 40px;">
 					<div class="kpi line1">
@@ -52,7 +56,7 @@
 						<div class="chart-number billable" id="esnNumberTACE"></div>
 					</div>
 					<div class="kpi line1">
-						<span>Billable</span>
+						<span>Facturable</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
 					</div>
 					<div class="kpi line1">
@@ -64,11 +68,11 @@
 						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
 					</div>
 					<div class="kpi line1">
-						<span>Marge staffable</span>
+						<span>Marge globale</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
 					</div>
 					<div class="kpi line1">
-						<span># missions</span>
+						<span># Missions</span>
 						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnMissionCount"></div></div>
 					</div>
 					<div class="kpi line1">
@@ -81,77 +85,77 @@
 						<span>Interco total</span>
 						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
 					</div>
-					<div class="kpi line2">
-						<span>Interco total Coût</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line2">
-						<span>Interco total CA</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line2">
-						<span>Délai entre missions</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelay"></div><div>J</div></div>
-					</div>
-					<div class="kpi line2">
-						<span>Délai entre missions Coût</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line2">
-						<span>Délai entre missions CA</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCA"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
 					<div class="kpi line3">
 						<span>First staff</span>
 						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>First staff Cost</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>First staff CA</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
+						<span>Délai entre missions</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelay"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
 						<span>Lean Start</span>
 						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Lean Start Cost</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Lean Start CA</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line3">
-						<span>Shadow staffing</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Shadow staffing Cost</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
-						<span>Shadow staffing CA</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line3">
 						<span>Lean Back</span>
 						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Lean Back Cost</span>
+						<span>Shadow staffing</span>
+						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
+					</div>
+				</div>
+				<div style="display: flex;margin-left: 40px;">
+					<div class="kpi line2">
+						<span>Coût</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Coût</span>
+						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Coût</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCost"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Coût</span>
+						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Coût</span>
 						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCost"></div><div>€</div></div>
 					</div>
 					<div class="kpi line3">
-						<span>Lean Back CA</span>
+						<span>Coût</span>
+						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
+					</div>
+				</div>
+				<div style="display: flex;margin-left: 40px;">
+					<div class="kpi line2">
+						<span>Manque à gagner</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Potentiel</span>
+						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Potentiel</span>
+						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Potentiel</span>
+						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Potentiel</span>
 						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
+					</div>
+					<div class="kpi line3">
+						<span>Potentiel</span>
+						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
 					</div>
 				</div>
 				</div>
@@ -170,15 +174,15 @@
 							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
 						</div>
 						<div class="kpi line4">
-							<span>Marge staffable (C-R)</span>
+							<span>Marge globale (C-R)</span>
 							<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
 						</div>
 						<div class="kpi line4">
-							<span>Interco Coût (C-R)</span>
+							<span>Coût d'interco (C-R)</span>
 							<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
 						</div>
 						<div class="kpi line4">
-							<span>Whoz Cost</span>
+							<span>Tarif Whoz</span>
 							<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
 						</div>
 					</div>
@@ -200,6 +204,8 @@
       					<input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
       					<label for="tab-1" class="tab-label">Référence</label>
       					<div class="tab-content">
+						  	<div id="defaultLeviersTip" class="tips">⚠️ Les leviers suivants ont été initialisés pour vous, mettez ces variables à jour en fonction de vos connaissances actuelles de votre Business puis cliquez sur le bouton.</div>
+							<div id="sharedLeviersTip" class="tips">⚠️ Les leviers de référence ont été initialisés pour vous par la personne qui vous a communiqué le lien. Cliquez sur le bouton pour découvrir le scénario cible et la comparaison.</div>
 							<div style="display: flex;">
 								<div style="float: left; width: 30%;">
 									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays"><span id="nbDaysHint" class="hint"></span></div> jours</label>
@@ -225,7 +231,7 @@
 								<button id="compareSent" class="whoz-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé (C)</button>
 							</div>
 							<div id="defaultSimulationButton" style="margin: auto;display: block;">
-								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Simulation de référence (R)</button>
+								<button id="simulation" class="whoz-button" onclick="saveSimulation1()">Lancer la simulation (R)</button>
 							</div>
 						</div>
     				</div>
@@ -255,17 +261,21 @@
 								</div>
 							</div>
 							<div id="defaultCompareButton" style="margin: auto;display: block;">
-								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Scénario cible personnalisé (C)</button>
-								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario cible 🏃💨 (C)</button>
-								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario cible 💪 (C)</button>
+								<button id="compare" class="whoz-button" onclick="saveSimulation2()">Lancer la simulation (C)</button>
+								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario prudent 🎵 (C)</button>
+								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario aggressif 💪 (C)</button>
 							</div>
 	  					</div>
     				</div>
   				</div>
 				</div>
 
-				<h3>Matérialisation détaillée des jours considérés</h3>
-				<div id="esnHeatmap"></div>
+				<div style="display: block;margin-top: 20px;">
+					<h3>Matérialisation détaillée des jours considérés</h3>
+					<div class="esn-block">
+						<div id="esnHeatmap"></div>
+					</div>
+				</div>
 			</div>
 			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
 			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
