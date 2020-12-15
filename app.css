@@ -1,3 +1,7 @@
+	body {
+		font-family: 'Montserrat', sans-serif;
+	}
+	
 	.tips {
 		align-self: center;
 		margin-left: 15px;
@@ -14,7 +18,7 @@
 
 	#sharedBy {
 		color: #3c3c3b;
-		font: 400 16px/24px Montserrat,sans-serif;
+		font: 400 16px/24px;
 		font-weight: bold;
 		letter-spacing: normal;
 		font-style: italic;
@@ -22,21 +26,21 @@
 	
 	.whoz-title {
 		color: #001442;
-		font: 900 45px/55px Montserrat,sans-serif;
+		font: 900 45px/55px;
 		letter-spacing: normal;
 		margin-left: 12px;
 	}
 	
 	.whoz-sub-title {
 		color: #3c3c3b;
-		font: 400 16px/24px Montserrat,sans-serif;
+		font: 400 16px/24px;
 		font-weight: bold;
 		letter-spacing: normal;
 		display: flex;
 	}
 	
 	.whoz-description {
-		font: 400 16px/24px Montserrat,sans-serif;
+		font: 400 16px/24px;
 		letter-spacing: normal;
 	}
 	
@@ -53,6 +57,12 @@
 		width: 98%;
 	}
 	
+	.chart-big-number {
+		font-size: 40px;
+		font-weight: 600;
+		line-height: 35px;
+	}
+
 	.chart-number {
 		font-size: 32px;
 		font-weight: 600;
@@ -78,10 +88,21 @@
 		margin-bottom: 10px;
 	}
 	
+	.whoz-block-container {
+		display: flex;
+		padding-bottom: 10px;
+	}
+
+	.whoz-block {
+		flex: 1;
+		padding: 10px;
+	}
+
 	.whoz-label {
 		font-size: 14px!important;
 		margin-bottom: 16px;
 		color: #001442;
+		display: block;
 	}
 	
 	.input {
@@ -115,20 +136,24 @@
 	}
 	
 	.on-boarding {
-		color: #935116;
+		color: #9c6102;
 	}
 	
 	.shadow-staffing {
 		color: #c51b8a
 	}
 	.lean-start {
-		color: #117A65;
+		color: #ff7600;
 	}
 	
 	.lean-back {
-		color: #CB4335;
+		color: #3c3c3c;
 	}
 	
+	.lean-pt {
+		color: #6285c9;
+	}
+
 	.kpi {
 		margin-right: 30px;
 	}
@@ -143,14 +168,30 @@
 		height: 70px;
 	}
 	
-	.line3 {
-		width: 9%;
+	.interco-kpi-header {
+		width: 11%;
 		height: 70px;
+	}
+
+	.interco-kpi-content {
+		width: 11%;
+		height: 70px;
+		display: flex;
+    	align-items: center;
 	}
 
 	.line4 {
 		width: 20%;
 		height: 70px;
+	}
+
+	.line5 {
+		width: 100%;
+		height: 90px;
+		width: 136px;
+    	background-color: #001442;
+	    color: #FFD47B;
+    	padding: 5px;
 	}
 	
     .heat-box {
@@ -171,19 +212,30 @@
 	}
 	
 	.whoz-button {
-    background-color:#2863D1;
-    border: #ffffff;
-  	font-family: Arial, Geneva, Arial, Helvetica,  sans-serif;
-	font-size: 15px;
-    color: #fff;
+	cursor: pointer;
+    background-color:#ffffff;
+	border:solid;
+    color: #001442;
     letter-spacing: 1px;
-    padding: 4px 4px 4px 4px;
-    font-size: 12px;
+    padding: 0px 8px 0px 8px;
+    font-size: 15px;
     font-weight: normal;
-    border-radius: 4px;
-    line-height: 1.5;
+    line-height: 3.5;
     text-decoration:none;
-	margin-top: 20px;
 	margin: auto;
 	}
 
+	.whoz-main-button {
+		cursor: pointer;
+		background-color:#001442;
+		border:solid;
+		color: #fff;
+		letter-spacing: 1px;
+		padding: 0px 20px 0px 20px;
+		font-size: 15px;
+		font-weight: normal;
+		line-height: 3.5;
+		text-decoration:none;
+		margin: auto;
+		justify-content: flex-end;
+		}
