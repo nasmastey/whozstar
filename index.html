@@ -1,338 +1,1267 @@
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-	<!-- Google Tag Manager -->
-	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-	})(window,document,'script','dataLayer','GTM-PPWPV4Z');</script>
-	<!-- End Google Tag Manager -->
-		<meta charset="UTF-8">
-		<title>WhozUp</title>
-		  <link rel="stylesheet" href="https://cdn.rawgit.com/raphaelfabeni/css-loader/7090f306bff5627b5b94c3607306838db7df7396/dist/css-loader.css">
-		<script src="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.js"></script>
-		<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.css"/>
-		<link rel="shortcut icon" href="https://www.whoz.com/static/favicon/favicon.ico"/>
-		<!--<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/bootstrap.min.css"/>-->
-		<link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
-		<link type="text/css" rel="stylesheet" href="./app.css"/>
-		<link type="text/css" rel="stylesheet" href="./tabs.css"/>
-	</head>
-	<body>
-		<div id="esn-loader" class="loader loader-default"></div>
-		<!-- Google Tag Manager (noscript) -->
-		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PPWPV4Z" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-		<!-- End Google Tag Manager (noscript) -->
-		<h2 class="whoz-title">WhozUp</h2>
-		<div class="esn">
-			<!--<span id="sharedBy"></span>-->
+tippy('#helpFirstStaff', {
+  content: "Manque d'anticipation des arrivées de nouveaux consultants. Conséquence : une latence sur le premier staffing des nouveaux embauchés."
+})
 
-			<div class="whoz-sub-title">Diagnostic Staffing des sociétés & centres de services <div id="hideDescription" class="showmore"><a onClick="hideDescription()">Masquer l'introduction</a></div><div id="showDescription" class="showmore" style="display: none;"><a onClick="showDescription()">Afficher l'introduction</a></div></div>
-				<div id="whozup-description" class="whoz-description">
-				</br>
-				Découvrez les scénarios d’optimisation de votre performance grâce à notre simulateur d’activité.</br>
-				</br>
-				Le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc de Whoz</u></a> décrit en détail les leviers possibles d’amélioration de la marge et du revenu pour les sociétés de services, de l’efficacité opérationnelle pour les centres de services.</br>
-				</br>
-				Notre simulateur reprend l’ensemble des leviers décrits dans le <a href="https://www.whoz.com/resources/livre_blanc_marge_revenu_esn_cabinet_conseil"><u>livre blanc</u></a> pour modéliser le staffing d’une société de services ou d’un centre de services. Il recalcule l’ensemble des indicateurs clefs de performance (TACE, production, marge...) en donnant un aperçu de l’impact de chacun des leviers sur les indicateurs clefs de performance. La fonction de scénarisation permet de définir un scénario de référence et de le comparer à un scénario cible. Ajustez les leviers du scénario cible et mesurez les différences de performance avec le scénario de référence.</br>
-				</br>
-				Le simulateur est une version Bêta que nous continuons à améliorer.</br>
-				</br>
-				Pour nos clients, l’ensemble des paramètres en entrée du modèle sont initialisés avec les indicateurs réels de performance mesurés par Whoz et les scénarios d’optimisation sont basés sur les données réelles de production. Pour activer la fonction, rendez-vous dans les paramètres de votre espace.
-				</div>				
-				<div id="firebaseui-auth-container"></div>
-				<div id="loader-test">Loading...</div>
-				
-				<div id="esn-main" style="display: none;">
-				
-				<div style="display: flex;">
-					<h3 id="simulationType">Les KPIs du scénario de Référence (R)</h3>
-					<div id="defaultKPIsTip" class="tips"><span class="material-icons">info</span>Ces KPIs ont été obtenus uniquement sur la base des leviers business ci-dessous. Pour avoir une idée de vos KPIs mettez à jour les leviers.</div>
-					<div id="sharedKPIsTip" class="tips"><span class="material-icons">info</span>Voici les KPIs de référence qui vous ont été partagés.</div>
-				</div>
-				<div class="esn-block">
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line1">
-						<span>TACE</span>
-						<div class="chart-number billable" id="esnNumberTACE"></div>
-					</div>
-					<div class="kpi line1">
-						<span>CA</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi line1">
-						<span>Marge globale</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnGlobalMargin"></div></div>
-					</div>
-					<div class="kpi line1">
-						<span>Coût global</span>
-						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnTotalCost"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line1">
-						<span>Facturable</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnNumberBillable"></div><div>J</div></div>
-					</div>
-					<div class="kpi line1">
-						<span>CA / Consultant</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnCAbyConsultant"></div><div>€</div></div>
-					</div>
-					<div class="kpi line1">
-						<span># Missions</span>
-						<div class="chart-number-wrapper billable"><div class="chart-number" id="esnMissionCount"></div></div>
-					</div>
-					<div class="kpi line1">
-						<span># Consultants (fin)</span>
-						<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnConsultantCount"></div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Interco total</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnInterco"></div><div>J</div></div>
-					</div>
-					<div id="helpFirstStaff" class="kpi interco-kpi-header">
-						<span>First Staffing</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoarding"></div><div>J</div></div>
-					</div>
-					<div id="helpNewStaffing" class="kpi interco-kpi-header">
-						<span>New Staffing</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelay"></div><div>J</div></div>
-					</div>
-					<div id="helpLeanStart" class="kpi interco-kpi-header">
-						<span>Lean Start</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStart"></div><div>J</div></div>
-					</div>
-					<div id="helpLeanBack" class="kpi interco-kpi-header">
-						<span>Lean Back</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBack"></div><div>J</div></div>
-					</div>
-					<div id="helpLeanPT" class="kpi interco-kpi-header">
-						<span>Lean PT</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper lean-pt"><div class="chart-number-small" id="esnLeanPT"></div><div>J</div></div>
-					</div>
-					<div id="helpShadowStaffing" class="kpi interco-kpi-header">
-						<span>Shadow staffing</span><span class="material-icons">info</span>
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffing"></div><div>J</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Coût</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-pt"><div class="chart-number-small" id="esnLeanPTCost"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCost"></div><div>€</div></div>
-					</div>
-				</div>
-				<div style="display: flex;margin-left: 40px;">
-					<div class="kpi line2">
-						<span>Manque à gagner</span>
-						<div class="chart-number-wrapper interco"><div class="chart-number" id="esnIntercoCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper on-boarding"><div class="chart-number-small" id="esnOnBoardingCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper interco"><div class="chart-number-small" id="esnMissionDelayCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-start"><div class="chart-number-small" id="esnLeanStartCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-back"><div class="chart-number-small" id="esnLeanBackCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper lean-pt"><div class="chart-number-small" id="esnLeanPTCA"></div><div>€</div></div>
-					</div>
-					<div class="kpi interco-kpi-content">
-						<div class="chart-number-wrapper shadow-staffing"><div class="chart-number-small" id="esnShadowStaffingCA"></div><div>€</div></div>
-					</div>
-				</div>
-				</div>
-				
-				<div class="resultCompare hideCompare">
-				<h3>Les impacts : Cible (C) vs Référence (R)</h3>
-				<div class="esn-block">
-				<div style="display: block; margin-top: 30px;margin-bottom: 30px;margin-left: 40px;">
-					<div class="kpi-compare" style="display: block;">
-						<div style="display: flex;margin-left: 40px;">
-							<div class="kpi line4">
-								<span>TACE (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareTACE"></div><div>pts</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>CA (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCA"></div><div>€</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Marge globale (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMargin"></div><div>pts</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Coût d'interco (C-R)</span>
-								<div class="chart-number-wrapper interco"><div class="chart-number" id="compareIntercoCost"></div><div>€</div></div>
-							</div>
-						</div>
-						<div style="display: flex;margin-left: 40px;">
-							<div class="kpi line4">
-								<span>Facturable (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareBillable"></div><div>J</div></div>
-							</div>
-							<div class="kpi line4">
-								<span>CA / Consultant (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareCAByConsultant"></div><div></div></div>
-							</div>
-							<div class="kpi line4">
-								<span># Missions (C-R)</span>
-								<div class="chart-number-wrapper billable"><div class="chart-number" id="compareMission"></div><div></div></div>
-							</div>
-							<div class="kpi line4">
-								<span>Tarif Licences Perf. Whoz</span>
-								<div class="chart-number-wrapper whoz-price"><div class="chart-number" id="esnWhozCost"></div><div>€</div></div>
-							</div>
-						</div>
-						<div style="display: block;margin-left: 43%;">
-							<div class="kpi line5">
-								<span>ROI post déploiement</span>
-								<div class="chart-number-wrapper">
-									<div class="chart-big-number" id="esnWhozROI"></div>
-									<div>Mois</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="defaultResultButton" style="margin: auto;display:block">
-						<div id="share" style="margin: auto;display:none">
-							<span class="urlToShare">Lien pour partager votre dernière comparaison de scénario : </span>
-							<div id="urlToShare" class="urlToShare"></div>
-							<button id="copyClipboard" class="whoz-main-button" style="margin: initial;" onclick="copyToClipboard('urlToShare')">Copier l'url</button>
-						</div>
-					</div>
-				</div>
-				</div>
-				</div>
-				
-				<h3>Les leviers</h3>
-				<div class="wrapper">
-  				<div class="tabs">
-    				<div class="tab">
-      					<input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
-      					<label for="tab-1" class="tab-label">Scénario de Référence (R)</label>
-      					<div class="tab-content">
-						  	<div id="defaultLeviersTip" class="tips"><span class="material-icons">info</span>Les leviers suivants ont été initialisés pour vous, mettez ces variables à jour en fonction de vos connaissances actuelles de votre Business puis cliquez sur le bouton.</div>
-							<div id="sharedLeviersTip" class="tips"><span class="material-icons">info</span>Les leviers de référence ont été initialisés pour vous par la personne qui vous a communiqué le lien. Cliquez sur le bouton pour découvrir le scénario cible et la comparaison.</div>
-							<div class="whoz-block-container">
-								<div class="whoz-block" style="background: #cfcfcf;">
-									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="nbDays"><span id="nbDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="nbConsultant"><span id="nbConsultantHint" class="hint"></span></div></label>
-									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="TJM"><span id="TJMHint" class="hint"></span></div>€</label>
-									<label class="whoz-label" for="name">CJM : <div class="input-block"><input class="input" type="number" id="CJM"><span id="CJMHint" class="hint"></span></div>€</label>
-								</div>
-								<div class="whoz-block">
-									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="ratioHires"><span id="ratioHiresHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="ratioLeavers"><span id="ratioLeaversHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="avgTaskDays"><span id="avgTaskDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="avgDaysFirstStaffing"><span id="avgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="taskDelay"><span id="taskDelayHint" class="hint"></span></div> jours</label>
-								</div>
-								<div class="whoz-block">
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioTaskRenewNum"><span id="ratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDenum"><span id="ratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="ratioTaskRenewDuration"><span id="ratioTaskRenewDurationHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioBeginDelayed"><span id="ratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="beginDelayed"><span id="beginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioEndBefore"><span id="ratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="endBefore"><span id="endBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="ratioPTNum"><span id="ratioPTNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="ratioPTDenum"><span id="ratioPTDenumHint" class="hint"></span></div> est en part-time à 50%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="ratioShadowStaffing"><span id="ratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="shadowStaffingDuration"><span id="shadowStaffingDurationHint" class="hint"></span></div> jours</label>
-								</div>
-							</div>
-							<div id="simulationSentButton" style="margin: auto;display: none;">
-								<button id="compareSent" class="whoz-main-button" onclick="launchCompareFrom()">Découvrer le scenario cible partagé</button>
-							</div>
-							<div style="margin: auto;display: flex;position: relative;right: 0;">
-							<div id="defaultSimulationButton" style="display: flex;">
-								<button id="simulation" class="whoz-main-button" onclick="saveSimulation1WithLoader()">Lancer la simulation</button>
-							</div>
-							</div>
-						</div>
-    				</div>
-    				<div class="tab">
-      					<input type="radio" name="css-tabs" id="tab-2" class="tab-switch" onClick="init('c',self?.simulation2?.variables || self?.simulation1?.variables)">
-      					<label for="tab-2" class="tab-label">Scénario Cible (C)</label>
-      					<div class="tab-content">
-							<div class="whoz-block-container">
-								<div class="whoz-block" style="background: #cfcfcf;">
-									<label class="whoz-label" for="name">Période de simulation : <div class="input-block"><input class="input" type="number" id="cnbDays"><span id="cnbDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Nombre de consultants staffables : <div class="input-block"><input class="input" type="number" id="cnbConsultant"><span id="cnbConsultantHint" class="hint"></span></div></label>
-									<label class="whoz-label" for="name">TJM : <div class="input-block"><input class="input" type="number" id="cTJM"><span id="cTJMHint" class="hint"></span></div>€</label>
-									<label class="whoz-label" for="name">CJM : <div class="input-block"><input class="input" type="number" id="cCJM"><span id="cCJMHint" class="hint"></span></div>€</label>
-								</div>
-								<div class="whoz-block">
-									<label class="whoz-label" for="name">Taux d'embauche sur la période : <div class="input-block"><input class="input" type="number" id="cratioHires"><span id="cratioHiresHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Taux de départ sur la période : <div class="input-block"><input class="input" type="number" id="cratioLeavers"><span id="cratioLeaversHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">Durée moyenne d'une mission : <div class="input-block"><input class="input" type="number" id="cavgTaskDays"><span id="cavgTaskDaysHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">1er staffing d'un nouvel embauché intervient après : <div class="input-block"><input class="input" type="number" id="cavgDaysFirstStaffing"><span id="cavgDaysFirstStaffingHint" class="hint"></span></div> jours</label>
-									<label class="whoz-label" for="name">Délai d'interco (entre 2 missions hors reconduction) : <div class="input-block"><input class="input" type="number" id="ctaskDelay"><span id="ctaskDelayHint" class="hint"></span></div> jours</label>
-								</div>
-								<div class="whoz-block">
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="cratioTaskRenewNum"><span id="cratioTaskRenewNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDenum"><span id="cratioTaskRenewDenumHint" class="hint"></span></div> est reconduite pour une durée de <div class="input-block"><input class="input" type="number" id="cratioTaskRenewDuration"><span id="cratioTaskRenewDurationHint" class="hint"></span></div>%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioBeginDelayed"><span id="cratioBeginDelayedHint" class="hint"></span></div> démarre <div class="input-block"><input class="input" type="number" id="cbeginDelayed"><span id="cbeginDelayedHint" class="hint"></span></div> jours de retard par rapport à la planification</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioEndBefore"><span id="cratioEndBeforeHint" class="hint"></span></div> se termine <div class="input-block"><input class="input" type="number" id="cendBefore"><span id="cendBeforeHint" class="hint"></span></div> jours avant la fin planifiée</label>
-									<label class="whoz-label" for="name"><div class="input-block"><input class="input" type="number" id="cratioPTNum"><span id="cratioPTNumHint" class="hint"></span></div> mission(s) sur <div class="input-block"><input class="input" type="number" id="cratioPTDenum"><span id="cratioPTDenumHint" class="hint"></span></div> est en part-time à 50%</label>
-									<label class="whoz-label" for="name">1 mission sur <div class="input-block"><input class="input" type="number" id="cratioShadowStaffing"><span id="cratioShadowStaffingHint" class="hint"></span></div> est sujette au shadow staffing pour <div class="input-block"><input class="input" type="number" id="cshadowStaffingDuration"><span id="cshadowStaffingDurationHint" class="hint"></span></div> jours</label>
-								</div>
-							</div>
-							<div id="defaultCompareButton" style="margin: auto;display: flex;">
-								<div>
-								<button id="optimFast" class="whoz-button" onclick="optimFast()">Scénario prudent 🎵 (C)</button>
-								<button id="optimHard" class="whoz-button" onclick="optimHard()">Scénario aggressif 💪 (C)</button>
-								</div>
-								<div>
-								<button id="compare" class="whoz-main-button" onclick="saveSimulation2WithLoader()">Lancer la simulation</button>
-								</div>
-							</div>
-	  					</div>
-    				</div>
-  				</div>
-				</div>
+tippy('#helpNewStaffing', {
+  content: "Manque d'anticipation des futures disponibilités. Conséquence : un délai d'inactivité entre les missions."
+})
 
-				<div style="display: block;margin-top: 20px;">
-					<h3 id="helpPlanDeCharge">La simulation du plan de charge des consultants ❔</h3>
-					<button id="heatmap" class="whoz-button" onclick="renderHeatmap()">Visualiser le plan de charge</button>
-					<div id="esnHeatmap"></div>
-				</div>
-			</div>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/d3.js"></script>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/crossfilter.js"></script>
-			<script type="text/javascript" src="https://dc-js.github.io/dc.js/js/dc.js"></script>
-			<script src="https://unpkg.com/@popperjs/core@2"></script>
-			<script src="https://unpkg.com/tippy.js@6"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-auth.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-analytics.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-firestore.js"></script>
-			<script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
-			<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.css" />
-			<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&display=block" rel="stylesheet"/>
-			<!-- MATERIAL DESIGN ICONS -->
-        	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>		
-		</div>
-	</body>
-	<script src="./app.js" type="text/javascript"></script>
-</html>
+tippy('#helpLeanStart', {
+  content: "Manque de fiabilité sur les démarrages de missions. Conséquence : un décalage des plannings avec des retards non productifs."
+})
+
+tippy('#helpLeanBack', {
+  content: "Manque de visibilité sur les fins et renouvellements de missions. Conséquence : un délai de prise en compte de la disponibilité des consultants."
+})
+
+tippy('#helpLeanPT', {
+  content: "Manque de précision dans la planification des missions à temps partiel. Conséquence : des plans de charge façon gruyère."
+})
+
+tippy('#helpShadowStaffing', {
+  content: "Manque de contrôle de la fraude. Conséquence : une inactivité cachée, révélée a posteriori."
+})
+
+tippy('#helpPlanDeCharge', {
+  content: "Matérialisation détaillée de l'occupation des consultants. Survolez les jours pour avoir leur explication."
+})
+
+tippy('#heatmap', {
+  content: "Votre simulation dépasse 300 consultants, si vous voulez tout de même visualiser ce détail, cela peut durer un certain temps (dépendant de la puissance de votre ordinateur)."
+})
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyAdJZlbzyA6ssJu5YyvftEupGIKlAQSPAI',
+  authDomain: 'simulator-299fa.firebaseapp.com',
+  databaseURL: 'https://simulator-299fa.firebaseio.com',
+  projectId: 'simulator-299fa',
+  storageBucket: 'simulator-299fa.appspot.com',
+  messagingSenderId: '966834241777',
+  appId: '1:966834241777:web:082d59532e859be085e950',
+  measurementId: 'G-NJ3L8JQKES'
+}
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig)
+
+var connected = true
+var user = firebase.auth().currentUser
+var name, email, photoUrl, uid, emailVerified
+var limitConsultantsToDraw=20
+var heatmapChart = new dc.HeatMap('#esnHeatmap')
+
+
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+
+// Initialize the FirebaseUI Widget using Firebase.
+var ui = new firebaseui.auth.AuthUI(firebase.auth())
+
+var actionCodeSettings = {
+  // URL you want to redirect back to. The domain (www.example.com) for this
+  // URL must be in the authorized domains list in the Firebase Console.
+  url: 'https://simulator.whoz.io/'
+}
+
+function loggued () {
+  document.getElementById('esn-main').style.display = 'block'
+  hideDescription()
+  connected = true
+  user = firebase.auth().currentUser
+
+  if (user != null) {
+    name = user.displayName
+    email = user.email
+    photoUrl = user.photoURL
+    emailVerified = user.emailVerified
+    uid = user.uid // The user's ID, unique to the Firebase project. Do NOT use
+    // this value to authenticate with your backend server, if
+    // you have one. Use User.getToken() instead.
+  }
+
+  db.collection('whoz' + dev)
+    .doc(email)
+    .collection('login')
+    .add({
+      email: email,
+      loginId,
+      loginDate
+    })
+
+  db.collection('events' + dev).add({
+    type: 'login',
+    email: email,
+    loginId,
+    loginDate
+  })
+
+  saveSimulation1(true)
+}
+
+var uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+      // User successfully signed in.
+      // Return type determines whether we continue the redirect automatically
+      // or whether we leave that to developer to handle.
+      loggued()
+
+      return false
+    },
+    uiShown: function () {
+      // The widget is rendered.
+      // Hide the loader.
+      document.getElementById('loader-test').style.display = 'none'
+    }
+  },
+  // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
+  signInFlow: 'popup',
+  signInSuccessUrl: '',
+  signInOptions: [
+    // Leave the lines as is for the providers you want to offer your users.
+    //firebase.auth.EmailAuthProvider.PROVIDER_ID,
+    {
+      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      signInMethod: firebase.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD
+    },
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID
+  ],
+  // Terms of service url.
+  tosUrl: '<your-tos-url>',
+  // Privacy policy url.
+  privacyPolicyUrl: '<your-privacy-policy-url>'
+}
+
+var dev = window.location.hostname === 'localhost' ? 'dev' : ''
+
+var variableTitleList = [
+  { name: 'nbDays', type: 'number', initialValue: 218, optim: false },
+  { name: 'nbConsultant', type: 'number', initialValue: 75, optim: false },
+  { name: 'TJM', type: 'number', initialValue: 550, optim: false },
+  { name: 'CJM', type: 'number', initialValue: 350, optim: false },
+  { name: 'ratioHires', type: 'percent', initialValue: 0.15, optim: false },
+  { name: 'ratioLeavers', type: 'percent', initialValue: 0.1, optim: false },
+  { name: 'avgTaskDays', type: 'number', initialValue: 100, optim: false },
+  { name: 'ratioTaskRenewNum', type: 'number', initialValue: 2, optim: false },
+  {
+    name: 'ratioTaskRenewDenum',
+    type: 'number',
+    initialValue: 3,
+    optim: false
+  },
+  {
+    name: 'ratioTaskRenewDuration',
+    type: 'percent',
+    initialValue: 0.5,
+    optim: false
+  },
+  { name: 'ratioPTNum', type: 'number', initialValue: 1, optim: false },
+  {
+    name: 'ratioPTDenum',
+    type: 'number',
+    initialValue: 30,
+    optim: true,
+    limit: 10000,
+    limitType: 'max'
+  },
+  {
+    name: 'avgDaysFirstStaffing',
+    type: 'number',
+    initialValue: 20,
+    optim: true,
+    limit: 5,
+    limitType: 'min'
+  },
+  {
+    name: 'taskDelay',
+    type: 'number',
+    initialValue: 30,
+    optim: true,
+    limit: 5,
+    limitType: 'min'
+  },
+  {
+    name: 'beginDelayed',
+    type: 'number',
+    initialValue: 7,
+    optim: true,
+    limit: 2,
+    limitType: 'min'
+  },
+  {
+    name: 'ratioBeginDelayed',
+    type: 'number',
+    initialValue: 9,
+    optim: true,
+    limit: 20,
+    limitType: 'max'
+  },
+  {
+    name: 'endBefore',
+    type: 'number',
+    initialValue: 10,
+    optim: true,
+    limit: 5,
+    limitType: 'min'
+  },
+  {
+    name: 'ratioEndBefore',
+    type: 'number',
+    initialValue: 19,
+    optim: true,
+    limit: 40,
+    limitType: 'max'
+  },
+  {
+    name: 'ratioShadowStaffing',
+    type: 'number',
+    initialValue: 30,
+    optim: true,
+    limit: 50,
+    limitType: 'max'
+  },
+  {
+    name: 'shadowStaffingDuration',
+    type: 'number',
+    initialValue: 20,
+    optim: true,
+    limit: 0,
+    limitType: 'min'
+  }
+]
+
+const queryString = window.location.search
+const urlParams = new URLSearchParams(queryString)
+var eventId = urlParams.get('eventId')
+
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // User is signed in.
+    console.log('loggued')
+    document.getElementById('loader-test').style.display = 'none'
+    loggued()
+  } else {
+    // User is signed out.
+    console.log('not loggued')
+    ui.start('#firebaseui-auth-container', uiConfig)
+  }
+})
+
+var defaultDatabase = firebase.database()
+var db = firebase.firestore()
+
+var loginId = Number(new Date())
+var loginDate = new Date()
+
+db.collection('view' + dev).add({
+  loginId,
+  loginDate
+})
+
+if (eventId) {
+  var docRef = db.collection('events' + dev).doc(eventId)
+  var doc
+
+  docRef
+    .get()
+    .then(function (doc) {
+      if (doc.exists) {
+        doc = doc.data()
+        //document.getElementById('sharedBy').textContent = 'Simulation partagée par '+doc.email;
+		document.getElementById('defaultSimulationButton').style.display = 'none'
+		document.getElementById('defaultResultButton').style.display = 'none'
+		document.getElementById('defaultCompareButton').style.display = 'none'
+    document.getElementById('simulationSentButton').style.display = 'block'
+    document.getElementById('sharedKPIsTip').style.display = 'block'
+    document.getElementById('sharedLeviersTip').style.display = 'block'
+		init('',doc.reference.variables)
+		saveSimulation1WithLoader(true)
+      } else {
+        // doc.data() will be undefined in this case
+        console.log('No such document!')
+      }
+    })
+    .catch(function (error) {
+      console.log('Error getting document:', error)
+    })
+} else {
+  document.getElementById('defaultKPIsTip').style.display = 'block'
+  document.getElementById('defaultLeviersTip').style.display = 'block'
+  init('')
+}
+
+function init (prefix, sentVariables) {
+  for (const listPosition in variableTitleList) {
+    var currentVariableName = variableTitleList[listPosition].name
+    var currentType = variableTitleList[listPosition].type
+    var i = sentVariables
+      ? sentVariables[currentVariableName]
+      : variableTitleList[listPosition].initialValue
+    document.getElementById(prefix + currentVariableName).value =
+      currentType === 'percent' ? Math.round(i * 100 * 100) / 100 : i
+  }
+}
+
+var nbDays,
+  nbConsultant,
+  TJM,
+  CJM,
+  ratioHires,
+  ratioLeavers,
+  avgDaysFirstStaffing,
+  avgTaskDays,
+  taskDelay
+var ratioTaskRenewNum,
+  ratioTaskRenewDenum,
+  ratioTaskRenewDuration,
+  ratioBeginDelayed,
+  beginDelayed,
+  ratioEndBefore,
+  endBefore,
+  ratioPTNum,
+  ratioPTDenum
+var ratioShadowStaffing, shadowStaffingDuration, nbUA, UAPrice, price
+
+function getVariables (prefix) {
+  nbConsultant = +document.getElementById(prefix + 'nbConsultant').value
+  nbDays = +document.getElementById(prefix + 'nbDays').value
+  TJM = +document.getElementById(prefix + 'TJM').value
+  ratioHires = +document.getElementById(prefix + 'ratioHires').value / 100
+  ratioLeavers = +document.getElementById(prefix + 'ratioLeavers').value / 100
+  avgTaskDays = +document.getElementById(prefix + 'avgTaskDays').value
+  avgDaysFirstStaffing = +document.getElementById(
+    prefix + 'avgDaysFirstStaffing'
+  ).value
+  taskDelay = +document.getElementById(prefix + 'taskDelay').value
+  CJM = +document.getElementById(prefix + 'CJM').value
+  ratioTaskRenewNum = +document.getElementById(prefix + 'ratioTaskRenewNum')
+    .value
+  ratioTaskRenewDenum = +document.getElementById(prefix + 'ratioTaskRenewDenum')
+    .value
+
+  ratioPTNum = +document.getElementById(prefix + 'ratioPTNum')
+    .value
+  ratioPTDenum = +document.getElementById(prefix + 'ratioPTDenum')
+    .value
+
+  ratioTaskRenewDuration =
+    +document.getElementById(prefix + 'ratioTaskRenewDuration').value / 100
+  ratioShadowStaffing = +document.getElementById(prefix + 'ratioShadowStaffing')
+    .value
+  shadowStaffingDuration = +document.getElementById(
+    prefix + 'shadowStaffingDuration'
+  ).value
+  beginDelayed = +document.getElementById(prefix + 'beginDelayed').value
+  ratioBeginDelayed = +document.getElementById(prefix + 'ratioBeginDelayed')
+    .value
+  endBefore = +document.getElementById(prefix + 'endBefore').value
+  ratioEndBefore = +document.getElementById(prefix + 'ratioEndBefore').value
+
+  nbUA = +nbConsultant / 10
+  UAPrice = 120 * 12 * (nbDays / 218)
+  price = nbUA * UAPrice
+
+  return {
+    nbConsultant,
+    nbDays,
+    TJM,
+    ratioHires,
+    ratioLeavers,
+    avgTaskDays,
+    avgDaysFirstStaffing,
+    taskDelay,
+    CJM,
+    ratioTaskRenewNum,
+    ratioTaskRenewDenum,
+    ratioPTNum,
+    ratioPTDenum,
+    ratioTaskRenewDuration,
+    beginDelayed,
+    ratioBeginDelayed,
+    endBefore,
+    ratioEndBefore,
+    ratioShadowStaffing,
+    shadowStaffingDuration,
+    nbUA,
+    UAPrice,
+    price
+  }
+}
+
+function calculateTaskDays (count) {
+  var tempTaskDays
+  if (count % 10 <= 1 && count % 10 <= 4) {
+    tempTaskDays = avgTaskDays
+  } else if (count % 10 == 5 || count % 10 == 7) {
+    tempTaskDays = Math.floor(avgTaskDays * 0.8)
+  } else if (count % 10 == 6 || count % 10 == 8) {
+    tempTaskDays = Math.floor(avgTaskDays * 1.2)
+  } else if (count % 10 == 9) {
+    tempTaskDays = Math.floor(avgTaskDays * 1.5)
+  } else {
+    tempTaskDays = Math.floor(avgTaskDays * 0.5)
+  }
+
+  if (count % ratioTaskRenewDenum > ratioTaskRenewNum - 1) {
+    tempCurrentTaskDuration = tempTaskDays
+  } else {
+    tempCurrentTaskDuration = Math.floor(
+      (1 + ratioTaskRenewDuration) * tempTaskDays
+    )
+  }
+
+  return tempCurrentTaskDuration
+}
+
+function renderHeatmap() {
+    showLoader();
+    document.getElementById('esnHeatmap').style.display = 'block'
+    document.getElementById('heatmap').style.display = 'none'    
+    setTimeout(function(){ 
+      heatmapChart.render()
+      hideLoader();
+    }, 1);
+}
+
+function simulate (prefix) {
+  const currentPrefix = prefix || ''
+
+  var variables = getVariables(currentPrefix)
+
+  var data = []
+
+  var nbHires = Math.floor(ratioHires * nbConsultant)
+  var nbLeavers = Math.floor(ratioLeavers * nbConsultant)
+
+  var nbDaysHires = Math.floor(nbDays / nbHires)
+  var nbDaysLeavers = Math.floor(nbDays / nbLeavers)
+
+  var totalConsultant = +nbConsultant + +nbHires
+
+  var previousTaskTotalCount = 0
+  var taskTotalCount = 1
+  var taskBeginOffset = 0
+  var taskWorkload = 0
+  var taskCount = 1
+  var taskBeginDelayedOffset = 0
+  var taskShadowDelayedOffset = 0
+
+  for (let consultant = 0; consultant < totalConsultant; consultant++) {
+    var previousConsultant, currentTaskDuration
+    nbHires--
+    var start = nbHires >= 0 ? nbDaysHires * nbHires : -1
+
+    var end = nbDays + 1
+    if (totalConsultant - consultant < nbLeavers) {
+      nbLeavers--
+      var end = nbLeavers > 0 ? nbDaysLeavers * nbLeavers : nbDays
+    }
+
+    if (previousTaskTotalCount !== taskTotalCount) {
+      currentTaskDuration = calculateTaskDays(taskTotalCount)
+      previousTaskTotalCount = taskTotalCount
+    }
+
+    taskWorkload = consultant % currentTaskDuration
+
+    if (taskWorkload <= beginDelayed) {
+      taskBeginDelayedOffset = taskWorkload
+    } else {
+      taskBeginDelayedOffset = beginDelayed
+    }
+
+    for (let days = 1; days <= nbDays; days++) {
+      var occupation, type, currentTaskDuration
+
+      if (previousTaskTotalCount !== taskTotalCount) {
+        currentTaskDuration = calculateTaskDays(taskTotalCount)
+        previousTaskTotalCount = taskTotalCount
+      }
+      if (days < start || days > end) {
+        occupation = 0
+        type = 'NOT WORKING'
+      } else {
+        if (
+          start >= 0 &&
+          days >= start &&
+          days - start < avgDaysFirstStaffing
+        ) {
+          occupation = 1
+          type = 'ON BOARDING'
+        } else {
+          if (
+            taskCount > 1 &&
+            taskBeginOffset < taskDelay &&
+            taskWorkload == 0
+          ) {
+            taskBeginOffset++
+            occupation = 1
+            type = 'DELAY BETWEEN TASKS'
+          } else {
+            if (
+              taskShadowDelayedOffset < shadowStaffingDuration &&
+              taskTotalCount % ratioShadowStaffing == 0
+            ) {
+              taskShadowDelayedOffset++
+              occupation = 1
+              type = 'SHADOW STAFFING'
+            } else if (
+              taskBeginDelayedOffset < beginDelayed &&
+              taskTotalCount % ratioBeginDelayed == 0
+            ) {
+              taskBeginDelayedOffset++
+              occupation = 1
+              type = 'START DELAYED'
+            } else {
+              if (
+                taskTotalCount % ratioEndBefore == 0 &&
+                currentTaskDuration - taskWorkload <= endBefore
+              ) {
+                occupation = 1
+                type = 'END BEFORE'
+                taskWorkload++
+              } else {
+                if(taskTotalCount % ratioPTDenum > ratioPTNum - 1) {
+                  occupation = 1
+                } else {
+                  occupation = 0.5
+                }
+                type = 'BILLABLE'
+                taskWorkload++
+              }
+            }
+          }
+        }
+      }
+
+      data.push({
+        date: days,
+        start: start,
+        end: end,
+        type: type,
+        consultant: consultant,
+        occupation: occupation,
+        text:
+          'Task count: ' +
+          taskTotalCount +
+          '\n' +
+          'Consultant task count' +
+          taskCount +
+          '\n' +
+          'Task workload: ' +
+          taskWorkload
+      })
+
+      if (taskWorkload === currentTaskDuration) {
+        taskTotalCount++
+        taskCount++
+        taskBeginOffset = 0
+        taskBeginDelayedOffset = 0
+        taskShadowDelayedOffset = 0
+        taskWorkload = 0
+      }
+    }
+    taskTotalCount++
+    taskBeginOffset = 0
+    taskBeginDelayedOffset = 0
+    taskShadowDelayedOffset = 0
+    taskWorkload = 0
+    taskCount = 1
+    previousConsultant = consultant
+  }
+
+
+  //.filter(d => d.consultant >= totalConsultant-100)
+  //const currentData = data;
+
+  var ndx = crossfilter(data),
+    heatmapDim = ndx.dimension(function (d) {
+      return [+d.date, d.consultant, d]
+    }),
+    heatmapGroup = heatmapDim.group().reduceSum(function (d) {
+      return +d.occupation
+    })
+
+  var width = 13 * nbDays
+  var height = 13 * totalConsultant
+
+  heatmapChart
+    .width(width)
+    .height(height)
+    .transitionDuration(0)
+    .dimension(heatmapDim)
+    .group(heatmapGroup)
+    .xBorderRadius(0)
+    .yBorderRadius(0)
+    .keyAccessor(function (d) {
+      return +d.key[0]
+    })
+    .valueAccessor(function (d) {
+      return +d.key[1]
+    })
+    .rowsLabel(function (d) {
+      //return 'Consultant ' + (totalConsultant - d)
+      return ''
+    })
+    .colsLabel(function (d) {
+      return d == 1 || d == nbDays || d % 10 === 0 ? d : ''
+    })
+    .title(function (d) {
+      return (
+        'Date:   ' +
+        d.key[0] +
+        '\n' +
+        'Consultant:  ' +
+        d.key[1] +
+        '\n' +
+        'Type : ' +
+        d.key[2].type +
+        '\n' +
+        'occupation: ' +
+        d.value +
+        '\n' +
+        'Task : ' +
+        d.key[2].text
+      )
+    })
+
+    .colorAccessor(d => d.key[2].type === 'BILLABLE' && d.value < 1 && 'PART TIME' || d.key[2].type)
+    .colors(
+      d3
+        .scaleOrdinal()
+        .domain([
+          'NOT WORKING',
+          'ON BOARDING',
+          'DELAY BETWEEN TASKS',
+          'SHADOW STAFFING',
+          'START DELAYED',
+          'END BEFORE',
+          'PART TIME',
+          'BILLABLE',
+        ])
+        .range([
+          '#cfcfcf',
+          '#9c6102',
+          '#FFBE3E',
+          '#3c3c3c',
+          '#ff7600',
+          '#ee0700',
+          '#6285c9',
+          '#0048B5'
+        ])
+    )
+
+  heatmapChart.margins({ top: 20, right: 0, bottom: 20, left: 0 })
+
+  heatmapChart.on('renderlet', function (chart) {
+    var rects = chart.selectAll('rect')
+
+    var yMin = 10000
+    var xMin = 10000
+    for (let rect of rects) {
+      if (rect.y.baseVal.value < yMin) {
+        yMin = rect.y.baseVal.value
+      }
+      if (rect.x.baseVal.value < xMin) {
+        xMin = rect.x.baseVal.value
+      }
+    }
+
+    chart.selectAll('g.cols.axis > text').attr('y', yMin - 14)
+    chart.select('g.heatmap').attr('transform', 'translate(0, 0)')
+    chart
+      .select('svg')
+      .attr('width', width + 100)
+      .attr('height', height + 100)
+  })
+
+  if(totalConsultant<=300) {
+    heatmapChart.render()
+    document.getElementById('heatmap').style.display = 'none'
+  } else {
+    document.getElementById('heatmap').style.display = 'initial'
+    document.getElementById('esnHeatmap').style.display = 'none'
+  }
+
+  kpiDim = ndx.dimension(function (d) {
+    return 1
+  })
+
+  var groupAllKPI = kpiDim.groupAll().reduce(
+    (p, v) => {
+      p.numTACE += v.type === 'BILLABLE' && v.occupation || 0
+      p.denumTACE += v.type !== 'NOT WORKING' && 1 || 0
+      p.interco += v.type === 'BILLABLE' && v.occupation === 1 ? 0 : v.occupation
+      p.missionDelay +=
+        v.type === 'DELAY BETWEEN TASKS' && v.occupation || 0
+      p.onBoarding += v.type === 'ON BOARDING' && v.occupation || 0
+      p.shadowStaffing +=
+        v.type === 'SHADOW STAFFING' && v.occupation || 0
+      p.leanStart += v.type === 'START DELAYED' && v.occupation || 0
+      p.leanBack += v.type === 'END BEFORE' && v.occupation || 0
+      p.leanPT += v.type === 'BILLABLE' && 1 - v.occupation || 0
+      p.TACE = p.denumTACE > 0 ? p.numTACE / p.denumTACE : 0
+      p.CA = p.numTACE * TJM
+      p.intercoCA = p.interco * TJM
+      p.intercoCost = p.interco * CJM
+      p.missionDelayCA = p.missionDelay * TJM
+      p.missionDelayCost = p.missionDelay * CJM
+      p.onBoardingCA = p.onBoarding * TJM
+      p.onBoardingCost = p.onBoarding * CJM
+      p.shadowStaffingCA = p.shadowStaffing * TJM
+      p.shadowStaffingCost = p.shadowStaffing * CJM
+      p.leanStartCA = p.leanStart * TJM
+      p.leanStartCost = p.leanStart * CJM
+      p.leanBackCA = p.leanBack * TJM
+      p.leanBackCost = p.leanBack * CJM
+      p.leanPTCA = p.leanPT * TJM
+      p.leanPTCost = p.leanPT * CJM
+      p.totalCost = p.denumTACE * CJM
+      p.totalTaskCount = taskTotalCount
+      p.initialConsultant = nbConsultant
+      p.hires = Math.floor(ratioHires * nbConsultant)
+      p.leavers = Math.floor(ratioLeavers * nbConsultant)
+
+      return p
+    },
+    (p, v) => {
+      p.numTACE -= v.type === 'BILLABLE' && v.occupation || 0
+      p.denumTACE -= v.type !== 'NOT WORKING' && 1 || 0
+      p.interco -= v.type === 'BILLABLE' && v.occupation === 1 ? 0 : v.occupation
+      p.missionDelay -=
+        v.type === 'DELAY BETWEEN TASKS' && v.occupation || 0
+      p.onBoarding -= v.type === 'ON BOARDING' && v.occupation || 0
+      p.shadowStaffing -=
+        v.type === 'SHADOW STAFFING' && v.occupation || 0
+      p.leanStart -= v.type === 'START DELAYED' && v.occupation || 0
+      p.leanBack -= v.type === 'END BEFORE' && v.occupation || 0
+      p.leanPT -= v.type === 'BILLABLE' && 1 - v.occupation || 0
+      p.TACE = p.denumTACE > 0 ? p.numTACE / p.denumTACE : 0
+      p.CA = p.numTACE * TJM
+      p.intercoCA = p.interco * TJM
+      p.intercoCost = p.interco * CJM
+      p.missionDelayCA = p.missionDelay * TJM
+      p.missionDelayCost = p.missionDelay * CJM
+      p.onBoardingCA = p.onBoarding * TJM
+      p.onBoardingCost = p.onBoarding * CJM
+      p.shadowStaffingCA = p.shadowStaffing * TJM
+      p.shadowStaffingCost = p.shadowStaffing * CJM
+      p.leanStartCA = p.leanStart * TJM
+      p.leanStartCost = p.leanStart * CJM
+      p.leanBackCA = p.leanBack * TJM
+      p.leanBackCost = p.leanBack * CJM
+      p.leanPTCA = p.leanPT * TJM
+      p.leanPTCost = p.leanPT * CJM
+      p.totalCost = p.denumTACE * CJM
+      p.totalTaskCount = taskTotalCount
+      p.initialConsultant = nbConsultant
+      p.hires = Math.floor(ratioHires * nbConsultant)
+      p.leavers = Math.floor(ratioLeavers * nbConsultant)
+
+      return p
+    },
+    () => {
+      return {
+        numTACE: 0,
+        denumTACE: 0,
+        TACE: 0,
+        interco: 0,
+        onBoarding: 0,
+        leanStart: 0,
+        leanBack: 0,
+        leanPT: 0,
+        CA: 0,
+        intercoCA: 0,
+        intercoCost: 0,
+        missionDelay: 0,
+        missionDelayCA: 0,
+        missionDelayCost: 0,
+        onBoardingCA: 0,
+        onBoardingCost: 0,
+        leanStartCA: 0,
+        leanStartCost: 0,
+        leanBackCA: 0,
+        leanBackCost: 0,
+        leanPTCA: 0,
+        leanPTCost: 0,
+        shadowStaffing: 0,
+        shadowStaffingCA: 0,
+        shadowStaffingCost: 0,
+        totalCost: 0,
+        totalTaskCount: 0,
+        initialConsultant: 0,
+        hires: 0,
+        leavers: 0
+      }
+    }
+  )
+
+  var numberTACE = new dc.NumberDisplay('#esnNumberTACE')
+    .formatNumber(d3.format('.2%'))
+    .valueAccessor(d => d.TACE)
+    .group(groupAllKPI)
+    .render()
+
+  var numberBillable = new dc.NumberDisplay('#esnNumberBillable')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.numTACE)
+    .group(groupAllKPI)
+    .render()
+
+  var numberCA = new dc.NumberDisplay('#esnCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.CA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberCA = new dc.NumberDisplay('#esnCAbyConsultant')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.CA / (d.initialConsultant + d.hires))
+    .group(groupAllKPI)
+    .render()
+
+  var numberInterco = new dc.NumberDisplay('#esnInterco')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.interco)
+    .group(groupAllKPI)
+    .render()
+
+  var numberIntercoCA = new dc.NumberDisplay('#esnIntercoCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.intercoCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberIntercoCost = new dc.NumberDisplay('#esnIntercoCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.intercoCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberMissionDelay = new dc.NumberDisplay('#esnMissionDelay')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.missionDelay)
+    .group(groupAllKPI)
+    .render()
+
+  var numberMissionDelayCA = new dc.NumberDisplay('#esnMissionDelayCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.missionDelayCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberMissionDelayCost = new dc.NumberDisplay('#esnMissionDelayCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.missionDelayCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberOnBoarding = new dc.NumberDisplay('#esnOnBoarding')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.onBoarding)
+    .group(groupAllKPI)
+    .render()
+
+  var numberOnBoardingCA = new dc.NumberDisplay('#esnOnBoardingCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.onBoardingCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberOnBoardingCost = new dc.NumberDisplay('#esnOnBoardingCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.onBoardingCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberShadowStaffing = new dc.NumberDisplay('#esnShadowStaffing')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.shadowStaffing)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanStartCA = new dc.NumberDisplay('#esnShadowStaffingCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.shadowStaffingCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanStartCost = new dc.NumberDisplay('#esnShadowStaffingCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.shadowStaffingCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanStart = new dc.NumberDisplay('#esnLeanStart')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.leanStart)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanStartCA = new dc.NumberDisplay('#esnLeanStartCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanStartCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanStartCost = new dc.NumberDisplay('#esnLeanStartCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanStartCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanBack = new dc.NumberDisplay('#esnLeanBack')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.leanBack)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanBackCA = new dc.NumberDisplay('#esnLeanBackCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanBackCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanBackCost = new dc.NumberDisplay('#esnLeanBackCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanBackCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanPT = new dc.NumberDisplay('#esnLeanPT')
+    .formatNumber(d3.format(',.0f'))
+    .valueAccessor(d => d.leanPT)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanPTCA = new dc.NumberDisplay('#esnLeanPTCA')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanPTCA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanPTCost = new dc.NumberDisplay('#esnLeanPTCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.leanPTCost)
+    .group(groupAllKPI)
+    .render()
+
+  var whozCost = new dc.NumberDisplay('#esnWhozCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => price)
+    .group(groupAllKPI)
+    .render()
+
+  var numberLeanBackCost = new dc.NumberDisplay('#esnTotalCost')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.totalCost)
+    .group(groupAllKPI)
+    .render()
+
+  var numberGlobalMargin = new dc.NumberDisplay('#esnGlobalMargin')
+    .formatNumber(d3.format('.2%'))
+    .valueAccessor(d => (d.CA - d.totalCost) / d.CA)
+    .group(groupAllKPI)
+    .render()
+
+  var numberConsultantCount = new dc.NumberDisplay('#esnConsultantCount')
+    .formatNumber(d3.format('.0f'))
+    .valueAccessor(d => d.initialConsultant - d.leavers + d.hires)
+    .group(groupAllKPI)
+    .render()
+
+  var numberMissionCount = new dc.NumberDisplay('#esnMissionCount')
+    .formatNumber(d3.format('.3s'))
+    .valueAccessor(d => d.totalTaskCount)
+    .group(groupAllKPI)
+    .render()
+
+  return { result: groupAllKPI.value(), variables }
+}
+var simulation1
+var simulation2
+
+function showLoader() {
+  document.getElementById("esn-loader").classList.add("is-active");
+}
+
+function hideLoader() {
+  document.getElementById("esn-loader").classList.remove("is-active");
+}
+
+function saveSimulation1WithLoader() {
+  showLoader();
+  setTimeout(function(){ 
+    saveSimulation1();
+    hideLoader();
+  }, 1);
+}
+
+function saveSimulation2WithLoader(fromAction) {
+  showLoader();
+  setTimeout(function(){ 
+    saveSimulation2(fromAction);
+    hideLoader();
+  }, 1);
+}
+
+function saveSimulation1 (initial) {
+  if(!initial) {
+    document.getElementById('defaultKPIsTip').style.display = 'none'
+    document.getElementById('defaultLeviersTip').style.display = 'none'
+  }
+
+  if (connected) {
+    simulation1 = simulate()
+    document.getElementById('simulationType').textContent =
+      'Les KPIs du scénario de Référence (R)'
+    if (simulation1 && simulation2) {
+      compare('simulation1')
+    } else {
+      db.collection('whoz' + dev)
+        .doc(user?.email || dev)
+        .collection('simulate')
+        .add({
+          email: user?.email || dev,
+          loginId,
+          loginDate,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reference: simulation1
+        })
+
+      db.collection('events' + dev).add({
+        type: 'simulation1',
+        email: user?.email || dev,
+        loginId,
+        loginDate,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        reference: simulation1
+      })
+    }
+  }
+  hideLoader();
+}
+
+function optim (factor, fromAction) {
+  for (const listPosition in variableTitleList) {
+    var optim = variableTitleList[listPosition].optim
+    var currentVariableName = variableTitleList[listPosition].name
+    var limitType = variableTitleList[listPosition].limitType
+    var limit = variableTitleList[listPosition].limit
+    var currentType = variableTitleList[listPosition].type
+    var r = simulation1.variables[currentVariableName]
+    if (optim === true) {
+      if (limitType === 'min') {
+        var c = Math.max(Math.min(r * (1 - factor), r), limit)
+        document.getElementById('c' + currentVariableName).value = Math.round(
+          currentType === 'percent' ? c * 100 : c
+        )
+      } else {
+        var c = Math.min(Math.max(r * (1 + factor), r), limit)
+        document.getElementById('c' + currentVariableName).value = Math.round(
+          currentType === 'percent' ? c * 100 : c
+        )
+      }
+    } else {
+      document.getElementById('c' + currentVariableName).value =
+        currentType === 'percent' ? r * 100 : r
+    }
+  }
+  saveSimulation2WithLoader(fromAction)
+}
+
+function optimFast () {
+  optim(0.3, 'fast')
+}
+
+function optimHard () {
+  optim(0.5, 'strong')
+}
+
+function saveSimulation2 (fromAction) {
+  document.getElementById('sharedKPIsTip').style.display = 'none'
+  document.getElementById('sharedLeviersTip').style.display = 'none'
+  if(fromAction != 'simulationSentButton') {
+	  document.getElementById('defaultResultButton').style.display = 'block'
+	}
+  if (connected) {
+    simulation2 = simulate('c')
+    document.getElementById('simulationType').textContent =
+      'Les KPIs du scénario Cible (C)'
+    if (simulation1 && simulation2) {
+      compare(fromAction || 'compare')
+    }
+  }
+}
+
+function compare (fromAction) {
+  console.log(simulation1, simulation2)
+
+  for (const listPosition in variableTitleList) {
+    var currentVariableName = variableTitleList[listPosition].name
+    var r = simulation1.variables[currentVariableName]
+    var t = simulation2.variables[currentVariableName]
+    if (r != t) {
+      document.getElementById(currentVariableName + 'Hint').textContent =
+        ' C=' + t
+      document.getElementById('c' + currentVariableName + 'Hint').textContent =
+        'R=' + r
+    } else {
+      document.getElementById(currentVariableName + 'Hint').textContent = ''
+      document.getElementById('c' + currentVariableName + 'Hint').textContent =
+        ''
+    }
+  }
+
+  const div = document.querySelector('.resultCompare')
+  div.classList.replace('hideCompare', 'showCompare')
+
+  var ndx2 = crossfilter({ id: 1 }),
+    runDim2 = ndx2.dimension(function (d) {
+      return d.id
+    }),
+    runGroup2 = runDim2.groupAll().reduceCount()
+
+  var numberCA = new dc.NumberDisplay('#compareCA')
+    .formatNumber(d3.format('+.3s'))
+    .valueAccessor(d => simulation2.result.CA - simulation1.result.CA)
+    .group(runGroup2)
+    .render()
+
+  var numberMission = new dc.NumberDisplay('#compareMission')
+    .formatNumber(d3.format('+.0f'))
+    .valueAccessor(
+      d => simulation2.result.totalTaskCount - simulation1.result.totalTaskCount
+    )
+    .group(runGroup2)
+    .render()
+
+  var numberMargin = new dc.NumberDisplay('#compareMargin')
+    .formatNumber(d3.format('+.2f'))
+    .valueAccessor(
+      d =>
+        100 *
+        ((simulation2.result.CA - simulation2.result.totalCost) /
+          simulation2.result.CA -
+          (simulation1.result.CA - simulation1.result.totalCost) /
+            simulation1.result.CA)
+    )
+    .group(runGroup2)
+    .render()
+
+  var numberCost = new dc.NumberDisplay('#compareIntercoCost')
+    .formatNumber(d3.format('+.3s'))
+    .valueAccessor(
+      d => simulation2.result.intercoCost - simulation1.result.intercoCost
+    )
+    .group(runGroup2)
+    .render()
+
+    var numberBillable = new dc.NumberDisplay('#compareBillable')
+    .formatNumber(d3.format('+.3s'))
+    .valueAccessor(
+      d => simulation2.result.numTACE - simulation1.result.numTACE
+    )
+    .group(runGroup2)
+    .render()
+
+    var numberCAByConsultant = new dc.NumberDisplay('#compareCAByConsultant')
+    .formatNumber(d3.format('+.3s'))
+    .valueAccessor(
+      d => simulation2.result.CA / (simulation2.result.initialConsultant + simulation2.result.hires) -
+      simulation1.result.CA / (simulation1.result.initialConsultant + simulation1.result.hires)
+    )
+    .group(runGroup2)
+    .render()
+
+    var numberMargin = new dc.NumberDisplay('#compareTACE')
+    .formatNumber(d3.format('+.2f'))
+    .valueAccessor(
+      d =>
+        100 *
+        (simulation2.result.numTACE /simulation2.result.denumTACE -
+          simulation1.result.numTACE / simulation1.result.denumTACE
+    ))
+    .group(runGroup2)
+    .render()
+
+    var numberROI = new dc.NumberDisplay('#esnWhozROI')
+    .formatNumber(d3.format('+.0s'))
+    .valueAccessor(d => (simulation2.result.CA - simulation1.result.CA) >0 ? Math.ceil(simulation2.variables.price/((simulation2.result.CA - simulation1.result.CA)/simulation2.variables.nbDays)/18) : 0)
+    .group(runGroup2)
+    .render()
+
+  db.collection('whoz' + dev)
+    .doc(user?.email || dev)
+    .collection('compare')
+    .add({
+      email: user?.email || dev,
+      loginId,
+      loginDate,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      reference: simulation1,
+      target: simulation2,
+      fromAction: fromAction
+    })
+
+  db.collection('events' + dev)
+    .add({
+      type: 'compare',
+      fromAction: fromAction,
+      email: user?.email || dev,
+      loginId,
+      loginDate,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      reference: simulation1,
+      target: simulation2
+    })
+    .then(docRef => {
+      if (fromAction != 'simulationSentButton') {
+        eventId = docRef.id
+        url = window.location.href + '?eventId=' + eventId
+        document.getElementById('share').style.display = 'flex'
+        document.getElementById('urlToShare').innerHTML =
+          window.location.href.split('?')[0] + '?eventId=' + eventId
+      }
+    })
+}
+
+function launchCompareFrom () {
+  docRef.get().then(function (doc) {
+    if (doc.exists) {
+	  doc = doc.data()
+	  document.getElementById('tab-2').click()
+      init('c',doc.target.variables)
+	  document.getElementById('defaultSimulationButton').style.display = 'flex'
+	  document.getElementById('defaultCompareButton').style.display = 'flex'
+      document.getElementById('simulationSentButton').style.display = 'none'
+      saveSimulation2WithLoader('simulationSentButton')
+    }
+  })
+}
+
+function copyToClipboard (elementId) {
+  // Create an auxiliary hidden input
+  var aux = document.createElement('input')
+  // Get the text from the element passed into the input
+  aux.setAttribute('value', document.getElementById(elementId).innerHTML)
+  // Append the aux input to the body
+  document.body.appendChild(aux)
+  // Highlight the content
+  aux.select()
+  // Execute the copy command
+  document.execCommand('copy')
+  // Remove the input from the body
+  document.body.removeChild(aux)
+}
+
+function hideDescription () {
+  document.getElementById('whozup-description').style.display = 'none'
+  document.getElementById('showDescription').style.display = 'block'
+  document.getElementById('hideDescription').style.display = 'none'
+}
+
+function showDescription () {
+  document.getElementById('whozup-description').style.display = 'block'
+  document.getElementById('showDescription').style.display = 'none'
+  document.getElementById('hideDescription').style.display = 'block'
+}
