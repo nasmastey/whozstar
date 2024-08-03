@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>3D projection - NEW</title>
+
+        <!-- Babylon.js -->
+        <!--<script src="https://preview.babylonjs.com/babylon.js"></script>-->
+		<!--<script src="https://cdn.babylonjs.com/babylon.js"></script>-->
+        <script src="babylon.js"></script>
+        
+		<!--<script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>-->
+        <!--<script src="https://preview.babylonjs.com/cannon.js"></script>-->
+		<!--<script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>-->
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+			
+			#searchInput {
+				position: absolute;
+				display: block;
+			}
+			
+			#searchButton {
+				position: absolute;
+				display: block;
+				left: 200px;
+			}
+        </style>
+    </head>
+<body>
+    <script type="module" src="scatter_v5.js"></script>
+	<input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
+	<datalist id="particlesList"></datalist>
+	<button id="searchButton">Search</button>
+	<canvas id="renderCanvas" touch-action="none"></canvas>
+</body>
+</html>
