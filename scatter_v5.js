@@ -1,6 +1,17 @@
 //http-server -c-1 to launch server
 import data_0 from './PSO_0.json' with  {type: 'json'};
 
+
+// Function to toggle the visibility of an element
+export function toggleElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element.style.display === "none" || element.style.display === "") {
+        element.style.display = "block";
+    } else {
+        element.style.display = "none";
+    }
+}
+
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true);
 
@@ -66,20 +77,41 @@ const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', image
 
 var font = "bold 44px monospace";
 
-
 const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
 
 const labelSprites = [];
+const originalPositions = [];
 
 scatter.addPoints(data.length, function (particle) {
-    const point = data[particle.idx];
+        const point = data[particle.idx];
     particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
-	const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+    originalPositions.push(particle.position.clone());
+
+    const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
     sprite.position = particle.position;
-    sprite.size = 0.7
-	sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);	
+    sprite.size = 0.7;
+    sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
+
+    labelSprites.push(sprite);	
 });
 
+let time = 0;
+
+// Update sprite positions to add small movements
+function updateSpritePositions() {
+    time += 0.02;
+    labelSprites.forEach((sprite, idx) => {
+        const originalPosition = originalPositions[idx];
+        sprite.position.x = originalPosition.x + 0.2 * Math.sin(time + idx);
+        sprite.position.y = originalPosition.y + 0.2 * Math.cos(time + idx);
+        sprite.position.z = originalPosition.z + 0.2 * Math.sin(time + idx);
+    });
+}
+
+// Use the onBeforeRenderObservable to update the positions before each frame is rendered
+scene.onBeforeRenderObservable.add(() => {
+    updateSpritePositions();
+});
 
 scene.onAfterRenderObservable.add(() => {
     var names = [];
@@ -219,13 +251,60 @@ function moveCameraToSprite() {
         scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, 100, false);
 		
 		blinkSprite(targetSprite);
+		
+		        // Find the nearest particles
+        let distances = sprites.map(sprite => {
+            return {
+                name: sprite.name,
+                distance: BABYLON.Vector3.Distance(targetSprite.position, sprite.position)
+            };
+        });
+        distances.sort((a, b) => a.distance - b.distance);
+
+        // Get top 20 nearest particles
+        let nearestParticles = distances.slice(1, 21);
+
+        // Update the nearest list
+        const nearestList = document.getElementById('nearestList');
+        nearestList.innerHTML = '';
+        nearestParticles.forEach(particle => {
+            let listItem = document.createElement('li');
+            listItem.className = 'nearest-item';
+            listItem.textContent = `${particle.name} (${particle.distance.toFixed(2)})`;
+            nearestList.appendChild(listItem);
+        });
+		
     } else {
         console.log("Sprite not found: " + spriteName);
     }
 }
 
+// Function to create legend
+function createLegend(data) {
+    const legendContainer = document.getElementById('legend');
+    const uniqueTypes = [...new Set(data.map(d => d.subType))];
+
+    uniqueTypes.forEach(type => {
+        const color = `rgb(${getColor(type).r * 255}, ${getColor(type).g * 255}, ${getColor(type).b * 255})`;
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = color;
+
+        const label = document.createElement('span');
+        label.textContent = type;
+
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendContainer.appendChild(legendItem);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function() {
 	
+	createLegend(data);
 	
 	// Assuming particleNames is filled as shown above
     const dataList = document.getElementById('particlesList');
@@ -241,6 +320,27 @@ document.addEventListener("DOMContentLoaded", function() {
         searchButton.addEventListener('click', function(event) {
             event.preventDefault();  // This prevents any default form submitting
             moveCameraToSprite();
+        });
+    }
+	
+	const toggleSearchButton = document.querySelector(".toggleButton[data-target='searchContainer']");
+    if (toggleSearchButton) {
+        toggleSearchButton.addEventListener('click', function() {
+            toggleElement('searchContainer');
+        });
+    }
+
+    const toggleLegendButton = document.querySelector(".toggleButton[data-target='legend']");
+    if (toggleLegendButton) {
+        toggleLegendButton.addEventListener('click', function() {
+            toggleElement('legend');
+        });
+    }
+
+    const toggleNearestButton = document.querySelector(".toggleButton[data-target='nearestContainer']");
+    if (toggleNearestButton) {
+        toggleNearestButton.addEventListener('click', function() {
+            toggleElement('nearestContainer');
         });
     }
 });
