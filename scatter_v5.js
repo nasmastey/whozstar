@@ -244,7 +244,7 @@ scene.onAfterRenderObservable.add(() => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
             const font_size = 16
             const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size * 100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
-            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
+            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Times New Roman", "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
