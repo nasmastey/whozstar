@@ -323,6 +323,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 	
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();  // This prevents any default form submitting
+                moveCameraToSprite();
+            }
+        });
+
+        searchInput.addEventListener('change', function(event) {
+            moveCameraToSprite();
+        });
+    }
+	
 	const toggleSearchButton = document.querySelector(".toggleButton[data-target='searchContainer']");
     if (toggleSearchButton) {
         toggleSearchButton.addEventListener('click', function() {
