@@ -258,10 +258,6 @@ function renderLoop() {
 
 engine.runRenderLoop(renderLoop);
 
-// Resize the engine on window resize
-    window.addEventListener('resize', function () {
-        engine.resize();
-    });
 
 function blinkSprite(sprite) {
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
