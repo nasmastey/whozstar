@@ -1,8 +1,4 @@
 //http-server -c-1 to launch server
-import data_0 from './PSO_0.json'
-with {
-    type: 'json'
-};
 
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true);
@@ -214,29 +210,32 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
-document.getElementById('loadFileButton').addEventListener('click', () => {
+document.getElementById('loadFileButton').addEventListener('click', async () => {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
-    
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const newdata = JSON.parse(event.target.result);
-                main(newdata,20);
-				document.getElementById('fileInputContainer').style.display = 'none';
-  
-				//updateScatterData(newdata);
-            } catch (error) {
-                alert('An error occurred while parsing the file.');
-                console.error(error);
-            }
-        };
 
-        reader.readAsText(file);
+    if (file) {
+        try {
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const newdata = JSON.parse(event.target.result);
+                main(newdata, 20);
+                document.getElementById('fileInputContainer').style.display = 'none';
+            };
+            reader.readAsText(file);
+        } catch (error) {
+            alert('An error occurred while parsing the file.');
+            console.error(error);
+        }
     } else {
-		main(data_0,1);
-		document.getElementById('fileInputContainer').style.display = 'none';
+        try {
+            const response = await fetch('./PSO_0.json');
+            const data = await response.json();
+            main(data, 1);
+            document.getElementById('fileInputContainer').style.display = 'none';
+        } catch (error) {
+            console.error("Failed to load JSON:", error);
+        }
     }
 });
 
@@ -335,14 +334,16 @@ function updateSpritePositions() {
     
 	labelSprites.forEach((sprite, idx) => {
 		const distance = BABYLON.Vector3.Distance(camera.position, sprite.position);
-		const spriteDirection = sprite.position.subtract(camera.position).normalize();
-		const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
-
-		if (distance < 150 && angle < fov) {
-        const originalPosition = originalPositions[idx];
-        sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
-        sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
-        sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+		
+		if (distance < 150) {
+			const spriteDirection = sprite.position.subtract(camera.position).normalize();
+			const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
+			if( angle < fov) {
+				const originalPosition = originalPositions[idx];
+				sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
+				sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
+				sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+			}
 		}
     });
 }
@@ -408,7 +409,7 @@ function moveCameraToSprite(spriteName) {
         });
         distances.sort((a, b) => a.distance - b.distance);
 
-        // Get top 20 nearest particles
+        // Get top 100 nearest particles
         let nearestParticles = distances.slice(1, 101);
 
         // Update the nearest list
@@ -417,7 +418,7 @@ function moveCameraToSprite(spriteName) {
 			let i=0
 			
 		let listItem = document.createElement('li');
-			listItem.className = 'nearest-item';
+			listItem.className = 'nearest-item first-item';
 			listItem.textContent = `${spriteName}`;
 		
 		nearestList.appendChild(listItem);
@@ -445,6 +446,11 @@ function createLegend(data) {
     const legendContainer = document.getElementById('legend');
     legendContainer.innerHTML = '';
 
+	const totalLinesElement = document.createElement('div');
+	totalLinesElement.className = 'legend-total';
+    totalLinesElement.textContent = `Total Lines: ${data.length}`;
+    legendContainer.appendChild(totalLinesElement);
+	
     uniqueTypes.sort().forEach(type => {
         const color = `rgb(${getColor(type).r * 255}, ${getColor(type).g * 255}, ${getColor(type).b * 255})`;
         const legendItem = document.createElement('div');
