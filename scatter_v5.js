@@ -1,7 +1,11 @@
 //http-server -c-1 to launch server
 
 const canvas = document.getElementById('renderCanvas');
-const engine = new BABYLON.Engine(canvas, true);
+const engine = new BABYLON.Engine(canvas, true, {
+    preserveDrawingBuffer: true,
+    stencil: true,
+    disableWebGL2Support: false, // Assurer l'utilisation de WebGL 2.0 si disponible
+});
 
 const scene = new BABYLON.Scene(engine);
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
