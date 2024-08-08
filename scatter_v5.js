@@ -4,19 +4,6 @@ with {
     type: 'json'
 };
 
-
-// Function to toggle the visibility of an element
-export function toggleElement(elementId) {
-    const element = document.getElementById(elementId);
-	
-	console.log(element.style.display)
-    if (element.style.display === "none") {
-        element.style.display = "block";
-    } else {
-        element.style.display = "none";
-    }
-}
-
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true);
 
@@ -117,16 +104,6 @@ camera.speed = 0.9;
 camera.angularSpeed = 0.05;
 camera.angle = Math.PI / 2;
 camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
-camera.inputs.addGamepad();
-
-var cone = BABYLON.MeshBuilder.CreateCylinder("dummyCamera", {
-    diameterTop: 0.01,
-    diameterBottom: 0.2,
-    height: 0.2
-}, scene);
-cone.parent = camera;
-cone.rotation.x = Math.PI / 2;
-
 
 const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
 light.intensity = 0.7;
@@ -146,8 +123,9 @@ const imageUrl = 'bubble.png';
 //const imageUrl = 'star.png';
 
 const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 3000, scene);
+labelSpriteManager.isPickable = true;
 
-var font = "bold 44px monospace";
+var font = "Calibri 16px monospace";
 
 const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
 
@@ -160,14 +138,16 @@ scatter.addPoints(data.length, function(particle) {
     originalPositions.push(particle.position.clone());
 
     const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+	sprite.isPickable = true;
     sprite.position = particle.position;
     sprite.size = 0.7;
     sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
 	sprite.metadata = { subType: point.subType };
     sprite.isVisible = true; // Ensure the sprite is initially visible
-
+	
     labelSprites.push(sprite);
 });
+
 
 let time = 0;
 
@@ -204,7 +184,7 @@ scene.onAfterRenderObservable.add(() => {
 
         const distance = BABYLON.Vector3.Distance(camera.position, s.position);
 		
-        if (distance < 10 && s.isVisible) {
+        if (distance < 15 && s.isVisible) {
             names.push({
                 "name": s.name + '_layer',
                 "meshName": s.name + '_mesh',
@@ -243,16 +223,16 @@ scene.onAfterRenderObservable.add(() => {
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
             const font_size = 16
-            const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size * 100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
-            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Times New Roman", "white", "transparent", true, true);
+            const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
+            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
-            material.backFaceCulling = false;
-            material.disableLighting = false;
+            material.backFaceCulling = true;
+            material.disableLighting = true;
             material.freeze();
 
-            var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
+			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
             outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
             outputplane.isVisible = true;
             outputplane.position = n.position;
@@ -278,10 +258,15 @@ function renderLoop() {
 
 engine.runRenderLoop(renderLoop);
 
+// Resize the engine on window resize
+    window.addEventListener('resize', function () {
+        engine.resize();
+    });
+
 function blinkSprite(sprite) {
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
     const defaultColor = sprite.color
-    const highlightColor = new BABYLON.Color4(1, 0, 0, 1); // couleur du clignotement (rouge)
+    const highlightColor = new BABYLON.Color4(1, 1, 1, 1); // couleur du clignotement (rouge)
 
     // Configure l'intervalle de clignotement
     setInterval(() => {
@@ -295,8 +280,7 @@ function blinkSprite(sprite) {
     }, 500); // Durée du clignotement en millisecondes
 }
 
-function moveCameraToSprite() {
-    const spriteName = document.getElementById('searchInput').value;
+function moveCameraToSprite(spriteName) {
     const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
     let targetSprite = sprites.find(s => s.name === spriteName);
 
@@ -309,31 +293,19 @@ function moveCameraToSprite() {
         const directionVector = targetPosition.subtract(camera.position).normalize();
         const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
 
-        // Create animation for camera position
+
+		const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
+		const numberOfFrames = Math.min(85,Math.max(10,Math.round(moveDistance)));
+		
+		// Create animation for camera position
         const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 10, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamPosition.setKeys([{
-                frame: 0,
-                value: cameraStartPosition
-            },
-            {
-                frame: 100,
-                value: adjustedTargetPosition
-            }
-        ]);
+        animCamPosition.setKeys([{frame: 0, value: cameraStartPosition},{frame: numberOfFrames, value: adjustedTargetPosition}]);
 
         // Create animation for camera target
         const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 10, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamTarget.setKeys([{
-                frame: 0,
-                value: cameraStartTarget
-            },
-            {
-                frame: 100,
-                value: targetPosition
-            }
-        ]);
+        animCamTarget.setKeys([{frame: 0, value: cameraStartTarget},{  frame: numberOfFrames, value: targetPosition}]);
 
-        scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, 100, false);
+        scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
 
         blinkSprite(targetSprite);
 
@@ -347,18 +319,32 @@ function moveCameraToSprite() {
         distances.sort((a, b) => a.distance - b.distance);
 
         // Get top 20 nearest particles
-        let nearestParticles = distances.slice(1, 21);
+        let nearestParticles = distances.slice(1, 101);
 
         // Update the nearest list
-        const nearestList = document.getElementById('nearestList');
-        nearestList.innerHTML = '';
-        nearestParticles.forEach(particle => {
-            let listItem = document.createElement('li');
-            listItem.className = 'nearest-item';
-            listItem.textContent = `${particle.name} (${particle.distance.toFixed(2)})`;
-            nearestList.appendChild(listItem);
-        });
+		const nearestList = document.getElementById('nearestList');
+			nearestList.innerHTML = '';
+			let i=0
+			
+		let listItem = document.createElement('li');
+			listItem.className = 'nearest-item';
+			listItem.textContent = `${spriteName}`;
+		
+		nearestList.appendChild(listItem);
+		
+			nearestParticles.forEach(particle => {
+		i=i+1;
+		let listItem = document.createElement('li');
+			listItem.className = 'nearest-item';
+			listItem.textContent = `${i} : ${particle.name} (${particle.distance.toFixed(2)})`;
 
+		// Ajouter un écouteur d'événements click à chaque élément de la liste
+		listItem.addEventListener('click', function() {
+			moveCameraToSprite(particle.name);
+    });
+
+    nearestList.appendChild(listItem);
+});
     } else {
         console.log("Sprite not found: " + spriteName);
     }
@@ -369,7 +355,7 @@ function createLegend(data) {
     const legendContainer = document.getElementById('legend');
     legendContainer.innerHTML = '';
 
-    uniqueTypes.forEach(type => {
+    uniqueTypes.sort().forEach(type => {
         const color = `rgb(${getColor(type).r * 255}, ${getColor(type).g * 255}, ${getColor(type).b * 255})`;
         const legendItem = document.createElement('div');
         legendItem.className = 'legend-item';
@@ -389,7 +375,6 @@ function createLegend(data) {
 
         // Add event listener for click
         legendItem.addEventListener('click', function() {
-            console.log(`Filtering by type: ${type}`);
             filterByType(type);
             toggleLegendItemColor(legendItem);
         });
@@ -398,11 +383,9 @@ function createLegend(data) {
 
 // Function to filter sprites by type
 function filterByType(type) {
-    console.log(`Filter function called for type: ${type}`);
     scene.spriteManagers[0].sprites.forEach(sprite => {
 		if (sprite.metadata && sprite.metadata.subType === type) {
             sprite.isVisible = !sprite.isVisible;
-            //console.log(`Sprite ${sprite.name} is visible`);
         }
     });
 	
@@ -444,8 +427,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const searchButton = document.getElementById('searchButton');
     if (searchButton) {
         searchButton.addEventListener('click', function(event) {
-            event.preventDefault(); // This prevents any default form submitting
-            moveCameraToSprite();
+            event.preventDefault();
+			 const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
         });
     }
 
@@ -453,38 +437,18 @@ document.addEventListener("DOMContentLoaded", function() {
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // This prevents any default form submitting
-                moveCameraToSprite();
+				const spriteName = document.getElementById('searchInput').value;
+                moveCameraToSprite(spriteName);
             }
         });
 
         searchInput.addEventListener('change', function(event) {
-            moveCameraToSprite();
+			const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
         });
     }
 
-    const toggleSearchButton = document.querySelector(".toggleButton[data-target='searchContainer']");
-    if (toggleSearchButton) {
-        toggleSearchButton.addEventListener('click', function() {
-            toggleElement('searchContainer');
-        });
-    }
-
-    const toggleLegendButton = document.querySelector(".toggleButton[data-target='legend']");
-    if (toggleLegendButton) {
-        toggleLegendButton.addEventListener('click', function() {
-            toggleElement('legend');
-        });
-    }
-
-    const toggleNearestButton = document.querySelector(".toggleButton[data-target='nearestContainer']");
-    if (toggleNearestButton) {
-        toggleNearestButton.addEventListener('click', function() {
-            toggleElement('nearestContainer');
-        });
-    }
 });
-
-
 
 
 //scene.debugLayer.show()
