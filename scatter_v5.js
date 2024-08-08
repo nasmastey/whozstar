@@ -177,13 +177,16 @@ engine.runRenderLoop(renderLoop);
         engine.resize();
     });
 
-    createLegend(data);
-	updateParticleList();
-	
-document.addEventListener("DOMContentLoaded", function() {
 
     createLegend(data);
 	updateParticleList();
+	
+}	
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    //createLegend(data);
+	//updateParticleList();
 
     const searchButton = document.getElementById('searchButton');
     if (searchButton) {
@@ -210,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 });
-}
+
 document.getElementById('loadFileButton').addEventListener('click', () => {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
@@ -367,6 +370,7 @@ function blinkSprite(sprite) {
 }
 
 function moveCameraToSprite(spriteName) {
+	console.log('move to ',spriteName);
     const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
     let targetSprite = sprites.find(s => s.name === spriteName);
 
