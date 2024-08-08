@@ -10,6 +10,233 @@ const engine = new BABYLON.Engine(canvas, true);
 const scene = new BABYLON.Scene(engine);
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
+var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
+camera.minZ = 0.0001;
+camera.attachControl(canvas, true);
+camera.speed = 0.9;
+camera.angularSpeed = 0.05;
+camera.angle = Math.PI / 2;
+camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
+
+const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+light.intensity = 0.7;
+
+let time = 0;
+
+// Initialise le compteur et le seuil
+let frameCounter = 0;
+const frameThreshold = 20; // Ajustez ce nombre pour changer la fréquence
+
+var font = "Calibri 16px monospace";
+
+const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
+
+const labelSprites = [];
+const originalPositions = [];
+
+// Create scatter mesh and label sprites
+const imageUrl = 'bubble.png';
+//const imageUrl = 'star.png';
+
+
+function main(currentData, ratio) {
+
+
+const data = currentData.map(d => {
+    d.x = d.x * ratio;
+    d.y = d.y * ratio;
+    d.z = d.z * ratio;
+    d.color = getColor(d.subType);
+    d.metadata = { subType: d.subType };
+    return d;
+});
+
+
+const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 3000, scene);
+labelSpriteManager.isPickable = true;
+
+
+
+scatter.addPoints(data.length, function(particle) {
+    const point = data[particle.idx];
+    particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
+    originalPositions.push(particle.position.clone());
+
+    const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+	sprite.isPickable = true;
+    sprite.position = particle.position;
+    sprite.size = 0.7;
+    sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
+	sprite.metadata = { subType: point.subType };
+    sprite.isVisible = true; // Ensure the sprite is initially visible
+	
+    labelSprites.push(sprite);
+});
+
+scene.onBeforeRenderObservable.add(() => {
+	
+	updateSpritePositions();
+	
+	frameCounter++;
+    if (frameCounter > frameThreshold) {
+        frameCounter = 0;  // Réinitialise le compteur
+		
+    var names = [];
+	
+	const cameraDirection = camera.getForwardRay().direction.normalize();
+	
+    scene.spriteManagers[0].sprites.map(s => {
+        var width = engine.getRenderWidth();
+        var height = engine.getRenderHeight();
+        var identityMatrix = BABYLON.Matrix.Identity();
+        var getTransformMatrix = scene.getTransformMatrix();
+        var toGlobal = camera.viewport.toGlobal(width, height);
+        const projectedPosition = BABYLON.Vector3.Project(
+            s.position,
+            identityMatrix,
+            getTransformMatrix,
+            toGlobal
+        );
+		
+		const spriteDirection = s.position.subtract(camera.position).normalize();
+		const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
+		const fov = camera.fov; // Champs de vision de la caméra
+
+        const distance = BABYLON.Vector3.Distance(camera.position, s.position);
+		
+        if (distance < 15 && angle < fov && s.isVisible) {
+            names.push({
+                "name": s.name + '_layer',
+                "meshName": s.name + '_mesh',
+                "matName": s.name + '_mat',
+                "textureName": s.name,
+                "position": s.position
+            });
+        }
+    });
+
+    // Dispose of unused meshes
+    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND').forEach(mesh => {
+        if (!names.some(n => n.meshName === mesh.name)) {
+            if (mesh.material) {
+                if (mesh.material.emissiveTexture) {
+                    mesh.material.emissiveTexture.dispose(); // Dispose the emissive texture
+                }
+                mesh.material.dispose(); // Dispose the material
+            }
+            scene.removeMesh(mesh);
+            mesh.dispose(); // Dispose the mesh
+        }
+    });
+
+    // Dispose of unused materials
+    scene.materials.filter(material => material.name !== 'BACKGROUND').forEach(material => {
+        if (!names.some(n => n.matName === material.name)) {
+            if (material.emissiveTexture) {
+                material.emissiveTexture.dispose(); // Dispose the emissive texture
+            }
+            scene.removeMaterial(material);
+            material.dispose(); // Dispose the material
+        }
+    });
+
+    names.forEach(n => {
+        if (!scene.meshes.some(l => l.name === n.meshName)) {
+            const font_size = 16
+            const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
+            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
+            var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
+            material.emissiveTexture = planeTexture;
+            material.opacityTexture = planeTexture;
+            material.backFaceCulling = true;
+            material.disableLighting = true;
+            material.freeze();
+
+			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
+            outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
+            outputplane.isVisible = true;
+            outputplane.position = n.position;
+            outputplane.material = material;
+        }
+    });
+	}
+});
+
+scatter.buildMeshAsync().then(mesh => {
+    mesh.material = new BABYLON.StandardMaterial('scatterMaterial', scene);
+    mesh.material.pointSize = 10;
+    mesh.material.usePointSizing = true;
+    mesh.material.disableLighting = true;
+    mesh.material.pointColor = new BABYLON.Color3(1, 1, 1);
+});
+
+engine.runRenderLoop(renderLoop);
+
+// Resize the engine on window resize
+    window.addEventListener('resize', function () {
+        engine.resize();
+    });
+
+    createLegend(data);
+	updateParticleList();
+	
+document.addEventListener("DOMContentLoaded", function() {
+
+    createLegend(data);
+	updateParticleList();
+
+    const searchButton = document.getElementById('searchButton');
+    if (searchButton) {
+        searchButton.addEventListener('click', function(event) {
+            event.preventDefault();
+			 const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // This prevents any default form submitting
+				const spriteName = document.getElementById('searchInput').value;
+                moveCameraToSprite(spriteName);
+            }
+        });
+
+        searchInput.addEventListener('change', function(event) {
+			const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
+        });
+    }
+
+});
+}
+document.getElementById('loadFileButton').addEventListener('click', () => {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const newdata = JSON.parse(event.target.result);
+                main(newdata,20);
+				document.getElementById('fileInputContainer').style.display = 'none';
+  
+				//updateScatterData(newdata);
+            } catch (error) {
+                alert('An error occurred while parsing the file.');
+                console.error(error);
+            }
+        };
+
+        reader.readAsText(file);
+    } else {
+		main(data_0,1);
+		document.getElementById('fileInputContainer').style.display = 'none';
+    }
+});
+
 function getColor(type) {
     const colors = {
         TECHNICAL: {
@@ -97,167 +324,30 @@ function getColor(type) {
     return colors[type] || colors.DEFAULT;
 }
 
-var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
-camera.minZ = 0.0001;
-camera.attachControl(canvas, true);
-camera.speed = 0.9;
-camera.angularSpeed = 0.05;
-camera.angle = Math.PI / 2;
-camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
-
-const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
-light.intensity = 0.7;
-
-
-const data = data_0.map(d => {
-    d.x = d.x * 1;
-    d.y = d.y * 1;
-    d.z = d.z * 1;
-    d.color = getColor(d.subType);
-    d.metadata = { subType: d.subType };
-    return d;
-});
-
-// Create scatter mesh and label sprites
-const imageUrl = 'bubble.png';
-//const imageUrl = 'star.png';
-
-const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 3000, scene);
-labelSpriteManager.isPickable = true;
-
-var font = "Calibri 16px monospace";
-
-const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
-
-const labelSprites = [];
-const originalPositions = [];
-
-scatter.addPoints(data.length, function(particle) {
-    const point = data[particle.idx];
-    particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
-    originalPositions.push(particle.position.clone());
-
-    const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
-	sprite.isPickable = true;
-    sprite.position = particle.position;
-    sprite.size = 0.7;
-    sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
-	sprite.metadata = { subType: point.subType };
-    sprite.isVisible = true; // Ensure the sprite is initially visible
-	
-    labelSprites.push(sprite);
-});
-
-
-let time = 0;
-
 // Update sprite positions to add small movements
 function updateSpritePositions() {
-    time += 0.02;
-    labelSprites.forEach((sprite, idx) => {
+    time += 0.005;
+	const cameraDirection = camera.getForwardRay().direction.normalize();
+	const fov = camera.fov; // Champs de vision de la caméra
+    
+	labelSprites.forEach((sprite, idx) => {
+		const distance = BABYLON.Vector3.Distance(camera.position, sprite.position);
+		const spriteDirection = sprite.position.subtract(camera.position).normalize();
+		const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
+
+		if (distance < 150 && angle < fov) {
         const originalPosition = originalPositions[idx];
-        sprite.position.x = originalPosition.x + 0.2 * Math.sin(time + idx);
-        sprite.position.y = originalPosition.y + 0.2 * Math.cos(time + idx);
-        sprite.position.z = originalPosition.z + 0.2 * Math.sin(time + idx);
+        sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
+        sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
+        sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+		}
     });
 }
-
-// Use the onBeforeRenderObservable to update the positions before each frame is rendered
-scene.onBeforeRenderObservable.add(() => {
-    updateSpritePositions();
-});
-
-scene.onAfterRenderObservable.add(() => {
-    var names = [];
-    scene.spriteManagers[0].sprites.map(s => {
-        var width = engine.getRenderWidth();
-        var height = engine.getRenderHeight();
-        var identityMatrix = BABYLON.Matrix.Identity();
-        var getTransformMatrix = scene.getTransformMatrix();
-        var toGlobal = camera.viewport.toGlobal(width, height);
-        const projectedPosition = BABYLON.Vector3.Project(
-            s.position,
-            identityMatrix,
-            getTransformMatrix,
-            toGlobal
-        );
-
-        const distance = BABYLON.Vector3.Distance(camera.position, s.position);
-		
-        if (distance < 15 && s.isVisible) {
-            names.push({
-                "name": s.name + '_layer',
-                "meshName": s.name + '_mesh',
-                "matName": s.name + '_mat',
-                "textureName": s.name,
-                "position": s.position
-            });
-        }
-    });
-
-    // Dispose of unused meshes
-    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND').forEach(mesh => {
-        if (!names.some(n => n.meshName === mesh.name)) {
-            if (mesh.material) {
-                if (mesh.material.emissiveTexture) {
-                    mesh.material.emissiveTexture.dispose(); // Dispose the emissive texture
-                }
-                mesh.material.dispose(); // Dispose the material
-            }
-            scene.removeMesh(mesh);
-            mesh.dispose(); // Dispose the mesh
-        }
-    });
-
-    // Dispose of unused materials
-    scene.materials.filter(material => material.name !== 'BACKGROUND').forEach(material => {
-        if (!names.some(n => n.matName === material.name)) {
-            if (material.emissiveTexture) {
-                material.emissiveTexture.dispose(); // Dispose the emissive texture
-            }
-            scene.removeMaterial(material);
-            material.dispose(); // Dispose the material
-        }
-    });
-
-    names.forEach(n => {
-        if (!scene.meshes.some(l => l.name === n.meshName)) {
-            const font_size = 16
-            const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
-            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
-            var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
-            material.emissiveTexture = planeTexture;
-            material.opacityTexture = planeTexture;
-            material.backFaceCulling = true;
-            material.disableLighting = true;
-            material.freeze();
-
-			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
-            outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
-            outputplane.isVisible = true;
-            outputplane.position = n.position;
-            outputplane.material = material;
-        }
-    });
-
-});
-
-
-scatter.buildMeshAsync().then(mesh => {
-    mesh.material = new BABYLON.StandardMaterial('scatterMaterial', scene);
-    mesh.material.pointSize = 10;
-    mesh.material.usePointSizing = true;
-    mesh.material.disableLighting = true;
-    mesh.material.pointColor = new BABYLON.Color3(1, 1, 1);
-});
 
 // Start rendering the scene on each animation frame
 function renderLoop() {
     scene.render();
 }
-
-engine.runRenderLoop(renderLoop);
-
 
 function blinkSprite(sprite) {
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
@@ -401,6 +491,7 @@ function toggleLegendItemColor(legendItem) {
 
 // Function to update the datalist options based on particle visibility
 function updateParticleList() {
+	
     const dataList = document.getElementById('particlesList');
     dataList.innerHTML = ''; // Clear existing items
 
@@ -414,37 +505,5 @@ function updateParticleList() {
         dataList.appendChild(option);
     });
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-
-    createLegend(data);
-	updateParticleList();
-
-    const searchButton = document.getElementById('searchButton');
-    if (searchButton) {
-        searchButton.addEventListener('click', function(event) {
-            event.preventDefault();
-			 const spriteName = document.getElementById('searchInput').value;
-            moveCameraToSprite(spriteName);
-        });
-    }
-
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // This prevents any default form submitting
-				const spriteName = document.getElementById('searchInput').value;
-                moveCameraToSprite(spriteName);
-            }
-        });
-
-        searchInput.addEventListener('change', function(event) {
-			const spriteName = document.getElementById('searchInput').value;
-            moveCameraToSprite(spriteName);
-        });
-    }
-
-});
-
 
 //scene.debugLayer.show()
