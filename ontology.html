@@ -130,10 +130,24 @@
             .toggleButton:hover {
                 background-color: #0056b3;
             }
+			
+		#fileInputContainer {
+    position: absolute;
+    top: 10px;
+    left: 350px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
         </style>
     </head>
 <body>
     <script type="module" src="./scatter_v5.js"></script>
+	<div id="fileInputContainer">
+        <input type="file" id="fileInput" accept=".json">
+        <button id="loadFileButton">Click for default or Load File and click</button>
+    </div>
 	<div id="searchContainer">
         <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
         <datalist id="particlesList"></datalist>
