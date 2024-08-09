@@ -169,7 +169,8 @@
     <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
     <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
 	    <script>
-        document.querySelectorAll('.toggleButton').forEach(button => {
+		const toggleButtons = document.querySelectorAll('.toggleButton');
+        toggleButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const target = document.querySelector(`#${button.dataset.target}`);
                 if (target) {
