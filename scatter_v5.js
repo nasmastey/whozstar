@@ -230,6 +230,27 @@ engine.runRenderLoop(renderLoop);
 	
 }	
 
+const showPasswordModal = () => {
+    return new Promise((resolve) => {
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitPasswordButton = document.getElementById('submitPasswordButton');
+
+        passwordModal.style.display = 'block'; 
+        passwordInput.value = ''; 
+        passwordInput.focus(); 
+
+        const submitHandler = () => {
+            const password = passwordInput.value;
+            passwordModal.style.display = 'none';
+            submitPasswordButton.removeEventListener('click', submitHandler);
+            resolve(password);
+        };
+
+        submitPasswordButton.addEventListener('click', submitHandler);
+    });
+};
+
 const loadFileButton = document.getElementById('loadFileButton');
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -291,7 +312,7 @@ loadFileButton.addEventListener('click', async () => {
 			const response = await fetch('./encrypted_PSO_0.json');
             const encryptedData = await response.text();
             // Demander le mot de passe
-            const password = prompt('Entrez le mot de passe pour déchiffrer les données');
+			const password = await showPasswordModal();
             const data = decryptData(encryptedData, password);
 			
             //const response = await fetch('./PSO_0.json');
