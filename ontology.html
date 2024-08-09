@@ -160,6 +160,13 @@
 	<button class="toggleButton" data-target="searchContainer">Search</button>
     <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
     <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+    <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
+        <label for="passwordInput">Enter password:</label>
+        <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
+        <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
+    </div>
+</div>
 	    <script>
 		const toggleButtons = document.querySelectorAll('.toggleButton');
         toggleButtons.forEach(button => {
