@@ -287,8 +287,15 @@ loadFileButton.addEventListener('click', async () => {
         }
     } else {
         try {
-            const response = await fetch('./PSO_0.json');
-            const data = await response.json();
+			
+			const response = await fetch('./encrypted_PSO_0.json');
+            const encryptedData = await response.text();
+            // Demander le mot de passe
+            const password = prompt('Entrez le mot de passe pour déchiffrer les données');
+            const data = decryptData(encryptedData, password);
+			
+            //const response = await fetch('./PSO_0.json');
+            //const data = await response.json();
             main(data, 1);
             document.getElementById('fileInputContainer').style.display = 'none';
         } catch (error) {
@@ -581,6 +588,18 @@ function updateParticleList() {
         option.value = name;
         dataList.appendChild(option);
     });
+}
+
+function decryptData(encryptedData, password) {
+    try {
+        const bytes = CryptoJS.AES.decrypt(encryptedData, password);
+        const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        return decryptedData;
+    } catch (e) {
+        alert('Le mot de passe est incorrect ou les données sont invalides.');
+        console.error(e);
+        return null;
+    }
 }
 
 //scene.debugLayer.show()
