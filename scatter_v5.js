@@ -78,6 +78,7 @@ scatter.addPoints(data.length, function(particle) {
     let sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
 	sprite.isPickable = true;
     sprite.position = particle.position;
+	sprite.originalPosition = originalPositions[particle.idx];
     sprite.size = 0.7;
     sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
 	sprite.metadata = { subType: point.subType };
@@ -99,7 +100,7 @@ sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
         let distances = sprites.filter(s => s.isVisible).map(sprite => {
             return {
                 name: sprite.name,
-                distance: BABYLON.Vector3.Distance(targetSprite.position, sprite.position)
+                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
             };
         });
         distances.sort((a, b) => a.distance - b.distance);
@@ -414,7 +415,7 @@ function getColor(type) {
 
 // Update sprite positions to add small movements
 function updateSpritePositions() {
-    time += 0.005;
+    time += 0.003;
 	
 	const cameraDirection = camera.getForwardRay().direction.normalize();
 	const fov = camera.fov; // Champs de vision de la caméra
@@ -493,7 +494,7 @@ function moveCameraToSprite(spriteName) {
         let distances = sprites.filter(s => s.isVisible).map(sprite => {
             return {
                 name: sprite.name,
-                distance: BABYLON.Vector3.Distance(targetSprite.position, sprite.position)
+                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
             };
         });
         distances.sort((a, b) => a.distance - b.distance);
