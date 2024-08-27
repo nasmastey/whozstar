@@ -1,4 +1,4 @@
-//http-server -c-1 to launch server
+// to launch server
 
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, {
@@ -40,7 +40,7 @@ let time = 0;
 let frameCounter = 0;
 const frameThreshold = 20; // Ajustez ce nombre pour changer la fréquence
 
-var font = "Calibri 16px monospace";
+//var font = "Calibri 20px monospace";
 
 const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
 
@@ -48,7 +48,7 @@ const labelSprites = [];
 const originalPositions = [];
 
 // Create scatter mesh and label sprites
-const imageUrl = 'bubble.png';
+const imageUrl = 'bubble12.png';
 //const imageUrl = 'star.png';
 
 
@@ -65,7 +65,7 @@ const data = currentData.map(d => {
 });
 
 
-const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 3000, scene);
+const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 5000, scene);
 labelSpriteManager.isPickable = true;
 
 
@@ -190,7 +190,7 @@ scene.onBeforeRenderObservable.add(() => {
 
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
-            const font_size = 16
+            const font_size = 18
             const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
             planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
@@ -415,7 +415,7 @@ function getColor(type) {
 
 // Update sprite positions to add small movements
 function updateSpritePositions() {
-    time += 0.003;
+    time += 0.004;
 	
 	const cameraDirection = camera.getForwardRay().direction.normalize();
 	const fov = camera.fov; // Champs de vision de la caméra
