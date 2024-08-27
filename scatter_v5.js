@@ -1,4 +1,4 @@
-// to launch server
+//http-server -c-1
 
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, {
