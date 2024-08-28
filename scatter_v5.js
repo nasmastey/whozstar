@@ -51,9 +51,9 @@ const originalPositions = [];
 //const imageUrl = 'bubble12.png';
 //const imageSize = 5000;
 
-const imageUrl = 'etoile4.png';
-const imageSize = 1510;
-const spriteRatio = 0.5;
+const imageUrl = 'etoile2.png';
+const imageSize = 640;
+const spriteRatio = 1;
 
 
 function main(currentData, ratio) {
