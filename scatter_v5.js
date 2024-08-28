@@ -48,8 +48,12 @@ const labelSprites = [];
 const originalPositions = [];
 
 // Create scatter mesh and label sprites
-const imageUrl = 'bubble12.png';
-//const imageUrl = 'star.png';
+//const imageUrl = 'bubble12.png';
+//const imageSize = 5000;
+
+const imageUrl = 'etoile4.png';
+const imageSize = 1510;
+const spriteRatio = 0.5;
 
 
 function main(currentData, ratio) {
@@ -65,7 +69,7 @@ const data = currentData.map(d => {
 });
 
 
-const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, 5000, scene);
+const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
 labelSpriteManager.isPickable = true;
 
 
@@ -79,7 +83,7 @@ scatter.addPoints(data.length, function(particle) {
 	sprite.isPickable = true;
     sprite.position = particle.position;
 	sprite.originalPosition = originalPositions[particle.idx];
-    sprite.size = 0.7;
+    sprite.size = spriteRatio;
     sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
 	sprite.metadata = { subType: point.subType };
     sprite.isVisible = true; // Ensure the sprite is initially visible
@@ -152,12 +156,13 @@ scene.onBeforeRenderObservable.add(() => {
 		
         const distance = BABYLON.Vector3.Distance(camera.position, s.position);
 		
-        if (distance < 15 && angle < fov && s.isVisible) {
+        if (distance > 3 && distance < 12 && angle < fov && s.isVisible) {
             names.push({
                 "name": s.name + '_layer',
                 "meshName": s.name + '_mesh',
                 "matName": s.name + '_mat',
                 "textureName": s.name,
+				"color": s.color,
                 "position": s.position
             });
         }
@@ -192,7 +197,24 @@ scene.onBeforeRenderObservable.add(() => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
             const font_size = 18
             const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
-            planeTexture.drawText(n.textureName, null, null, "" + font_size + "px Calibri", "white", "transparent", true, true);
+			
+			var textureContext = planeTexture.getContext();
+			
+			//Draw on canvas
+			textureContext.beginPath();
+			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5, Math.PI/5);
+			textureContext.strokeStyle = "rgba("+255*n.color.r+", "+255*n.color.g+", "+255*n.color.b+", 0.7)";
+			textureContext.stroke();
+			
+			textureContext.beginPath();
+			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
+			textureContext.strokeStyle = n.color;
+			textureContext.stroke();
+			
+			planeTexture.update();
+			
+			
+            planeTexture.drawText(n.textureName, null, (font_size*52), "" + font_size + "px system-ui", "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
