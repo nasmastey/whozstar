@@ -109,7 +109,7 @@ sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
         });
         distances.sort((a, b) => a.distance - b.distance);
 		
-		updateNearestList(distances, spriteName)
+		updateNearestList(distances, spriteName, targetSprite.metadata.subType)
 		
 		searchInput.value = spriteName
     }
@@ -454,6 +454,7 @@ function updateSpritePositions() {
 				sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
 				sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
 				sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+				sprite.angle = 0.01*idx;
 			}
 		}
     });
@@ -520,14 +521,14 @@ function moveCameraToSprite(spriteName) {
         });
         distances.sort((a, b) => a.distance - b.distance);
 		
-		updateNearestList(distances, spriteName)
+		updateNearestList(distances, spriteName, targetSprite.metadata.subType)
 		
     } else {
         console.log("Sprite not found: " + spriteName);
     }
 }
 
-function updateNearestList(distances, spriteName) {
+function updateNearestList(distances, spriteName, subType) {
 		// Get top 100 nearest particles
         let nearestParticles = distances.slice(1, 101);
 
@@ -536,9 +537,10 @@ function updateNearestList(distances, spriteName) {
 			nearestList.innerHTML = '';
 			let i=0
 			
+			
 		let listItem = document.createElement('li');
 			listItem.className = 'nearest-item first-item';
-			listItem.textContent = `${spriteName}`;
+			listItem.textContent = `${spriteName} (${subType})`;
 		
 		nearestList.appendChild(listItem);
 		
@@ -563,10 +565,12 @@ function createLegend(data) {
     const legendContainer = document.getElementById('legend');
     legendContainer.innerHTML = '';
 
-	const totalLinesElement = document.createElement('div');
-	totalLinesElement.className = 'legend-total';
-    totalLinesElement.textContent = `Total Lines: ${data.length}`;
-    legendContainer.appendChild(totalLinesElement);
+	//const totalLinesElement = document.createElement('div');
+	//totalLinesElement.className = 'legend-total';
+    //totalLinesElement.textContent = `Count: ${data.length}`;
+    //legendContainer.appendChild(totalLinesElement);
+	
+	console.log('count:', data.length);
 	
     uniqueTypes.sort().forEach(type => {
         const color = `rgb(${getColor(type).r * 255}, ${getColor(type).g * 255}, ${getColor(type).b * 255})`;
