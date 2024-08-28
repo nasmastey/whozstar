@@ -195,7 +195,7 @@ scene.onBeforeRenderObservable.add(() => {
 
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
-            const font_size = 18
+            const font_size = 12
             const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
 			
 			var textureContext = planeTexture.getContext();
@@ -214,7 +214,7 @@ scene.onBeforeRenderObservable.add(() => {
 			planeTexture.update();
 			
 			
-            planeTexture.drawText(n.textureName, null, (font_size*52), "" + font_size + "px system-ui", "white", "transparent", true, true);
+            planeTexture.drawText(n.textureName, null, (font_size*53), "" + font_size + "px system-ui", "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
@@ -334,8 +334,7 @@ loadFileButton.addEventListener('click', async () => {
 			
 			const response = await fetch('./encrypted_PSO_0.json');
             const encryptedData = await response.text();
-            // Demander le mot de passe
-			const password = await showPasswordModal();
+            const password = await showPasswordModal();
             const data = decryptData(encryptedData, password);
 			
             //const response = await fetch('./PSO_0.json');
