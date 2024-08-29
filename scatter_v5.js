@@ -509,7 +509,7 @@ function moveCameraToSprite(spriteName) {
         const cameraStartPosition = camera.position.clone();
         const cameraStartTarget = camera.getTarget().clone();
 
-        const bufferDistance = 8; // Adjust the distance from sprite
+        const bufferDistance = 10; // Adjust the distance from sprite
         const directionVector = targetPosition.subtract(camera.position).normalize();
         const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
 
