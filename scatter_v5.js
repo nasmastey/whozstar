@@ -32,9 +32,10 @@ scene.onPointerObservable.add((pointerInfo) => {
 //const cameraGetTarget = camera.getTarget();
 
 const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
-light.intensity = 0.7;
+light.intensity = 1;
 
 let time = 0;
+let blinkCount = 0;
 
 // Initialise le compteur et le seuil
 let frameCounter = 0;
@@ -156,7 +157,7 @@ scene.onBeforeRenderObservable.add(() => {
 		
         const distance = BABYLON.Vector3.Distance(camera.position, s.position);
 		
-        if (distance > 3 && distance < 12 && angle < fov && s.isVisible) {
+        if (distance > 2 && distance < 12 && angle < fov && s.isVisible) {
             names.push({
                 "name": s.name + '_layer',
                 "meshName": s.name + '_mesh',
@@ -201,6 +202,7 @@ scene.onBeforeRenderObservable.add(() => {
 			var textureContext = planeTexture.getContext();
 			
 			//Draw on canvas
+			textureContext.lineWidth = 2;
 			textureContext.beginPath();
 			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5, Math.PI/5);
 			textureContext.strokeStyle = "rgba("+255*n.color.r+", "+255*n.color.g+", "+255*n.color.b+", 0.7)";
@@ -208,7 +210,6 @@ scene.onBeforeRenderObservable.add(() => {
 			
 			textureContext.beginPath();
 			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
-			textureContext.strokeStyle = n.color;
 			textureContext.stroke();
 			
 			planeTexture.update();
@@ -468,18 +469,34 @@ function renderLoop() {
 function blinkSprite(sprite) {
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
     const defaultColor = sprite.color
-    const highlightColor = new BABYLON.Color4(1, 1, 1, 1); // couleur du clignotement (rouge)
+    const highlightColor = new BABYLON.Color4(1, 1, 1, 1);
+	const mediumMediumlightColor = new BABYLON.Color4((sprite.color.r+1)/2, (sprite.color.g+1)/2, (sprite.color.b+1)/2, (sprite.color.a+1)/2);
+	const mediumLowlightColor = new BABYLON.Color4((3*sprite.color.r+1)/4, (3*sprite.color.g+1)/4, (3*sprite.color.b+1)/4, (3*sprite.color.a+1)/4);
+	const mediumHighlightColor = new BABYLON.Color4((sprite.color.r+3)/4, (sprite.color.g+3)/4, (sprite.color.b+3)/4, (sprite.color.a+3)/4);
 
     // Configure l'intervalle de clignotement
     setInterval(() => {
-        if (isDefaultColor) {
-            sprite.color = highlightColor;
-            isDefaultColor = false;
-        } else {
+		blinkCount+=1
+		
+		var moduloBlink = blinkCount % 8;
+		
+        if (moduloBlink == 0) {
             sprite.color = defaultColor;
             isDefaultColor = true;
+        } else if (moduloBlink == 1 || moduloBlink == 7) {
+            sprite.color = mediumLowlightColor;
+            isDefaultColor = false;
+        } else if (moduloBlink == 2 || moduloBlink == 6) {
+            sprite.color = mediumMediumlightColor;
+            isDefaultColor = false;
+        } else if (moduloBlink == 3 || moduloBlink == 5) {
+            sprite.color = mediumHighlightColor;
+            isDefaultColor = false;
+        } else {
+            sprite.color = highlightColor;
+            isDefaultColor = false;
         }
-    }, 500); // Durée du clignotement en millisecondes
+    }, 200); // Durée du clignotement en millisecondes
 }
 
 function moveCameraToSprite(spriteName) {
