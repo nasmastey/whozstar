@@ -87,7 +87,7 @@ scatter.addPoints(data.length, function(particle) {
     sprite.size = spriteRatio;
     sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
 	sprite.metadata = { subType: point.subType };
-    sprite.isVisible = true; // Ensure the sprite is initially visible
+    sprite.isVisible = false; //true; // Ensure the sprite is initially visible
 
 // Add an ActionManager to the sphere
 sprite.actionManager = new BABYLON.ActionManager(scene);
