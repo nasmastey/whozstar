@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	    		<!-- Google Tag Manager -->
+	<!--<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-PPWPV4Z');</script>-->
+	<!-- End Google Tag Manager -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Whoz PSO</title>
+		<script src="https://cdn.babylonjs.com/babylon.js"></script>
+	    	<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+				font-family: 'system-ui', sans-serif; /* Apply Calibri font globally */
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+			
+			#searchContainer {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+				display: block; /* Default to visible */
+            }
+            
+            #searchInput {
+                width: 200px;
+                padding: 5px;
+                border-radius: 3px;
+                border: 1px solid #ccc;
+            }
+            
+            #searchButton {
+                padding: 5px 10px;
+                border-radius: 3px;
+                border: none;
+                background-color: #007bff;
+                color: white;
+                cursor: pointer;
+                margin-left: 10px;
+            }
+
+            #searchButton:hover {
+                background-color: #0056b3;
+            }
+			
+			    /* Add styles for the legend */
+    #legend {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+		display: block; /* Default to visible */
+    }
+.legend-item {
+    display: flex;
+	font-size: 12px;
+    align-items: center;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+.legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+	
+
+
+            .nearest-item {
+        margin-bottom: 5px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .first-item {
+        font-weight: bold;
+        font-size: 14px; /* Légèrement plus grande */
+    }
+	
+	    #nearestContainer {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        max-height: 40%;
+        overflow-y: auto;
+        display: block; /* Default to visible */
+    }
+
+    #nearestList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+			
+			/* Style for toggle buttons */
+            .toggleButton {
+                position: absolute;
+                bottom: 90px;
+                left: 10px;
+				width: 70px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 10px;
+                cursor: pointer;
+                margin-bottom: 5px;
+            }
+
+            .toggleButton:hover {
+                background-color: #0056b3;
+            }
+			
+		#fileInputContainer {
+    position: absolute;
+    top: 10px;
+    left: 350px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+        </style>
+    </head>
+<body>
+    <script type="module" src="./scatter_v5.js"></script>
+	<div id="fileInputContainer">
+        <input type="file" id="fileInput" accept=".json">
+        <button id="loadFileButton">Submit</button>
+    </div>
+	<div id="searchContainer">
+        <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
+        <datalist id="particlesList"></datalist>
+        <button id="searchButton">Search</button>
+    </div>
+	<canvas id="renderCanvas" touch-action="none"></canvas>
+	<div id="legend"></div>
+	<div id="nearestContainer">
+    <ul id="nearestList"></ul>
+    </div>
+	<button class="toggleButton" data-target="searchContainer">Search</button>
+    <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
+    <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+    <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
+        <label for="passwordInput">Enter password:</label>
+        <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
+        <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
+    </div>
+</div>
+	    <script>
+		const toggleButtons = document.querySelectorAll('.toggleButton');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.querySelector(`#${button.dataset.target}`);
+                if (target) {
+                    target.style.display = target.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</body>
+</html>
