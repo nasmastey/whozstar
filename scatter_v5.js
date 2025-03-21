@@ -10,6 +10,8 @@ const engine = new BABYLON.Engine(canvas, true, {
 const scene = new BABYLON.Scene(engine);
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
+const xr = scene.createDefaultXRExperienceAsync();
+
 var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
 camera.minZ = 0.0001;
 camera.attachControl(canvas, true);
