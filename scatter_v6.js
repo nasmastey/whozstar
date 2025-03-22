@@ -140,8 +140,19 @@ async function initXR() {
         });
 
         // Additional configuration if needed:
-        xrHelper.teleportation.detach(); // disable teleportation if unnecessary
-        xrHelper.pointerSelection.detach(); // disable pointer selection if unnecessary
+        //xrHelper.teleportation.detach(); // disable teleportation if unnecessary
+        //xrHelper.pointerSelection.detach(); // disable pointer selection if unnecessary
+
+	        // Mise en place du mouvement continu avec les manettes
+    const fm = xrHelper.baseExperience.featuresManager;
+
+    // Activer une locomotion fluide pilotée par les contrôleurs (thumbsticks)
+    const locomotionFeature = fm.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, "latest", {
+        xrInput: xrHelper.input,
+        movementOrientationFollowsViewerPose: true, // orientation suit le regard du joueur
+        movementSpeed: 0.1, // vitesse de déplacement
+        rotationSpeed: 0.05, // vitesse de rotation si désirée
+    });
 
     } catch (error) {
         console.error('Failed to initialize WebXR:', error);
