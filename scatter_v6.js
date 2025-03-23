@@ -8,7 +8,6 @@ const engine = new BABYLON.Engine(canvas, true, {
 
 const scene = new BABYLON.Scene(engine);
 
-
 scene.createDefaultXRExperienceAsync({
     floorMeshes: [],
     disableTeleportation: true,
@@ -31,6 +30,7 @@ scene.createDefaultXRExperienceAsync({
         });                
     });
 
+    
     // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
     xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
@@ -38,6 +38,96 @@ scene.createDefaultXRExperienceAsync({
             movementSpeed: 0.2,
             rotationSpeed: 0.05,
             movementOrientationFollowsViewerPose: true
+    });
+
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
+
+    // Container principal (invisible au départ)
+    const searchPanel = new BABYLON.GUI.StackPanel();
+    searchPanel.width = "400px";
+    searchPanel.paddingTop = "20px";
+    searchPanel.background = "rgba(255,255,255,0.7)";
+    searchPanel.isVisible = false;
+    advancedTexture.addControl(searchPanel);
+
+    // Titre du panneau
+    const header = new BABYLON.GUI.TextBlock();
+    header.text = "Recherche de particule";
+    header.height = "40px";
+    header.color = "black";
+    header.fontSize = 20;
+    searchPanel.addControl(header);
+
+    // Input (zone d'entrée texte)
+    const inputText = new BABYLON.GUI.InputText();
+    inputText.width = 0.8;
+    inputText.maxWidth = 0.8;
+    inputText.height = "40px";
+    inputText.color = "black";
+    inputText.background = "white";
+    inputText.placeholderText = "Nom de particule...";
+    searchPanel.addControl(inputText);
+
+    // Bouton "Search"
+    const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
+    searchBtn.width = 0.5;
+    searchBtn.height = "40px";
+    searchBtn.color = "white";
+    searchBtn.background = "#007bff";
+    searchBtn.cornerRadius = 5;
+    searchBtn.thickness = 0;
+    searchBtn.paddingTop = "10px";
+    searchPanel.addControl(searchBtn);
+
+    // Résultat recherche (feedback utilisateur)
+    const searchResultText = new BABYLON.GUI.TextBlock();
+    searchResultText.height = "30px";
+    searchResultText.color = "black";
+    searchResultText.text = "";
+    searchPanel.addControl(searchResultText);
+
+    // Orientation dynamique face caméra
+    scene.onBeforeRenderObservable.add(() => {
+        if(searchPanel.isVisible){
+            const cam = scene.activeCamera;
+            const forward = cam.getForwardRay().direction.scale(1.5);
+            const target = cam.position.add(forward);
+            advancedTexture.layer.layerMask = cam.layerMask;
+            searchPanel.linkWithMesh(null);
+            searchPanel.isVertical = true;
+        }
+    });
+
+    // Le bouton search actionne ta fonction existante de recherche
+    searchBtn.onPointerUpObservable.add(() => {
+        const query = inputText.text;
+        if(query.trim() !== ""){
+            moveCameraToSprite(query); // ta fonction existante déjà implémentée
+            searchResultText.text = "Recherche : " + query;
+        }else{
+            searchResultText.text = "Entrer un nom valide.";
+        }
+    });
+   
+    // Activation/désactivation depuis bouton X Quest 3
+    xrHelper.input.onControllerAddedObservable.add((ctrl) => {
+        ctrl.onMotionControllerInitObservable.add((motionController) => {
+            if(motionController.handness === 'left'){
+                const xButtonComponent = motionController.getComponent("x-button");
+                
+                if(xButtonComponent){
+                    xButtonComponent.onButtonStateChangedObservable.add(() => {
+                        if(xButtonComponent.pressed){
+                            searchPanel.isVisible = !searchPanel.isVisible;
+                            if(searchPanel.isVisible){
+                                inputText.text = "";
+                                searchResultText.text = "";
+                            }
+                        }
+                    });
+                }
+            }
+        });
     });
 
     // Important : Désactivez explicitement POINTER_SELECTION s'il est activé
@@ -177,8 +267,9 @@ scene.onBeforeRenderObservable.add(() => {
 		
     var names = [];
 
-const camera = scene.activeCamera; 
-	    
+    // CETTE ligne-ci est critique :
+    const camera = scene.activeCamera; 
+	
 		const cameraDirection = camera.getForwardRay().direction.normalize();
 		const fov = camera.fov; // Champs de vision de la caméra
 		const cameraPosition = camera.position;
@@ -695,6 +786,9 @@ function blinkSprite(sprite) {
 
 function moveCameraToSprite(spriteName) {
 	console.log('move to',spriteName);
+
+    const camera = scene.activeCamera; 
+
     const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
     let targetSprite = sprites.find(s => s.name === spriteName);
 
