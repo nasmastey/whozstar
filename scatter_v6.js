@@ -12,37 +12,41 @@ scene.createDefaultXRExperienceAsync({
     floorMeshes: [],
     disableTeleportation: true,
     inputOptions: {
-        doNotLoadControllerMeshes: false // important à conserver
-    },
-    optionalFeatures: false // Ajoutez cette ligne pour éviter les fonctionnalités optionnelles problématiques
+        doNotLoadControllerMeshes: false
+    }
 }).then(xrHelper => {
-    console.log("WebXR OK et initialisé proprement.");
+    console.log("WebXR OK initialisé proprement.");
 
-    // Si vous voulez cacher les contrôleurs, utilisez cette approche :
+    // Réactivation organisée du POINTER_SELECTION
+    const fm = xrHelper.baseExperience.featuresManager;
+
+    // Réactive POINTER_SELECTION correctement
+    fm.enableFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION, "latest", {
+        xrInput: xrHelper.input,
+        enablePointerSelectionOnAllControllers: true
+    });
+
+    // Configure les manettes (rendre invisibles mais interactives)
     xrHelper.input.onControllerAddedObservable.add((ctrl) => {
-        ctrl.onMotionControllerInitObservable.add(motionController => {
-            if (motionController && motionController.rootMesh) {
+        ctrl.onMotionControllerInitObservable.add((motionController) => {
+            if (motionController.rootMesh) {
                 motionController.rootMesh.isVisible = false;
-                motionController.rootMesh.getChildMeshes().forEach(mesh => {
-                    mesh.isVisible = false;
-                });
+                motionController.rootMesh.getChildMeshes().forEach(mesh => mesh.isVisible=false);
             }
-        });                
+        });
     });
 
-    
-    // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
-    xrHelper.baseExperience.featuresManager.enableFeature(
-        BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
-            xrInput: xrHelper.input,
-            movementSpeed: 0.2,
-            rotationSpeed: 0.05,
-            movementOrientationFollowsViewerPose: true
+    // Active le mouvement classique, comme déjà fait précédemment
+    fm.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
+        xrInput: xrHelper.input,
+        movementSpeed: 0.2,
+        rotationSpeed: 0.05,
+        movementOrientationFollowsViewerPose: true
     });
 
+    // Ton panneau et interaction GUI Babylon, comme auparavant :
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
 
-    // Container principal (invisible au départ)
     const searchPanel = new BABYLON.GUI.StackPanel();
     searchPanel.width = "400px";
     searchPanel.paddingTop = "20px";
@@ -50,7 +54,6 @@ scene.createDefaultXRExperienceAsync({
     searchPanel.isVisible = false;
     advancedTexture.addControl(searchPanel);
 
-    // Titre du panneau
     const header = new BABYLON.GUI.TextBlock();
     header.text = "Recherche de particule";
     header.height = "40px";
@@ -58,7 +61,6 @@ scene.createDefaultXRExperienceAsync({
     header.fontSize = 20;
     searchPanel.addControl(header);
 
-    // Input (zone d'entrée texte)
     const inputText = new BABYLON.GUI.InputText();
     inputText.width = 0.8;
     inputText.maxWidth = 0.8;
@@ -68,10 +70,9 @@ scene.createDefaultXRExperienceAsync({
     inputText.placeholderText = "Nom de particule...";
     searchPanel.addControl(inputText);
 
-    // Bouton "Search"
     const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
-    searchBtn.width = 0.5;
     searchBtn.height = "40px";
+    searchBtn.width = 0.5;
     searchBtn.color = "white";
     searchBtn.background = "#007bff";
     searchBtn.cornerRadius = 5;
@@ -79,42 +80,41 @@ scene.createDefaultXRExperienceAsync({
     searchBtn.paddingTop = "10px";
     searchPanel.addControl(searchBtn);
 
-    // Résultat recherche (feedback utilisateur)
     const searchResultText = new BABYLON.GUI.TextBlock();
     searchResultText.height = "30px";
     searchResultText.color = "black";
     searchResultText.text = "";
     searchPanel.addControl(searchResultText);
 
-    // Orientation dynamique face caméra
+    // Placement confortable (2.5m devant l'utilisateur)
     scene.onBeforeRenderObservable.add(() => {
         if(searchPanel.isVisible){
             const cam = scene.activeCamera;
-            const forward = cam.getForwardRay().direction.scale(1.5);
+            const forward = cam.getForwardRay().direction.scale(2.5); // <-- Distance 2.5 m
             const target = cam.position.add(forward);
-            advancedTexture.layer.layerMask = cam.layerMask;
-            searchPanel.linkWithMesh(null);
-            searchPanel.isVertical = true;
+            advancedTexture.rootContainer.linkWithMesh(null);
+            advancedTexture.rootContainer._linkOffsetX = target.x;
+            advancedTexture.rootContainer._linkOffsetY = target.y;
+            advancedTexture.rootContainer._linkOffsetZ = target.z;
         }
     });
 
-    // Le bouton search actionne ta fonction existante de recherche
+    // Interactions
     searchBtn.onPointerUpObservable.add(() => {
         const query = inputText.text;
         if(query.trim() !== ""){
-            moveCameraToSprite(query); // ta fonction existante déjà implémentée
+            moveCameraToSprite(query); // ta fonction existante
             searchResultText.text = "Recherche : " + query;
         }else{
             searchResultText.text = "Entrer un nom valide.";
         }
     });
-   
-    // Activation/désactivation depuis bouton X Quest 3
+
+    // Bouton X (manette gauche Oculus Quest) pour afficher/masquer le panneau
     xrHelper.input.onControllerAddedObservable.add((ctrl) => {
         ctrl.onMotionControllerInitObservable.add((motionController) => {
             if(motionController.handness === 'left'){
                 const xButtonComponent = motionController.getComponent("x-button");
-                
                 if(xButtonComponent){
                     xButtonComponent.onButtonStateChangedObservable.add(() => {
                         if(xButtonComponent.pressed){
@@ -130,11 +130,6 @@ scene.createDefaultXRExperienceAsync({
         });
     });
 
-    // Important : Désactivez explicitement POINTER_SELECTION s'il est activé
-    const pointerSelection = xrHelper.baseExperience.featuresManager.getEnabledFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
-    if(pointerSelection){
-       xrHelper.baseExperience.featuresManager.disableFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
-    }
 });
 
 
