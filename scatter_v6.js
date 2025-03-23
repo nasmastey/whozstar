@@ -176,7 +176,9 @@ scene.onBeforeRenderObservable.add(() => {
         frameCounter = 0;  // Réinitialise le compteur
 		
     var names = [];
-	
+
+const camera = scene.activeCamera; 
+	    
 		const cameraDirection = camera.getForwardRay().direction.normalize();
 		const fov = camera.fov; // Champs de vision de la caméra
 		const cameraPosition = camera.position;
