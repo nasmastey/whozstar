@@ -7,6 +7,47 @@ const engine = new BABYLON.Engine(canvas, true, {
 });
 
 const scene = new BABYLON.Scene(engine);
+
+
+scene.createDefaultXRExperienceAsync({
+    floorMeshes: [],
+    disableTeleportation: true,
+    inputOptions: {
+        doNotLoadControllerMeshes: false // important à conserver
+    },
+    optionalFeatures: false // Ajoutez cette ligne pour éviter les fonctionnalités optionnelles problématiques
+}).then(xrHelper => {
+    console.log("WebXR OK et initialisé proprement.");
+
+    // Si vous voulez cacher les contrôleurs, utilisez cette approche :
+    xrHelper.input.onControllerAddedObservable.add((ctrl) => {
+        ctrl.onMotionControllerInitObservable.add(motionController => {
+            if (motionController && motionController.rootMesh) {
+                motionController.rootMesh.isVisible = false;
+                motionController.rootMesh.getChildMeshes().forEach(mesh => {
+                    mesh.isVisible = false;
+                });
+            }
+        });                
+    });
+
+    // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
+    xrHelper.baseExperience.featuresManager.enableFeature(
+        BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
+            xrInput: xrHelper.input,
+            movementSpeed: 0.2,
+            rotationSpeed: 0.05,
+            movementOrientationFollowsViewerPose: true
+    });
+
+    // Important : Désactivez explicitement POINTER_SELECTION s'il est activé
+    const pointerSelection = xrHelper.baseExperience.featuresManager.getEnabledFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
+    if(pointerSelection){
+       xrHelper.baseExperience.featuresManager.disableFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
+    }
+});
+
+
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
 var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
@@ -17,6 +58,7 @@ camera.angularSpeed = 0.05;
 camera.angle = Math.PI / 2;
 camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
+
 scene.onPointerObservable.add((pointerInfo) => {
   switch (pointerInfo.type) {
     case BABYLON.PointerEventTypes.POINTERPICK:
@@ -24,6 +66,7 @@ scene.onPointerObservable.add((pointerInfo) => {
       break;
 	 }
 });
+
 
 //const cameraDirection = camera.getForwardRay().direction.normalize();
 //const fov = camera.fov; // Champs de vision de la caméra
@@ -124,43 +167,6 @@ sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.Action
     labelSprites.push(sprite);
 });
 
-async function initXR() {
-    try {
-        const xrHelper = await scene.createDefaultXRExperienceAsync({
-            floorMeshes: [] // optional
-        });
-        console.log('WebXR initialized successfully', xrHelper);
-
-        xrHelper.baseExperience.onStateChangedObservable.add((state) => {
-            if (state === BABYLON.WebXRState.IN_XR) {
-                console.log('Entered XR mode:', state);
-            } else if (state === BABYLON.WebXRState.NOT_IN_XR) {
-                console.log('Exited XR mode:', state);
-            }
-        });
-
-        // Additional configuration if needed:
-        //xrHelper.teleportation.detach(); // disable teleportation if unnecessary
-        //xrHelper.pointerSelection.detach(); // disable pointer selection if unnecessary
-
-	        // Mise en place du mouvement continu avec les manettes
-    const fm = xrHelper.baseExperience.featuresManager;
-
-    // Activer une locomotion fluide pilotée par les contrôleurs (thumbsticks)
-    const locomotionFeature = fm.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, "latest", {
-        xrInput: xrHelper.input,
-        movementOrientationFollowsViewerPose: true, // orientation suit le regard du joueur
-        movementSpeed: 0.1, // vitesse de déplacement
-        rotationSpeed: 0.05, // vitesse de rotation si désirée
-    });
-
-    } catch (error) {
-        console.error('Failed to initialize WebXR:', error);
-    }
-}
-
-initXR();
-	
 scene.onBeforeRenderObservable.add(() => {
 	
 	updateSpritePositions();
