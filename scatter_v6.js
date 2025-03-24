@@ -15,7 +15,7 @@ scene.createDefaultXRExperienceAsync({
     inputOptions: {
         doNotLoadControllerMeshes: false // important à conserver
     },
-    optionalFeatures: false // Ajoutez cette ligne pour éviter les fonctionnalités optionnelles problématiques
+    optionalFeatures: true // Ajoutez cette ligne pour éviter les fonctionnalités optionnelles problématiques
 }).then(xrHelper => {
     console.log("WebXR OK et initialisé proprement.");
 
@@ -42,6 +42,7 @@ scene.createDefaultXRExperienceAsync({
             rotationSpeed: 0.1,
             movementOrientationFollowsViewerPose: true
     });
+
 
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
 
