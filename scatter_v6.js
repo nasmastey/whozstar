@@ -35,15 +35,13 @@ scene.createDefaultXRExperienceAsync({
 
     
     // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
-    /*
     xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
             xrInput: xrHelper.input,
-            movementSpeed: 0.2,
-            rotationSpeed: 0.05,
+            movementSpeed: 0.4,
+            rotationSpeed: 0.1,
             movementOrientationFollowsViewerPose: true
     });
-    */
 
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
 
