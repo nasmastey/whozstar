@@ -723,7 +723,7 @@ cluster_30: {
 // Update sprite positions to add small movements
 function updateSpritePositions() {
     time += 0.004;
-	
+	const camera = scene.activeCamera; 
 	const cameraDirection = camera.getForwardRay().direction.normalize();
 	const fov = camera.fov; // Champs de vision de la caméra
 	const cameraPosition = camera.position;
