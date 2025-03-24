@@ -1,4 +1,5 @@
 //http-server -c-1
+//http-server -c-1 -S -C cert.pem -K key.pem
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, {
     preserveDrawingBuffer: true,
@@ -19,6 +20,7 @@ scene.createDefaultXRExperienceAsync({
     console.log("WebXR OK et initialisé proprement.");
 
     // Si vous voulez cacher les contrôleurs, utilisez cette approche :
+    /*
     xrHelper.input.onControllerAddedObservable.add((ctrl) => {
         ctrl.onMotionControllerInitObservable.add(motionController => {
             if (motionController && motionController.rootMesh) {
@@ -29,9 +31,11 @@ scene.createDefaultXRExperienceAsync({
             }
         });                
     });
+    */
 
     
     // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
+    /*
     xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
             xrInput: xrHelper.input,
@@ -39,6 +43,7 @@ scene.createDefaultXRExperienceAsync({
             rotationSpeed: 0.05,
             movementOrientationFollowsViewerPose: true
     });
+    */
 
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
 
