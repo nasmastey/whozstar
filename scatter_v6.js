@@ -22,9 +22,9 @@ scene.createDefaultXRExperienceAsync({
     xrHelper.input.onControllerAddedObservable.add((ctrl) => {
         ctrl.onMotionControllerInitObservable.add(motionController => {
             if (motionController && motionController.rootMesh) {
-                motionController.rootMesh.isVisible = false;
+                motionController.rootMesh.isVisible = true;
                 motionController.rootMesh.getChildMeshes().forEach(mesh => {
-                    mesh.isVisible = false;
+                    mesh.isVisible = true;
                 });
             }
         });                
