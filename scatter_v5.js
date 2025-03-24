@@ -124,11 +124,6 @@ sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.Action
     labelSprites.push(sprite);
 });
 
-const xr = scene.createDefaultXRExperienceAsync();
-
-document.addEventListener("DOMContentLoaded", function(event) {
-  document.getElementById("Button").disabled = true;
-});
 	
 scene.onBeforeRenderObservable.add(() => {
 	
