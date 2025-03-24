@@ -44,9 +44,9 @@ scene.createDefaultXRExperienceAsync({
     });
 
     //clavier?
-    xrHelper.baseExperience.featuresManager.enableFeature(BABYLON.WebXRFeatureName.DOM_OVERLAY, "latest", {
-        element: document.getElementById("searchContainer")
-    });
+    //xrHelper.baseExperience.featuresManager.enableFeature(BABYLON.WebXRFeatureName.DOM_OVERLAY, "latest", {
+    //    element: document.getElementById("searchContainer")
+    //});
 
 
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
