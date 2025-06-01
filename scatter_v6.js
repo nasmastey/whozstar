@@ -4,37 +4,138 @@ const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, {
     preserveDrawingBuffer: true,
     stencil: true,
-    disableWebGL2Support: false, // Assurer l'utilisation de WebGL 2.0 si disponible
+    disableWebGL2Support: false,
 });
-
 const scene = new BABYLON.Scene(engine);
 
+// XR Setup
 scene.createDefaultXRExperienceAsync({
     floorMeshes: [],
     disableTeleportation: true,
-    inputOptions: {
-        doNotLoadControllerMeshes: false // important à conserver
-    },
-    optionalFeatures: true // Ajoutez cette ligne pour éviter les fonctionnalités optionnelles problématiques
+    inputOptions: { doNotLoadControllerMeshes: true },
+    optionalFeatures: true
 }).then(xrHelper => {
-    console.log("WebXR OK et initialisé proprement.");
+    console.log("WebXR initialized.");
+    // Global reference for left thumbstick
+    window.leftThumbstick = null;
 
-    // Si vous voulez cacher les contrôleurs, utilisez cette approche :
-    /*
-    xrHelper.input.onControllerAddedObservable.add((ctrl) => {
-        ctrl.onMotionControllerInitObservable.add(motionController => {
-            if (motionController && motionController.rootMesh) {
-                motionController.rootMesh.isVisible = true;
-                motionController.rootMesh.getChildMeshes().forEach(mesh => {
-                    mesh.isVisible = true;
-                });
+    // XR legend panel setup (hidden by default)
+
+    // XR scale slider panel setup (hidden by default)
+    if (typeof BABYLON.GUI !== "undefined") {
+        if (scene.xrScalePanel) {
+            scene.xrScalePanel.dispose();
+        }
+        const xrScalePanel = new BABYLON.GUI.StackPanel();
+        xrScalePanel.width = "500px";
+        xrScalePanel.height = "120px";
+        xrScalePanel.background = "rgba(0,0,0,0.8)";
+        xrScalePanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        xrScalePanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        xrScalePanel.isVisible = false;
+        xrScalePanel.zIndex = 2000;
+
+        const sliderLabel = new BABYLON.GUI.TextBlock();
+        sliderLabel.text = "Scale: 1.00";
+        sliderLabel.height = "40px";
+        sliderLabel.color = "white";
+        sliderLabel.fontSize = 24;
+        sliderLabel.marginBottom = "10px";
+        xrScalePanel.addControl(sliderLabel);
+
+        const scaleSlider = new BABYLON.GUI.Slider();
+        scaleSlider.minimum = -1;
+        scaleSlider.maximum = 1;
+        scaleSlider.value = 0;
+        scaleSlider.height = "40px";
+        scaleSlider.width = "400px";
+        scaleSlider.color = "#00ff00";
+        scaleSlider.background = "#333";
+        scaleSlider.thumbWidth = "30px";
+        scaleSlider.barOffset = "10px";
+        xrScalePanel.addControl(scaleSlider);
+
+        // n is the scale factor range (e.g., 10)
+        const n = 10;
+        let currentScale = 1;
+
+        scaleSlider.onValueChangedObservable.add(value => {
+            // Map slider value: -1 -> 1/n, 0 -> 1, 1 -> n
+            let scale;
+            if (value < 0) {
+                scale = 1 / (1 + Math.abs(value) * (n - 1));
+            } else if (value > 0) {
+                scale = 1 + value * (n - 1);
+            } else {
+                scale = 1;
             }
-        });                
-    });
-    */
+            currentScale = scale;
+            sliderLabel.text = "Scale: " + scale.toFixed(2);
 
-    
-    // Activez explicitement seulement les features souhaitées (ici MOVEMENT seulement) :
+        });
+
+        if (!scene.xrScaleTexture) {
+            scene.xrScaleTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("XRScaleUI");
+        }
+        scene.xrScaleTexture.addControl(xrScalePanel);
+        scene.xrScalePanel = xrScalePanel;
+
+        // XR: Toggle scale panel with right A button
+        xrHelper.input.onControllerAddedObservable.add(ctrl => {
+            ctrl.onMotionControllerInitObservable.add(motionController => {
+                if (motionController.handness === 'right') {
+                    const aButton = motionController.getComponent("a-button");
+                    if (aButton) {
+                        aButton.onButtonStateChangedObservable.add(() => {
+                            if (aButton.pressed) {
+                                xrScalePanel.isVisible = !xrScalePanel.isVisible;
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }
+    if (typeof BABYLON.GUI !== "undefined") {
+        if (scene.xrLegendPanel) {
+            scene.xrLegendPanel.dispose();
+        }
+        const xrLegendPanel = new BABYLON.GUI.StackPanel();
+        xrLegendPanel.width = "400px";
+        xrLegendPanel.height = "600px";
+        xrLegendPanel.background = "rgba(0,0,0,0.7)";
+        xrLegendPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        xrLegendPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        xrLegendPanel.isVisible = false; // Hidden by default
+        xrLegendPanel.paddingTop = "20px";
+        xrLegendPanel.paddingLeft = "20px";
+        xrLegendPanel.zIndex = 1000;
+        scene.xrLegendPanel = xrLegendPanel;
+
+        // Attach to fullscreen UI
+        if (!scene.xrLegendTexture) {
+            scene.xrLegendTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("XRLegendUI");
+        }
+        scene.xrLegendTexture.addControl(xrLegendPanel);
+
+        // Toggle legend with right B button
+        xrHelper.input.onControllerAddedObservable.add(ctrl => {
+            ctrl.onMotionControllerInitObservable.add(motionController => {
+                if (motionController.handness === 'right') {
+                    const bButton = motionController.getComponent("b-button");
+                    if (bButton) {
+                        bButton.onButtonStateChangedObservable.add(() => {
+                            if (bButton.pressed) {
+                                xrLegendPanel.isVisible = !xrLegendPanel.isVisible;
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    // Enable only MOVEMENT feature
     xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
             xrInput: xrHelper.input,
@@ -43,92 +144,94 @@ scene.createDefaultXRExperienceAsync({
             movementOrientationFollowsViewerPose: true
     });
 
-    //clavier?
-    //xrHelper.baseExperience.featuresManager.enableFeature(BABYLON.WebXRFeatureName.DOM_OVERLAY, "latest", {
-    //    element: document.getElementById("searchContainer")
-    //});
-
-
+    // UI Setup
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
-
-    // Container principal (invisible au départ)
     const searchPanel = new BABYLON.GUI.StackPanel();
-    searchPanel.width = "400px";
-    searchPanel.paddingTop = "20px";
-    searchPanel.background = "rgba(255,255,255,0.7)";
-    searchPanel.isVisible = false;
+    Object.assign(searchPanel, {
+        width: "400px",
+        paddingTop: "20px",
+        background: "rgba(255,255,255,0.7)",
+        isVisible: false
+    });
     advancedTexture.addControl(searchPanel);
 
-    // Titre du panneau
+    // Header
     const header = new BABYLON.GUI.TextBlock();
-    header.text = "Recherche de particule";
-    header.height = "40px";
-    header.color = "black";
-    header.fontSize = 20;
+    Object.assign(header, {
+        text: "Recherche de particule",
+        height: "40px",
+        color: "black",
+        fontSize: 20
+    });
     searchPanel.addControl(header);
 
-    // Input (zone d'entrée texte)
+    // Input
     const inputText = new BABYLON.GUI.InputText();
-    inputText.width = 0.8;
-    inputText.maxWidth = 0.8;
-    inputText.height = "40px";
-    inputText.color = "black";
-    inputText.background = "white";
-    inputText.placeholderText = "Nom de particule...";
+    Object.assign(inputText, {
+        width: 0.8,
+        maxWidth: 0.8,
+        height: "40px",
+        color: "black",
+        background: "white",
+        placeholderText: "Nom de particule..."
+    });
     searchPanel.addControl(inputText);
 
-    // Bouton "Search"
+    // Search Button
     const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
-    searchBtn.width = 0.5;
-    searchBtn.height = "40px";
-    searchBtn.color = "white";
-    searchBtn.background = "#007bff";
-    searchBtn.cornerRadius = 5;
-    searchBtn.thickness = 0;
-    searchBtn.paddingTop = "10px";
+    Object.assign(searchBtn, {
+        width: 0.5,
+        height: "40px",
+        color: "white",
+        background: "#007bff",
+        cornerRadius: 5,
+        thickness: 0,
+        paddingTop: "10px"
+    });
     searchPanel.addControl(searchBtn);
 
-    // Résultat recherche (feedback utilisateur)
+    // Search Result
     const searchResultText = new BABYLON.GUI.TextBlock();
-    searchResultText.height = "30px";
-    searchResultText.color = "black";
-    searchResultText.text = "";
+    Object.assign(searchResultText, {
+        height: "30px",
+        color: "black",
+        text: ""
+    });
     searchPanel.addControl(searchResultText);
 
-    // Orientation dynamique face caméra
+    // Keep panel facing camera
     scene.onBeforeRenderObservable.add(() => {
-        if(searchPanel.isVisible){
+        if (searchPanel.isVisible) {
             const cam = scene.activeCamera;
-            const forward = cam.getForwardRay().direction.scale(3);
-            const target = cam.position.add(forward);
             advancedTexture.layer.layerMask = cam.layerMask;
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
         }
     });
 
-    // Le bouton search actionne ta fonction existante de recherche
+    // Search action
     searchBtn.onPointerUpObservable.add(() => {
-        const query = inputText.text;
-        if(query.trim() !== ""){
-            moveCameraToSprite(query); // ta fonction existante déjà implémentée
+        const query = inputText.text.trim();
+        if (query) {
+            moveCameraToSprite(query);
             searchResultText.text = "Recherche : " + query;
-        }else{
+        } else {
             searchResultText.text = "Entrer un nom valide.";
         }
     });
-   
-    // Activation/désactivation depuis bouton X Quest 3
-    xrHelper.input.onControllerAddedObservable.add((ctrl) => {
-        ctrl.onMotionControllerInitObservable.add((motionController) => {
-            if(motionController.handness === 'left'){
+
+    // Toggle panel with X button (Quest 3)
+    xrHelper.input.onControllerAddedObservable.add(ctrl => {
+        ctrl.onMotionControllerInitObservable.add(motionController => {
+            if (motionController.handness === 'left') {
+                // Debug: log all available components for this controller
+                console.log("Left controller components:", Object.keys(motionController.components));
                 const xButtonComponent = motionController.getComponent("x-button");
-                
-                if(xButtonComponent){
+                if (xButtonComponent) {
                     xButtonComponent.onButtonStateChangedObservable.add(() => {
-                        if(xButtonComponent.pressed){
+                        if (xButtonComponent.pressed) {
                             searchPanel.isVisible = !searchPanel.isVisible;
-                            if(searchPanel.isVisible){
+                            if (searchPanel.isVisible) {
                                 inputText.text = "";
                                 searchResultText.text = "";
                             }
@@ -136,18 +239,41 @@ scene.createDefaultXRExperienceAsync({
                     });
                 }
             }
+            // Add left joystick up/down to z translation
+            const thumbstick = motionController.getComponent("xr-standard-thumbstick");
+            if (thumbstick) {
+                window.leftThumbstick = thumbstick;
+            }
         });
     });
 
-    // Important : Désactivez explicitement POINTER_SELECTION s'il est activé
-    const pointerSelection = xrHelper.baseExperience.featuresManager.getEnabledFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
-    if(pointerSelection){
-       xrHelper.baseExperience.featuresManager.disableFeature(BABYLON.WebXRFeatureName.POINTER_SELECTION);
-    }
+    // Enable POINTER_SELECTION for controller pointer ray selection
+    xrHelper.baseExperience.featuresManager.enableFeature(
+        BABYLON.WebXRFeatureName.POINTER_SELECTION, 'latest', {
+            xrInput: xrHelper.input
+        }
+    );
 });
 
 
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+// Restore default movement, but add z translation for left joystick up/down
+scene.onBeforeRenderObservable.add(() => {
+    if (typeof xrHelper !== "undefined" && xrHelper.input && xrHelper.input.controllers) {
+        const leftController = xrHelper.input.controllers.find(c => c.inputSource.handedness === "left");
+        if (leftController && leftController.motionController) {
+            const thumbstick = leftController.motionController.getComponent("xr-standard-thumbstick");
+            if (thumbstick && thumbstick.axes) {
+                const axis = thumbstick.axes;
+                const zDelta = -axis[1] * 0.1; // Adjust speed as needed
+                if (Math.abs(axis[1]) > 0.05 && scene.activeCamera) {
+                    scene.activeCamera.position.z += zDelta;
+                }
+            }
+        }
+    }
+});
 
 var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
 camera.minZ = 0.0001;
@@ -161,7 +287,12 @@ camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camer
 scene.onPointerObservable.add((pointerInfo) => {
   switch (pointerInfo.type) {
     case BABYLON.PointerEventTypes.POINTERPICK:
-      searchButton.click();
+      if (pointerInfo.pickInfo && pointerInfo.pickInfo.pickedSprite) {
+        // Select the picked sprite (particle)
+        const pickedName = pointerInfo.pickInfo.pickedSprite.name;
+        searchInput.value = pickedName;
+        moveCameraToSprite(pickedName);
+      }
       break;
 	 }
 });
@@ -199,72 +330,70 @@ const spriteRatio = 1;
 
 
 function main(currentData, ratio) {
+    // Prepare data with scaled positions and color
+    const data = currentData.map(d => ({
+        ...d,
+        x: d.x * ratio,
+        y: d.y * ratio,
+        z: d.z * ratio,
+        color: getColor(d.subType),
+        metadata: { subType: d.subType }
+    }));
 
+    // Sprite manager
+    const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
+    labelSpriteManager.isPickable = true;
 
-const data = currentData.map(d => {
-    d.x = d.x * ratio;
-    d.y = d.y * ratio;
-    d.z = d.z * ratio;
-    d.color = getColor(d.subType);
-    d.metadata = { subType: d.subType };
-    return d;
-});
+    // Helper to create a sprite and attach actions
+    function createLabelSprite(point, idx) {
+        const position = new BABYLON.Vector3(point.x, point.y, point.z);
+        originalPositions.push(position.clone());
 
-
-const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
-labelSpriteManager.isPickable = true;
-
-
-
-scatter.addPoints(data.length, function(particle) {
-    const point = data[particle.idx];
-    particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
-    originalPositions.push(particle.position.clone());
-	
-    let sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
-	sprite.isPickable = true;
-    sprite.position = particle.position;
-	sprite.originalPosition = originalPositions[particle.idx];
-    sprite.size = spriteRatio;
-    sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
-	sprite.metadata = { subType: point.subType };
-    sprite.isVisible = true; // Ensure the sprite is initially visible
-
-// Add an ActionManager to the sphere
-sprite.actionManager = new BABYLON.ActionManager(scene);
-
-// Register actions for mouse over and mouse out
-sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
-    BABYLON.ActionManager.OnPointerOverTrigger,
-    function (evt) {
-		const spriteName = evt.source.name;
-		const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
-		
-		let targetSprite = sprites.find(s => s.name === spriteName);
-
-        // Find the nearest particles
-        let distances = sprites.filter(s => s.isVisible).map(sprite => {
-            return {
-                name: sprite.name,
-                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
-            };
+        const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+        Object.assign(sprite, {
+            isPickable: true,
+            position,
+            originalPosition: originalPositions[idx],
+            size: spriteRatio,
+            color: new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1),
+            metadata: { subType: point.subType },
+            isVisible: true
         });
-        distances.sort((a, b) => a.distance - b.distance);
-		
-		updateNearestList(distances, spriteName, targetSprite.metadata.subType)
-		
-		searchInput.value = spriteName
+
+        sprite.actionManager = new BABYLON.ActionManager(scene);
+
+        // Mouse over: update nearest list and search input
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOverTrigger,
+            evt => {
+                const spriteName = evt.source.name;
+                const sprites = scene.spriteManagers[0].sprites;
+                const targetSprite = sprites.find(s => s.name === spriteName);
+                const distances = sprites.filter(s => s.isVisible).map(s => ({
+                    name: s.name,
+                    distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, s.originalPosition)
+                })).sort((a, b) => a.distance - b.distance);
+                updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+                searchInput.value = spriteName;
+            }
+        ));
+
+        // Click: move camera to sprite
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPickUpTrigger,
+            evt => {
+                searchInput.value = evt.source.name;
+                moveCameraToSprite(evt.source.name);
+            }
+        ));
+
+        labelSprites.push(sprite);
     }
-));
 
-
-sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger, function (evt) {
-		searchInput.value = evt.source.name
-		moveCameraToSprite(evt.source.name);
-	}));
-
-    labelSprites.push(sprite);
-});
+    scatter.addPoints(data.length, (particle) => {
+        createLabelSprite(data[particle.idx], particle.idx);
+        particle.position = originalPositions[particle.idx];
+    });
 
 scene.onBeforeRenderObservable.add(() => {
 	
@@ -304,8 +433,8 @@ scene.onBeforeRenderObservable.add(() => {
         if (distance > 2 && distance < 12 && angle < fov && s.isVisible) {
             names.push({
                 "name": s.name + '_layer',
-                "meshName": s.name + '_mesh',
-                "matName": s.name + '_mat',
+                "meshName": s.name + '_whoz_mesh',
+                "matName": s.name + '_whoz_mat',
                 "textureName": s.name,
 				"color": s.color,
                 "position": s.position
@@ -314,8 +443,9 @@ scene.onBeforeRenderObservable.add(() => {
     });
 
     // Dispose of unused meshes
-    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND').forEach(mesh => {
-        if (!names.some(n => n.meshName === mesh.name)) {
+    scene.meshes
+        .filter(mesh => mesh.name.endsWith('_whoz_mesh') && !names.some(n => n.meshName === mesh.name))
+        .forEach(mesh => {
             if (mesh.material) {
                 if (mesh.material.emissiveTexture) {
                     mesh.material.emissiveTexture.dispose(); // Dispose the emissive texture
@@ -324,19 +454,18 @@ scene.onBeforeRenderObservable.add(() => {
             }
             scene.removeMesh(mesh);
             mesh.dispose(); // Dispose the mesh
-        }
-    });
+        });
 
     // Dispose of unused materials
-    scene.materials.filter(material => material.name !== 'BACKGROUND').forEach(material => {
-        if (!names.some(n => n.matName === material.name)) {
+    scene.materials
+        .filter(material => material.name.endsWith('_whoz_mat') && !names.some(n => n.matName === material.name))
+        .forEach(material => {
             if (material.emissiveTexture) {
                 material.emissiveTexture.dispose(); // Dispose the emissive texture
             }
             scene.removeMaterial(material);
             material.dispose(); // Dispose the material
-        }
-    });
+        });
 
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
@@ -360,14 +489,14 @@ scene.onBeforeRenderObservable.add(() => {
 			
 			
             planeTexture.drawText(n.textureName, null, (font_size*53), "" + font_size + "px system-ui", "white", "transparent", true, true);
-            var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
+            var material = new BABYLON.StandardMaterial(n.textureName + '_whoz_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
             material.backFaceCulling = true;
             material.disableLighting = true;
             material.freeze();
 
-			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
+			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_whoz_mesh', font_size, scene, false);
             outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
             outputplane.isVisible = true;
             outputplane.position = n.position;
@@ -492,241 +621,21 @@ loadFileButton.addEventListener('click', async () => {
     }
 });
 
+const generatedColors = {};
 function getColor(type) {
-    const colors = {
-        TECHNICAL: {
-            r: 85 / 255,
-            g: 113 / 255,
-            b: 255 / 255
-        },
-        PROTOCOL: {
-            r: 255 / 255,
-            g: 121 / 255,
-            b: 166 / 255
-        },
-        OPERATING_SYSTEM: {
-            r: 215 / 255,
-            g: 0 / 255,
-            b: 248 / 255
-        },
-        BUSINESS_SOFTWARE: {
-            r: 134 / 255,
-            g: 0 / 255,
-            b: 255 / 255
-        },
-        TOOL: {
-            r: 121 / 255,
-            g: 210 / 255,
-            b: 255 / 255
-        },
-        FUNCTIONAL: {
-            r: 164 / 255,
-            g: 255 / 255,
-            b: 182 / 255
-        },
-        PROGRAMMING_LANGUAGE: {
-            r: 22 / 255,
-            g: 233 / 255,
-            b: 255 / 255
-        },
-        METHOD: {
-            r: 204 / 255,
-            g: 144 / 255,
-            b: 255 / 255
-        },
-        DATABASE: {
-            r: 11 / 255,
-            g: 255 / 255,
-            b: 227 / 255
-        },
-        BEHAVIORAL: {
-            r: 255 / 255,
-            g: 51 / 255,
-            b: 51 / 255
-        },
-        FRAMEWORK: {
-            r: 255 / 255,
-            g: 230 / 255,
-            b: 0 / 255
-        },
-        TRANSVERSAL: {
-            r: 255 / 255,
-            g: 131 / 255,
-            b: 15 / 255
-        },
-        PLATFORM: {
-            r: 213 / 255,
-            g: 14 / 255,
-            b: 98 / 255
-        },
-        NORMS_AND_STANDARDS: {
-            r: 255 / 255,
-            g: 152 / 255,
-            b: 0 / 255
-        },
-        LANGUAGE: {
-            r: 255 / 255,
-            g: 193 / 255,
-            b: 101 / 255
-        },
-        DEFAULT: {
-            r: 96 / 255,
-            g: 125 / 255,
-            b: 139 / 255
-        },
-	cluster_1: {
-    r: 0 / 255,
-    g: 153 / 255,
-    b: 204 / 255
-},
-cluster_2: {
-    r: 255 / 255,
-    g: 102 / 255,
-    b: 102 / 255
-},
-cluster_3: {
-    r: 102 / 255,
-    g: 204 / 255,
-    b: 0 / 255
-},
-cluster_4: {
-    r: 255 / 255,
-    g: 153 / 255,
-    b: 51 / 255
-},
-cluster_5: {
-    r: 204 / 255,
-    g: 51 / 255,
-    b: 255 / 255
-},
-cluster_6: {
-    r: 102 / 255,
-    g: 255 / 255,
-    b: 178 / 255
-},
-cluster_7: {
-    r: 255 / 255,
-    g: 255 / 255,
-    b: 102 / 255
-},
-cluster_8: {
-    r: 255 / 255,
-    g: 51 / 255,
-    b: 153 / 255
-},
-cluster_9: {
-    r: 153 / 255,
-    g: 153 / 255,
-    b: 255 / 255
-},
-cluster_10: {
-    r: 255 / 255,
-    g: 204 / 255,
-    b: 0 / 255
-},
-cluster_11: {
-    r: 0 / 255,
-    g: 204 / 255,
-    b: 102 / 255
-},
-cluster_12: {
-    r: 204 / 255,
-    g: 0 / 255,
-    b: 204 / 255
-},
-cluster_13: {
-    r: 255 / 255,
-    g: 229 / 255,
-    b: 204 / 255
-},
-cluster_14: {
-    r: 255 / 255,
-    g: 102 / 255,
-    b: 192 / 255
-},
-cluster_15: {
-    r: 204 / 255,
-    g: 102 / 255,
-    b: 51 / 255
-},
-cluster_16: {
-    r: 51 / 255,
-    g: 204 / 255,
-    b: 255 / 255
-},
-cluster_17: {
-    r: 153 / 255,
-    g: 255 / 255,
-    b: 204 / 255
-},
-cluster_18: {
-    r: 255 / 255,
-    g: 179 / 255,
-    b: 102 / 255
-},
-cluster_19: {
-    r: 204 / 255,
-    g: 51 / 255,
-    b: 51 / 255
-},
-cluster_20: {
-    r: 0 / 255,
-    g: 153 / 255,
-    b: 153 / 255
-},
-cluster_21: {
-    r: 204 / 255,
-    g: 204 / 255,
-    b: 0 / 255
-},
-cluster_22: {
-    r: 255 / 255,
-    g: 102 / 255,
-    b: 255 / 255
-},
-cluster_23: {
-    r: 153 / 255,
-    g: 51 / 255,
-    b: 255 / 255
-},
-cluster_24: {
-    r: 102 / 255,
-    g: 51 / 255,
-    b: 0 / 255
-},
-cluster_25: {
-    r: 51 / 255,
-    g: 255 / 255,
-    b: 102 / 255
-},
-cluster_26: {
-    r: 255 / 255,
-    g: 102 / 255,
-    b: 0 / 255
-},
-cluster_27: {
-    r: 153 / 255,
-    g: 0 / 255,
-    b: 51 / 255
-},
-cluster_28: {
-    r: 102 / 255,
-    g: 153 / 255,
-    b: 153 / 255
-},
-cluster_29: {
-    r: 0 / 255,
-    g: 204 / 255,
-    b: 255 / 255
-},
-cluster_30: {
-    r: 255 / 255,
-    g: 153 / 255,
-    b: 204 / 255
-}
-    };
+    // No hardcoded colors, all subTypes get random colors
 
-    return colors[type] || colors.DEFAULT;
+    if (generatedColors[type]) {
+        return generatedColors[type];
+    }
+    // Generate and store a random color for this subType
+    const randColor = {
+        r: Math.random(),
+        g: Math.random(),
+        b: Math.random()
+    };
+    generatedColors[type] = randColor;
+    return randColor;
 }
 
 // Update sprite positions to add small movements
@@ -878,6 +787,52 @@ function createLegend(data) {
     const uniqueTypes = [...new Set(data.map(item => item.subType))];
     const legendContainer = document.getElementById('legend');
     legendContainer.innerHTML = '';
+
+    // Fill XR legend panel if it exists
+    if (scene.xrLegendPanel) {
+        scene.xrLegendPanel.clearControls();
+        uniqueTypes.sort().forEach(type => {
+            const color = getColor(type);
+            const legendItem = new BABYLON.GUI.StackPanel();
+            legendItem.isVertical = false;
+            legendItem.height = "30px";
+            legendItem.paddingBottom = "5px";
+
+            const colorBox = new BABYLON.GUI.Rectangle();
+            colorBox.width = "30px";
+            colorBox.height = "30px";
+            colorBox.color = "white";
+            colorBox.thickness = 1;
+            // Set initial opacity based on state
+            if (!window.xrLegendActiveTypes) window.xrLegendActiveTypes = {};
+            const isActive = window.xrLegendActiveTypes[type] !== false;
+            colorBox.background = `rgba(${Math.round(color.r*255)},${Math.round(color.g*255)},${Math.round(color.b*255)},${isActive ? 1 : 0.3})`;
+
+            const label = new BABYLON.GUI.TextBlock();
+            label.text = type;
+            label.color = "white";
+            label.height = "30px";
+            label.width = "320px";
+            label.paddingLeft = "20px";
+            label.fontSize = 22;
+            label.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            label.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            label.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+
+            legendItem.addControl(colorBox);
+            legendItem.addControl(label);
+            scene.xrLegendPanel.addControl(legendItem);
+
+            // XR: Click to filter by subType using existing function
+            legendItem.onPointerClickObservable.add(() => {
+                filterByType(type);
+                // Toggle state and update colorBox opacity
+                window.xrLegendActiveTypes[type] = !window.xrLegendActiveTypes[type];
+                const active = window.xrLegendActiveTypes[type] !== false;
+                colorBox.background = `rgba(${Math.round(color.r*255)},${Math.round(color.g*255)},${Math.round(color.b*255)},${active ? 0.3 : 1})`;
+            });
+        });
+    }
 
 	//const totalLinesElement = document.createElement('div');
 	//totalLinesElement.className = 'legend-total';
