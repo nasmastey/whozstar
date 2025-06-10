@@ -53,7 +53,7 @@ const originalPositions = [];
 
 const imageUrl = 'etoile2.png';
 const imageSize = 640;
-const spriteRatio = 1;
+const spriteRatio = 2;
 
 
 function main(currentData, ratio) {
@@ -332,15 +332,9 @@ loadFileButton.addEventListener('click', async () => {
         }
     } else {
         try {
-			
-			const response = await fetch('./encrypted_PSO_0.json');
-            const encryptedData = await response.text();
-            const password = await showPasswordModal();
-            const data = decryptData(encryptedData, password);
-			
-            //const response = await fetch('./PSO_0.json');
-            //const data = await response.json();
-            main(data, 1);
+            const response = await fetch('./test_data.json');
+            const data = await response.json();
+            main(data, 20);
             document.getElementById('fileInputContainer').style.display = 'none';
         } catch (error) {
             console.error("Failed to load JSON:", error);

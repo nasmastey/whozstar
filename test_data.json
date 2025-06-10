@@ -1,0 +1,996 @@
+[
+  {
+    "prefLabel": "Element_001",
+    "subType": "TECHNICAL",
+    "x": 0.234,
+    "y": -0.567,
+    "z": 0.891
+  },
+  {
+    "prefLabel": "Element_002",
+    "subType": "PROTOCOL",
+    "x": -0.123,
+    "y": 0.456,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_003",
+    "subType": "OPERATING_SYSTEM",
+    "x": 0.678,
+    "y": 0.234,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_004",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": -0.456,
+    "y": -0.123,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_005",
+    "subType": "TOOL",
+    "x": 0.789,
+    "y": -0.345,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_006",
+    "subType": "FUNCTIONAL",
+    "x": -0.234,
+    "y": 0.678,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_007",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": 0.345,
+    "y": -0.789,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_008",
+    "subType": "METHOD",
+    "x": -0.567,
+    "y": 0.123,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_009",
+    "subType": "DATABASE",
+    "x": 0.123,
+    "y": 0.567,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_010",
+    "subType": "BEHAVIORAL",
+    "x": -0.789,
+    "y": -0.234,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_011",
+    "subType": "FRAMEWORK",
+    "x": 0.456,
+    "y": 0.345,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_012",
+    "subType": "TRANSVERSAL",
+    "x": -0.345,
+    "y": -0.456,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_013",
+    "subType": "PLATFORM",
+    "x": 0.567,
+    "y": 0.789,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_014",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": -0.678,
+    "y": -0.567,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_015",
+    "subType": "LANGUAGE",
+    "x": 0.234,
+    "y": 0.123,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_016",
+    "subType": "TECHNICAL",
+    "x": -0.123,
+    "y": -0.678,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_017",
+    "subType": "PROTOCOL",
+    "x": 0.789,
+    "y": 0.456,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_018",
+    "subType": "OPERATING_SYSTEM",
+    "x": -0.456,
+    "y": 0.234,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_019",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": 0.123,
+    "y": -0.345,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_020",
+    "subType": "TOOL",
+    "x": -0.567,
+    "y": 0.789,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_021",
+    "subType": "FUNCTIONAL",
+    "x": 0.345,
+    "y": -0.123,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_022",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": -0.234,
+    "y": -0.789,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_023",
+    "subType": "METHOD",
+    "x": 0.678,
+    "y": 0.567,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_024",
+    "subType": "DATABASE",
+    "x": -0.345,
+    "y": 0.345,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_025",
+    "subType": "BEHAVIORAL",
+    "x": 0.456,
+    "y": -0.456,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_026",
+    "subType": "FRAMEWORK",
+    "x": -0.789,
+    "y": 0.678,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_027",
+    "subType": "TRANSVERSAL",
+    "x": 0.234,
+    "y": -0.567,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_028",
+    "subType": "PLATFORM",
+    "x": -0.123,
+    "y": 0.123,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_029",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": 0.567,
+    "y": -0.234,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_030",
+    "subType": "LANGUAGE",
+    "x": -0.456,
+    "y": 0.456,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_031",
+    "subType": "TECHNICAL",
+    "x": 0.123,
+    "y": 0.789,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_032",
+    "subType": "PROTOCOL",
+    "x": -0.678,
+    "y": -0.345,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_033",
+    "subType": "OPERATING_SYSTEM",
+    "x": 0.345,
+    "y": 0.234,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_034",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": -0.567,
+    "y": -0.678,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_035",
+    "subType": "TOOL",
+    "x": 0.789,
+    "y": 0.123,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_036",
+    "subType": "FUNCTIONAL",
+    "x": -0.234,
+    "y": 0.567,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_037",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": 0.456,
+    "y": -0.456,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_038",
+    "subType": "METHOD",
+    "x": -0.123,
+    "y": 0.345,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_039",
+    "subType": "DATABASE",
+    "x": 0.678,
+    "y": -0.123,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_040",
+    "subType": "BEHAVIORAL",
+    "x": -0.345,
+    "y": -0.789,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_041",
+    "subType": "FRAMEWORK",
+    "x": 0.567,
+    "y": 0.678,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_042",
+    "subType": "TRANSVERSAL",
+    "x": -0.456,
+    "y": 0.234,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_043",
+    "subType": "PLATFORM",
+    "x": 0.234,
+    "y": -0.567,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_044",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": -0.789,
+    "y": 0.456,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_045",
+    "subType": "LANGUAGE",
+    "x": 0.123,
+    "y": -0.234,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_046",
+    "subType": "TECHNICAL",
+    "x": -0.567,
+    "y": 0.789,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_047",
+    "subType": "PROTOCOL",
+    "x": 0.345,
+    "y": -0.345,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_048",
+    "subType": "OPERATING_SYSTEM",
+    "x": -0.234,
+    "y": -0.123,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_049",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": 0.678,
+    "y": 0.567,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_050",
+    "subType": "TOOL",
+    "x": -0.123,
+    "y": 0.345,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_051",
+    "subType": "FUNCTIONAL",
+    "x": 0.456,
+    "y": -0.678,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_052",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": -0.789,
+    "y": 0.234,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_053",
+    "subType": "METHOD",
+    "x": 0.234,
+    "y": -0.456,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_054",
+    "subType": "DATABASE",
+    "x": -0.345,
+    "y": 0.123,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_055",
+    "subType": "BEHAVIORAL",
+    "x": 0.567,
+    "y": 0.678,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_056",
+    "subType": "FRAMEWORK",
+    "x": -0.456,
+    "y": -0.567,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_057",
+    "subType": "TRANSVERSAL",
+    "x": 0.123,
+    "y": 0.456,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_058",
+    "subType": "PLATFORM",
+    "x": -0.678,
+    "y": -0.234,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_059",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": 0.789,
+    "y": 0.345,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_060",
+    "subType": "LANGUAGE",
+    "x": -0.234,
+    "y": -0.789,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_061",
+    "subType": "TECHNICAL",
+    "x": 0.345,
+    "y": 0.567,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_062",
+    "subType": "PROTOCOL",
+    "x": -0.567,
+    "y": 0.123,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_063",
+    "subType": "OPERATING_SYSTEM",
+    "x": 0.456,
+    "y": -0.345,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_064",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": -0.123,
+    "y": 0.678,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_065",
+    "subType": "TOOL",
+    "x": 0.234,
+    "y": -0.123,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_066",
+    "subType": "FUNCTIONAL",
+    "x": -0.789,
+    "y": -0.456,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_067",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": 0.678,
+    "y": 0.234,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_068",
+    "subType": "METHOD",
+    "x": -0.345,
+    "y": 0.789,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_069",
+    "subType": "DATABASE",
+    "x": 0.567,
+    "y": -0.567,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_070",
+    "subType": "BEHAVIORAL",
+    "x": -0.456,
+    "y": 0.345,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_071",
+    "subType": "FRAMEWORK",
+    "x": 0.123,
+    "y": -0.234,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_072",
+    "subType": "TRANSVERSAL",
+    "x": -0.234,
+    "y": 0.456,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_073",
+    "subType": "PLATFORM",
+    "x": 0.789,
+    "y": -0.678,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_074",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": -0.567,
+    "y": 0.567,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_075",
+    "subType": "LANGUAGE",
+    "x": 0.345,
+    "y": -0.789,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_076",
+    "subType": "TECHNICAL",
+    "x": -0.678,
+    "y": 0.123,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_077",
+    "subType": "PROTOCOL",
+    "x": 0.456,
+    "y": 0.678,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_078",
+    "subType": "OPERATING_SYSTEM",
+    "x": -0.123,
+    "y": -0.345,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_079",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": 0.234,
+    "y": 0.234,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_080",
+    "subType": "TOOL",
+    "x": -0.345,
+    "y": -0.567,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_081",
+    "subType": "FUNCTIONAL",
+    "x": 0.567,
+    "y": 0.456,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_082",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": -0.789,
+    "y": -0.123,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_083",
+    "subType": "METHOD",
+    "x": 0.123,
+    "y": 0.789,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_084",
+    "subType": "DATABASE",
+    "x": -0.456,
+    "y": 0.345,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_085",
+    "subType": "BEHAVIORAL",
+    "x": 0.678,
+    "y": -0.234,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_086",
+    "subType": "FRAMEWORK",
+    "x": -0.234,
+    "y": -0.678,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_087",
+    "subType": "TRANSVERSAL",
+    "x": 0.345,
+    "y": 0.567,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_088",
+    "subType": "PLATFORM",
+    "x": -0.567,
+    "y": 0.234,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_089",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": 0.789,
+    "y": -0.456,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_090",
+    "subType": "LANGUAGE",
+    "x": -0.123,
+    "y": 0.123,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_091",
+    "subType": "TECHNICAL",
+    "x": 0.456,
+    "y": -0.567,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_092",
+    "subType": "PROTOCOL",
+    "x": -0.345,
+    "y": 0.678,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_093",
+    "subType": "OPERATING_SYSTEM",
+    "x": 0.234,
+    "y": -0.345,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_094",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": -0.678,
+    "y": -0.789,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_095",
+    "subType": "TOOL",
+    "x": 0.567,
+    "y": 0.345,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_096",
+    "subType": "FUNCTIONAL",
+    "x": -0.234,
+    "y": 0.456,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_097",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": 0.123,
+    "y": -0.123,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_098",
+    "subType": "METHOD",
+    "x": -0.456,
+    "y": 0.789,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_099",
+    "subType": "DATABASE",
+    "x": 0.789,
+    "y": -0.234,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_100",
+    "subType": "BEHAVIORAL",
+    "x": -0.567,
+    "y": -0.456,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_101",
+    "subType": "FRAMEWORK",
+    "x": 0.345,
+    "y": 0.123,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_102",
+    "subType": "TRANSVERSAL",
+    "x": -0.123,
+    "y": 0.567,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_103",
+    "subType": "PLATFORM",
+    "x": 0.678,
+    "y": -0.678,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_104",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": -0.789,
+    "y": 0.234,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_105",
+    "subType": "LANGUAGE",
+    "x": 0.234,
+    "y": -0.345,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_106",
+    "subType": "TECHNICAL",
+    "x": -0.345,
+    "y": 0.456,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_107",
+    "subType": "PROTOCOL",
+    "x": 0.567,
+    "y": -0.567,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_108",
+    "subType": "OPERATING_SYSTEM",
+    "x": -0.456,
+    "y": 0.678,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_109",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": 0.123,
+    "y": -0.234,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_110",
+    "subType": "TOOL",
+    "x": -0.234,
+    "y": -0.123,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_111",
+    "subType": "FUNCTIONAL",
+    "x": 0.789,
+    "y": 0.789,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_112",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": -0.567,
+    "y": 0.345,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_113",
+    "subType": "METHOD",
+    "x": 0.345,
+    "y": -0.456,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_114",
+    "subType": "DATABASE",
+    "x": -0.678,
+    "y": 0.567,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_115",
+    "subType": "BEHAVIORAL",
+    "x": 0.456,
+    "y": -0.789,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_116",
+    "subType": "FRAMEWORK",
+    "x": -0.123,
+    "y": 0.234,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_117",
+    "subType": "TRANSVERSAL",
+    "x": 0.234,
+    "y": 0.456,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_118",
+    "subType": "PLATFORM",
+    "x": -0.345,
+    "y": -0.567,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_119",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": 0.567,
+    "y": 0.123,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_120",
+    "subType": "LANGUAGE",
+    "x": -0.789,
+    "y": -0.345,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_121",
+    "subType": "TECHNICAL",
+    "x": 0.123,
+    "y": 0.678,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_122",
+    "subType": "PROTOCOL",
+    "x": -0.456,
+    "y": 0.234,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_123",
+    "subType": "OPERATING_SYSTEM",
+    "x": 0.678,
+    "y": -0.123,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_124",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": -0.234,
+    "y": -0.678,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_125",
+    "subType": "TOOL",
+    "x": 0.345,
+    "y": 0.567,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_126",
+    "subType": "FUNCTIONAL",
+    "x": -0.567,
+    "y": 0.345,
+    "z": -0.456
+  },
+  {
+    "prefLabel": "Element_127",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": 0.789,
+    "y": -0.456,
+    "z": 0.678
+  },
+  {
+    "prefLabel": "Element_128",
+    "subType": "METHOD",
+    "x": -0.123,
+    "y": 0.789,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_129",
+    "subType": "DATABASE",
+    "x": 0.456,
+    "y": -0.567,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_130",
+    "subType": "BEHAVIORAL",
+    "x": -0.345,
+    "y": 0.123,
+    "z": -0.567
+  },
+  {
+    "prefLabel": "Element_131",
+    "subType": "FRAMEWORK",
+    "x": 0.234,
+    "y": 0.234,
+    "z": 0.789
+  },
+  {
+    "prefLabel": "Element_132",
+    "subType": "TRANSVERSAL",
+    "x": -0.678,
+    "y": -0.234,
+    "z": -0.123
+  },
+  {
+    "prefLabel": "Element_133",
+    "subType": "PLATFORM",
+    "x": 0.567,
+    "y": 0.456,
+    "z": 0.234
+  },
+  {
+    "prefLabel": "Element_134",
+    "subType": "NORMS_AND_STANDARDS",
+    "x": -0.456,
+    "y": -0.789,
+    "z": -0.678
+  },
+  {
+    "prefLabel": "Element_135",
+    "subType": "LANGUAGE",
+    "x": 0.123,
+    "y": 0.345,
+    "z": 0.456
+  },
+  {
+    "prefLabel": "Element_136",
+    "subType": "TECHNICAL",
+    "x": -0.234,
+    "y": 0.567,
+    "z": -0.345
+  },
+  {
+    "prefLabel": "Element_137",
+    "subType": "PROTOCOL",
+    "x": 0.789,
+    "y": -0.123,
+    "z": 0.123
+  },
+  {
+    "prefLabel": "Element_138",
+    "subType": "OPERATING_SYSTEM",
+    "x": -0.567,
+    "y": -0.456,
+    "z": -0.234
+  },
+  {
+    "prefLabel": "Element_139",
+    "subType": "BUSINESS_SOFTWARE",
+    "x": 0.345,
+    "y": 0.678,
+    "z": 0.567
+  },
+  {
+    "prefLabel": "Element_140",
+    "subType": "TOOL",
+    "x": -0.123,
+    "y": 0.234,
+    "z": -0.789
+  },
+  {
+    "prefLabel": "Element_141",
+    "subType": "FUNCTIONAL",
+    "x": 0.456,
+    "y": -0.345,
+    "z": 0.345
+  },
+  {
+    "prefLabel": "Element_142",
+    "subType": "PROGRAMMING_LANGUAGE",
+    "x": -0.789,
+    "y": 0.456,
+    "z": -0.456
+  }
+]
