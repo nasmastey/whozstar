@@ -17,10 +17,24 @@ camera.angularSpeed = 0.05;
 camera.angle = Math.PI / 2;
 camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
+// Global click handler for sprite selection
 scene.onPointerObservable.add((pointerInfo) => {
   switch (pointerInfo.type) {
     case BABYLON.PointerEventTypes.POINTERPICK:
-      searchButton.click();
+      if (pointerInfo.pickInfo && pointerInfo.pickInfo.pickedSprite) {
+        // Select the picked sprite (particle)
+        const pickedName = pointerInfo.pickInfo.pickedSprite.name;
+        console.log('Sprite clicked:', pickedName);
+        
+        // Update search input if it exists
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.value = pickedName;
+        }
+        
+        // Move camera to the clicked sprite
+        moveCameraToSprite(pickedName);
+      }
       break;
 	 }
 });
@@ -40,6 +54,10 @@ let blinkCount = 0;
 let frameCounter = 0;
 const frameThreshold = 20; // Ajustez ce nombre pour changer la fréquence
 
+// Visual effects variables
+let starField = null;
+let hoverGlowEffects = [];
+
 //var font = "Calibri 20px monospace";
 
 const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
@@ -47,82 +65,340 @@ const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
 const labelSprites = [];
 const originalPositions = [];
 
+// Create background starfield
+function createStarField() {
+    const starCount = 1000;
+    const starSystem = new BABYLON.PointsCloudSystem("starField", starCount, scene);
+    
+    starSystem.addPoints(starCount, function(particle) {
+        // Random position in a large sphere around the scene
+        const radius = 500;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        particle.position = new BABYLON.Vector3(
+            radius * Math.sin(phi) * Math.cos(theta),
+            radius * Math.sin(phi) * Math.sin(theta),
+            radius * Math.cos(phi)
+        );
+        
+        // Random color between white and light blue
+        const intensity = 0.3 + Math.random() * 0.7;
+        particle.color = new BABYLON.Color4(intensity, intensity, intensity + 0.2, 1);
+    });
+    
+    starSystem.buildMeshAsync().then(mesh => {
+        mesh.material = new BABYLON.StandardMaterial('starMaterial', scene);
+        mesh.material.pointSize = 2;
+        mesh.material.usePointSizing = true;
+        mesh.material.disableLighting = true;
+        mesh.material.emissiveColor = new BABYLON.Color3(0.8, 0.8, 1);
+        starField = mesh;
+    });
+}
+
+// Create hover glow effect
+function createHoverGlow(sprite) {
+    const level = sprite.metadata && sprite.metadata.level ? sprite.metadata.level : 5;
+    const glowIntensity = Math.max(0.3, (14 - level) * 0.08); // Higher level = more glow
+    
+    // Create glow sphere
+    const glowSphere = BABYLON.MeshBuilder.CreateSphere(`hoverGlow_${sprite.name}`, {
+        diameter: sprite.size * 3
+    }, scene);
+    
+    const glowMaterial = new BABYLON.StandardMaterial(`hoverGlowMat_${sprite.name}`, scene);
+    glowMaterial.emissiveColor = new BABYLON.Color3(
+        sprite.color.r * glowIntensity,
+        sprite.color.g * glowIntensity,
+        sprite.color.b * glowIntensity
+    );
+    glowMaterial.alpha = 0.4;
+    glowMaterial.disableLighting = true;
+    
+    glowSphere.material = glowMaterial;
+    glowSphere.position = sprite.position.clone();
+    glowSphere.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
+    glowSphere.isVisible = false; // Initially hidden
+    
+    const hoverEffect = {
+        sprite: sprite,
+        mesh: glowSphere,
+        material: glowMaterial,
+        baseIntensity: glowIntensity,
+        isActive: false
+    };
+    
+    hoverGlowEffects.push(hoverEffect);
+    return hoverEffect;
+}
+
+// Show hover glow for a sprite
+function showHoverGlow(spriteName) {
+    const hoverEffect = hoverGlowEffects.find(effect => effect.sprite.name === spriteName);
+    if (hoverEffect && !hoverEffect.isActive) {
+        hoverEffect.mesh.isVisible = true;
+        hoverEffect.isActive = true;
+        
+        // Animate glow appearance
+        const animateGlow = new BABYLON.Animation("glowAppear", "alpha", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        animateGlow.setKeys([
+            {frame: 0, value: 0},
+            {frame: 15, value: 0.4}
+        ]);
+        hoverEffect.material.animations = [animateGlow];
+        scene.beginAnimation(hoverEffect.material, 0, 15, false);
+    }
+}
+
+// Hide hover glow for a sprite
+function hideHoverGlow(spriteName) {
+    const hoverEffect = hoverGlowEffects.find(effect => effect.sprite.name === spriteName);
+    if (hoverEffect && hoverEffect.isActive) {
+        // Animate glow disappearance
+        const animateGlow = new BABYLON.Animation("glowDisappear", "alpha", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        animateGlow.setKeys([
+            {frame: 0, value: 0.4},
+            {frame: 15, value: 0}
+        ]);
+        hoverEffect.material.animations = [animateGlow];
+        const animation = scene.beginAnimation(hoverEffect.material, 0, 15, false);
+        
+        animation.onAnimationEndObservable.add(() => {
+            hoverEffect.mesh.isVisible = false;
+            hoverEffect.isActive = false;
+        });
+    }
+}
+
+// Global function to get all sprites from all managers
+function getAllSprites() {
+    const allSprites = [];
+    if (scene && scene.spriteManagers) {
+        scene.spriteManagers.forEach(manager => {
+            if (manager.sprites) {
+                allSprites.push(...manager.sprites);
+            }
+        });
+    }
+    return allSprites;
+}
+
 // Create scatter mesh and label sprites
 //const imageUrl = 'bubble12.png';
 //const imageSize = 5000;
 
-const imageUrl = '5etoile.png';
-const imageSize = 640;
+// Default values - will be overridden by individual sprite images
+const defaultImageSize = 640;
 const spriteRatio = 2;
 
 
-function main(currentData, ratio) {
 
-
-const data = currentData.map(d => {
-    d.x = d.x * ratio;
-    d.y = d.y * ratio;
-    d.z = d.z * ratio;
-    d.color = getColor(d.subType);
-    d.metadata = { subType: d.subType };
-    return d;
-});
-
-
-const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
-labelSpriteManager.isPickable = true;
-
-
-
-scatter.addPoints(data.length, function(particle) {
-    const point = data[particle.idx];
-    particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
-    originalPositions.push(particle.position.clone());
-	
-    let sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
-	sprite.isPickable = true;
-    sprite.position = particle.position;
-	sprite.originalPosition = originalPositions[particle.idx];
-    sprite.size = spriteRatio;
-    sprite.color = new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1);
-	sprite.metadata = { subType: point.subType };
-    sprite.isVisible = true; // Ensure the sprite is initially visible
-
-// Add an ActionManager to the sphere
-sprite.actionManager = new BABYLON.ActionManager(scene);
-
-// Register actions for mouse over and mouse out
-sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
-    BABYLON.ActionManager.OnPointerOverTrigger,
-    function (evt) {
-		const spriteName = evt.source.name;
-		const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
-		
-		let targetSprite = sprites.find(s => s.name === spriteName);
-
-        // Find the nearest particles
-        let distances = sprites.filter(s => s.isVisible).map(sprite => {
-            return {
-                name: sprite.name,
-                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
-            };
-        });
-        distances.sort((a, b) => a.distance - b.distance);
-		
-		updateNearestList(distances, spriteName, targetSprite.metadata.subType)
-		
-		searchInput.value = spriteName
+// Function to ensure minimum distance between sprites
+function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+    const adjustedData = [...data];
+    const maxIterations = 50; // Reduced from 100 to prevent freezes
+    let iteration = 0;
+    let progressThreshold = 0.01; // Minimum progress required to continue
+    let lastCollisionCount = Infinity;
+    
+    while (iteration < maxIterations) {
+        let hasCollisions = false;
+        let collisionCount = 0;
+        
+        // Process in smaller batches to prevent UI freezing
+        const batchSize = Math.min(50, adjustedData.length);
+        for (let batch = 0; batch < adjustedData.length; batch += batchSize) {
+            const endBatch = Math.min(batch + batchSize, adjustedData.length);
+            
+            for (let i = batch; i < endBatch; i++) {
+                for (let j = i + 1; j < adjustedData.length; j++) {
+                    const sprite1 = adjustedData[i];
+                    const sprite2 = adjustedData[j];
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(sprite1.x - sprite2.x, 2) +
+                        Math.pow(sprite1.y - sprite2.y, 2) +
+                        Math.pow(sprite1.z - sprite2.z, 2)
+                    );
+                    
+                    if (distance < minDistance && distance > 0.001) { // Avoid division by zero
+                        hasCollisions = true;
+                        collisionCount++;
+                        
+                        // Calculate direction vector from sprite2 to sprite1
+                        const dx = sprite1.x - sprite2.x;
+                        const dy = sprite1.y - sprite2.y;
+                        const dz = sprite1.z - sprite2.z;
+                        
+                        // Normalize the direction vector
+                        const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        const normalizedDx = length > 0.001 ? dx / length : (Math.random() - 0.5) * 2;
+                        const normalizedDy = length > 0.001 ? dy / length : (Math.random() - 0.5) * 2;
+                        const normalizedDz = length > 0.001 ? dz / length : (Math.random() - 0.5) * 2;
+                        
+                        // Calculate how much to move each sprite (reduced movement for stability)
+                        const overlap = minDistance - distance;
+                        const moveDistance = Math.min(overlap * 0.3, 2); // Limit movement to prevent overshooting
+                        
+                        // Move sprites apart
+                        sprite1.x += normalizedDx * moveDistance;
+                        sprite1.y += normalizedDy * moveDistance;
+                        sprite1.z += normalizedDz * moveDistance;
+                        
+                        sprite2.x -= normalizedDx * moveDistance;
+                        sprite2.y -= normalizedDy * moveDistance;
+                        sprite2.z -= normalizedDz * moveDistance;
+                    }
+                }
+            }
+        }
+        
+        // Check for progress to avoid infinite loops
+        const progress = (lastCollisionCount - collisionCount) / Math.max(lastCollisionCount, 1);
+        if (!hasCollisions || (iteration > 10 && progress < progressThreshold)) {
+            break;
+        }
+        
+        lastCollisionCount = collisionCount;
+        iteration++;
     }
-));
+    
+    console.log(`Position adjustment completed after ${iteration} iterations (${lastCollisionCount} remaining collisions)`);
+    return adjustedData;
+}
+
+function main(currentData, ratio) {
+    // Prepare data with scaled positions and color
+    let data = currentData.map(d => ({
+        ...d,
+        x: d.x * ratio,
+        y: d.y * ratio,
+        z: d.z * ratio,
+        color: getColor(d.subType),
+        metadata: { subType: d.subType }
+    }));
+    
+    // Adjust positions to ensure minimum distance of 8 between sprites
+    data = adjustPositionsForMinimumDistance(data, 8);
+
+    // Group data by level to create separate sprite managers for each PNG
+    const dataByLevel = {};
+    data.forEach(d => {
+        const level = d.level || 5; // Default to level 5 if no level specified
+        const imageFile = d.imageFile || '5etoile.png'; // Default image
+        if (!dataByLevel[level]) {
+            dataByLevel[level] = {
+                imageFile: imageFile,
+                elements: []
+            };
+        }
+        dataByLevel[level].elements.push(d);
+    });
+
+    // Create sprite managers for each level
+    const spriteManagers = {};
+    Object.keys(dataByLevel).forEach(level => {
+        const levelData = dataByLevel[level];
+        const spriteManager = new BABYLON.SpriteManager(
+            `labelSpriteManager_level_${level}`,
+            levelData.imageFile,
+            levelData.elements.length,
+            defaultImageSize,
+            scene
+        );
+        spriteManager.isPickable = true;
+        spriteManagers[level] = spriteManager;
+    });
 
 
-sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger, function (evt) {
-		searchInput.value = evt.source.name
-		moveCameraToSprite(evt.source.name);
-	}));
 
-    labelSprites.push(sprite);
-});
+    // Helper function to create a sprite and attach actions
+    function createLabelSprite(point, idx, spriteManager) {
+        const position = new BABYLON.Vector3(point.x, point.y, point.z);
+        originalPositions.push(position.clone());
+
+        // Calculate size based on level: level 1 = 6, level 2 = 5.5, level 3 = 5, etc.
+        const level = point.level || 5;
+        const spriteSize = Math.max(1, 6.5 - (level * 0.5)); // Formula: 6.5 - (level * 0.5)
+
+        const sprite = new BABYLON.Sprite(point.prefLabel, spriteManager);
+        Object.assign(sprite, {
+            isPickable: true,
+            position,
+            originalPosition: originalPositions[idx],
+            size: spriteSize,
+            color: new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1),
+            metadata: { subType: point.subType, level: point.level },
+            isVisible: true
+        });
+
+        sprite.actionManager = new BABYLON.ActionManager(scene);
+
+        // Mouse over: update nearest list and search input
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOverTrigger,
+            evt => {
+                const spriteName = evt.source.name;
+                const allSprites = getAllSprites();
+                const targetSprite = allSprites.find(s => s.name === spriteName);
+                if (targetSprite) {
+                    const distances = allSprites.filter(s => s.isVisible).map(s => ({
+                        name: s.name,
+                        distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, s.originalPosition)
+                    })).sort((a, b) => a.distance - b.distance);
+                    updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+                    
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = spriteName;
+                    }
+                }
+            }
+        ));
+
+        // Click: move camera to sprite (OnPickTrigger for better click detection)
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPickTrigger,
+            evt => {
+                const spriteName = evt.source.name;
+                console.log('Sprite clicked via ActionManager:', spriteName);
+                
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = spriteName;
+                }
+                moveCameraToSprite(spriteName);
+            }
+        ));
+
+        // Alternative click handler for better compatibility
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPickUpTrigger,
+            evt => {
+                const spriteName = evt.source.name;
+                console.log('Sprite clicked via OnPickUpTrigger:', spriteName);
+                
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = spriteName;
+                }
+                moveCameraToSprite(spriteName);
+            }
+        ));
+
+        labelSprites.push(sprite);
+    }
+
+
+    scatter.addPoints(data.length, function(particle) {
+        const point = data[particle.idx];
+        const level = point.level || 5; // Default to level 5 if no level specified
+        const spriteManager = spriteManagers[level];
+        
+        particle.position = new BABYLON.Vector3(point.x, point.y, point.z);
+        createLabelSprite(point, particle.idx, spriteManager);
+    });
 
 	
 scene.onBeforeRenderObservable.add(() => {
@@ -139,7 +415,7 @@ scene.onBeforeRenderObservable.add(() => {
 		const fov = camera.fov; // Champs de vision de la caméra
 		const cameraPosition = camera.position;
 	
-    scene.spriteManagers[0].sprites.map(s => {
+    getAllSprites().map(s => {
         var width = engine.getRenderWidth();
         var height = engine.getRenderHeight();
         var identityMatrix = BABYLON.Matrix.Identity();
@@ -158,13 +434,19 @@ scene.onBeforeRenderObservable.add(() => {
         const distance = BABYLON.Vector3.Distance(camera.position, s.position);
 		
         if (distance > 2 && distance < 12 && angle < fov && s.isVisible) {
+            // Get sprite level for size calculation
+            const spriteLevel = s.metadata && s.metadata.level ? s.metadata.level : 5;
+            const spriteSize = Math.max(1, 6.5 - (spriteLevel * 0.5));
+            
             names.push({
                 "name": s.name + '_layer',
                 "meshName": s.name + '_mesh',
                 "matName": s.name + '_mat',
                 "textureName": s.name,
-				"color": s.color,
-                "position": s.position
+    "color": s.color,
+                "position": s.position,
+                "level": spriteLevel,
+                "spriteSize": spriteSize
             });
         }
     });
@@ -196,26 +478,57 @@ scene.onBeforeRenderObservable.add(() => {
 
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
-            const font_size = 12
+            const font_size = 12;
+            // Scale the parentheses radius based on sprite size (tripled)
+            const baseRadius = 90; // Tripled from 30 to 90
+            const scaledRadius = baseRadius * (n.spriteSize / 4); // Scale relative to default size 4
+            
             const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
-			
-			var textureContext = planeTexture.getContext();
-			
-			//Draw on canvas
-			textureContext.lineWidth = 2;
-			textureContext.beginPath();
-			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5, Math.PI/5);
-			textureContext.strokeStyle = "rgba("+255*n.color.r+", "+255*n.color.g+", "+255*n.color.b+", 0.7)";
-			textureContext.stroke();
-			
-			textureContext.beginPath();
-			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
-			textureContext.stroke();
-			
-			planeTexture.update();
-			
-			
-            planeTexture.drawText(n.textureName, null, (font_size*53), "" + font_size + "px system-ui", "white", "transparent", true, true);
+   
+   var textureContext = planeTexture.getContext();
+   
+   //Draw on canvas - scaled parentheses with cyan color and black border
+   // Draw black border first (thicker)
+   textureContext.lineWidth = 3; // Thicker for border effect
+   textureContext.strokeStyle = "black";
+   textureContext.beginPath();
+   textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5, Math.PI/5);
+   textureContext.stroke();
+   
+   textureContext.beginPath();
+   textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
+   textureContext.stroke();
+   
+   // Draw cyan parentheses on top
+   textureContext.lineWidth = 2; // Original thickness for cyan
+   textureContext.strokeStyle = "cyan";
+   textureContext.beginPath();
+   textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5, Math.PI/5);
+   textureContext.stroke();
+   
+   textureContext.beginPath();
+   textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
+   textureContext.stroke();
+   
+   planeTexture.update();
+   
+   
+            // Draw text with stroke (border) first, then fill
+            const textY = font_size * 53; // Center the sprite name
+            const fontSize = font_size;
+            const fontFamily = "FreeMono, monospace";
+            const textToDisplay = n.textureName.toUpperCase(); // Convert to uppercase
+            
+            // Set font for measurements
+            textureContext.font = fontSize + "px " + fontFamily;
+            
+            // Draw sprite name with black stroke (border) first
+            textureContext.strokeStyle = "black";
+            textureContext.lineWidth = 1;
+            textureContext.strokeText(textToDisplay, null, textY);
+            
+            // Draw cyan fill text on top for sprite name
+            planeTexture.drawText(textToDisplay, null, textY, fontSize + "px " + fontFamily, "cyan", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
@@ -223,7 +536,7 @@ scene.onBeforeRenderObservable.add(() => {
             material.disableLighting = true;
             material.freeze();
 
-			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
+   var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
             outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
             outputplane.isVisible = true;
             outputplane.position = n.position;
@@ -332,7 +645,7 @@ loadFileButton.addEventListener('click', async () => {
         }
     } else {
         try {
-            const response = await fetch('./test_data.json');
+            const response = await fetch('./test_data_with_levels.json');
             const data = await response.json();
             main(data, 20);
             document.getElementById('fileInputContainer').style.display = 'none';
@@ -611,6 +924,11 @@ function renderLoop() {
 }
 
 function blinkSprite(sprite) {
+    // Clear any existing blink interval to prevent memory leaks
+    if (sprite.blinkInterval) {
+        clearInterval(sprite.blinkInterval);
+    }
+    
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
     const defaultColor = sprite.color
     const highlightColor = new BABYLON.Color4(1, 1, 1, 1);
@@ -618,11 +936,14 @@ function blinkSprite(sprite) {
 	const mediumLowlightColor = new BABYLON.Color4((3*sprite.color.r+1)/4, (3*sprite.color.g+1)/4, (3*sprite.color.b+1)/4, (3*sprite.color.a+1)/4);
 	const mediumHighlightColor = new BABYLON.Color4((sprite.color.r+3)/4, (sprite.color.g+3)/4, (sprite.color.b+3)/4, (sprite.color.a+3)/4);
 
+    let localBlinkCount = 0;
+    const maxBlinks = 16; // Limit blink duration to prevent infinite blinking
+
     // Configure l'intervalle de clignotement
-    setInterval(() => {
-		blinkCount+=1
+    sprite.blinkInterval = setInterval(() => {
+		localBlinkCount++;
 		
-		var moduloBlink = blinkCount % 8;
+		var moduloBlink = localBlinkCount % 8;
 		
         if (moduloBlink == 0) {
             sprite.color = defaultColor;
@@ -640,40 +961,68 @@ function blinkSprite(sprite) {
             sprite.color = highlightColor;
             isDefaultColor = false;
         }
+        
+        // Stop blinking after maxBlinks and restore default color
+        if (localBlinkCount >= maxBlinks) {
+            sprite.color = defaultColor;
+            clearInterval(sprite.blinkInterval);
+            sprite.blinkInterval = null;
+        }
     }, 200); // Durée du clignotement en millisecondes
 }
 
 function moveCameraToSprite(spriteName) {
-	console.log('move to',spriteName);
-    const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
+	console.log('Moving camera to sprite:', spriteName);
+    
+    // Get all sprites from all managers
+    const sprites = getAllSprites();
     let targetSprite = sprites.find(s => s.name === spriteName);
 
     if (targetSprite) {
+        console.log('Target sprite found:', targetSprite.name, 'at position:', targetSprite.position);
+        
         const targetPosition = new BABYLON.Vector3(targetSprite.position.x, targetSprite.position.y, targetSprite.position.z);
         const cameraStartPosition = camera.position.clone();
         const cameraStartTarget = camera.getTarget().clone();
 
-        const bufferDistance = 9; // Adjust the distance from sprite
+        const bufferDistance = 9; // Distance from sprite
         const directionVector = targetPosition.subtract(camera.position).normalize();
         const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
 
-
-		const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
-		const numberOfFrames = Math.min(85,Math.max(10,Math.round(moveDistance)));
-		
-		// Create animation for camera position
-        const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 10, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamPosition.setKeys([{frame: 0, value: cameraStartPosition},{frame: numberOfFrames, value: adjustedTargetPosition}]);
+        const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
+        const numberOfFrames = Math.min(85, Math.max(10, Math.round(moveDistance)));
+        
+        console.log('Animation frames:', numberOfFrames, 'Distance:', moveDistance);
+        
+        // Stop any existing animations
+        scene.stopAnimation(camera);
+        
+        // Create animation for camera position
+        const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        animCamPosition.setKeys([
+            {frame: 0, value: cameraStartPosition},
+            {frame: numberOfFrames, value: adjustedTargetPosition}
+        ]);
 
         // Create animation for camera target
-        const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 10, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamTarget.setKeys([{frame: 0, value: cameraStartTarget},{  frame: numberOfFrames, value: targetPosition}]);
+        const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        animCamTarget.setKeys([
+            {frame: 0, value: cameraStartTarget},
+            {frame: numberOfFrames, value: targetPosition}
+        ]);
 
-        scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
+        // Start the animation
+        const animationGroup = scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
+        
+        // Add completion callback
+        animationGroup.onAnimationEndObservable.add(() => {
+            console.log('Camera animation completed');
+        });
 
+        // Make the sprite blink to indicate selection
         blinkSprite(targetSprite);
 
-        // Find the nearest particles
+        // Find and update nearest particles list
         let distances = sprites.filter(s => s.isVisible).map(sprite => {
             return {
                 name: sprite.name,
@@ -681,11 +1030,12 @@ function moveCameraToSprite(spriteName) {
             };
         });
         distances.sort((a, b) => a.distance - b.distance);
-		
-		updateNearestList(distances, spriteName, targetSprite.metadata.subType)
-		
+        
+        updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+        
     } else {
-        console.log("Sprite not found: " + spriteName);
+        console.error("Sprite not found:", spriteName);
+        console.log("Available sprites:", sprites.map(s => s.name));
     }
 }
 
@@ -761,7 +1111,7 @@ function createLegend(data) {
 
 // Function to filter sprites by type
 function filterByType(type) {
-    scene.spriteManagers[0].sprites.forEach(sprite => {
+    getAllSprites().forEach(sprite => {
 		if (sprite.metadata && sprite.metadata.subType === type) {
             sprite.isVisible = !sprite.isVisible;
         }
@@ -787,7 +1137,7 @@ function updateParticleList() {
     const dataList = document.getElementById('particlesList');
     dataList.innerHTML = ''; // Clear existing items
 
-    const particleNames = scene.spriteManagers[0].sprites
+    const particleNames = getAllSprites()
         .filter(sprite => sprite.isVisible)
         .map(sprite => sprite.name);
     
