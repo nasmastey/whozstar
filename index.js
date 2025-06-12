@@ -440,18 +440,8 @@ scene.onBeforeRenderObservable.add(() => {
    
    
             // Draw text with stroke (border) first, then fill
-            // Calculate textY based on sprite level: level 1 = below parentheses, levels 12-13 = centered
             const spriteLevel = n.level || 5;
-            let textYOffset;
-            if (spriteLevel === 1) {
-                textYOffset = 65; // Below parentheses for level 1
-            } else if (spriteLevel >= 12) {
-                textYOffset = 50; // Centered with parentheses for levels 12-13
-            } else {
-                // Gradual transition from 65 (level 1) to 50 (level 12)
-                textYOffset = 65 - ((spriteLevel - 1) * (15 / 11)); // Linear interpolation
-            }
-            const textY = font_size * textYOffset;
+            const textY = (spriteLevel <= 3) ? font_size * 65 : font_size * 53; // Below parentheses for levels 1-3, centered for others
             const fontSize = font_size;
             const fontFamily = "FreeMono, monospace";
             const textToDisplay = n.textureName.toUpperCase(); // Convert to uppercase
