@@ -146,9 +146,10 @@
 <body>
     <script type="module" src="./index.js"></script>
 	<div id="fileInputContainer">
-        <input type="file" id="fileInput" accept=".json">
-        <button id="loadFileButton">Submit</button>
-    </div>
+	       <input type="file" id="fileInput" accept=".json">
+	       <button id="loadFileButton">Submit</button>
+	       <button id="imageSelectorButton" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">🎨 Images</button>
+	   </div>
 	<div id="searchContainer">
         <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
         <datalist id="particlesList"></datalist>
@@ -170,16 +171,21 @@
     </div>
 </div>
 	    <script>
-		const toggleButtons = document.querySelectorAll('.toggleButton');
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const target = document.querySelector(`#${button.dataset.target}`);
-                if (target) {
-                    target.style.display = target.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-        });
-    </script>
+	 const toggleButtons = document.querySelectorAll('.toggleButton');
+	       toggleButtons.forEach(button => {
+	           button.addEventListener('click', () => {
+	               const target = document.querySelector(`#${button.dataset.target}`);
+	               if (target) {
+	                   target.style.display = target.style.display === 'none' ? 'block' : 'none';
+	               }
+	           });
+	       });
+
+	       // Gestionnaire pour le bouton du sélecteur d'images
+	       document.getElementById('imageSelectorButton').addEventListener('click', function() {
+	           window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+	       });
+	   </script>
 </body>
 </body>
 </html>

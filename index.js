@@ -195,6 +195,9 @@ function adjustPositionsForMinimumDistance(data, minDistance = 8) {
 }
 
 function main(currentData, ratio) {
+    // Charger la configuration des images personnalisées
+    const imageConfiguration = loadImageConfiguration();
+    
     // Prepare data with scaled positions and color
     let data = currentData.map(d => ({
         ...d,
@@ -202,7 +205,9 @@ function main(currentData, ratio) {
         y: d.y * ratio,
         z: d.z * ratio,
         color: getColor(d.subType),
-        metadata: { subType: d.subType }
+        metadata: { subType: d.subType },
+        // Utiliser l'image personnalisée si disponible, sinon utiliser l'image par défaut
+        imageFile: imageConfiguration[d.level] || d.imageFile || getDefaultImageForLevel(d.level)
     }));
     
     // Adjust positions to ensure minimum distance of 8 between sprites
@@ -212,7 +217,7 @@ function main(currentData, ratio) {
     const dataByLevel = {};
     data.forEach(d => {
         const level = d.level || 5; // Default to level 5 if no level specified
-        const imageFile = d.imageFile || '5etoile.png'; // Default image
+        const imageFile = d.imageFile; // Image déjà déterminée ci-dessus
         if (!dataByLevel[level]) {
             dataByLevel[level] = {
                 imageFile: imageFile,
@@ -1124,5 +1129,107 @@ function decryptData(encryptedData, password) {
         return null;
     }
 }
+
+// Fonction pour charger la configuration des images personnalisées
+function loadImageConfiguration() {
+    try {
+        const saved = localStorage.getItem('imageConfiguration');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Erreur lors du chargement de la configuration des images:', e);
+    }
+    
+    // Configuration par défaut si aucune sauvegarde
+    return getDefaultImageConfiguration();
+}
+
+// Configuration par défaut des images
+function getDefaultImageConfiguration() {
+    return {
+        1: "1blackhole.png",
+        2: "2blackhole.png",
+        3: "3whitehole.png",
+        4: "4nebuleuse.png",
+        5: "5etoile.png",
+        6: "6etoile.png",
+        7: "7neutronstar.png",
+        8: "8planet.png",
+        9: "9planet.png",
+        10: "10protoplanet.png",
+        11: "11moon.png",
+        12: "12asteroid.png",
+        13: "13asteroid.png"
+    };
+}
+
+// Fonction pour obtenir l'image par défaut pour un niveau
+function getDefaultImageForLevel(level) {
+    const defaultConfig = getDefaultImageConfiguration();
+    return defaultConfig[level] || '5etoile.png';
+}
+
+// Fonction pour recharger les données avec la nouvelle configuration d'images
+function reloadWithNewImageConfiguration() {
+    // Récupérer les données actuelles
+    const currentData = getAllSprites().map(sprite => ({
+        prefLabel: sprite.name,
+        subType: sprite.metadata.subType,
+        x: sprite.originalPosition.x / 20, // Diviser par le ratio utilisé
+        y: sprite.originalPosition.y / 20,
+        z: sprite.originalPosition.z / 20,
+        level: sprite.metadata.level
+    }));
+    
+    if (currentData.length > 0) {
+        // Nettoyer la scène actuelle
+        clearScene();
+        
+        // Recharger avec la nouvelle configuration
+        main(currentData, 20);
+        
+        console.log('Données rechargées avec la nouvelle configuration d\'images');
+    }
+}
+
+// Fonction pour nettoyer la scène
+function clearScene() {
+    // Supprimer tous les sprites
+    if (scene.spriteManagers) {
+        scene.spriteManagers.forEach(manager => {
+            manager.dispose();
+        });
+    }
+    
+    // Vider les tableaux
+    labelSprites.length = 0;
+    originalPositions.length = 0;
+    
+    // Supprimer les meshes de texte
+    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND' && mesh.name !== 'starField').forEach(mesh => {
+        if (mesh.material) {
+            if (mesh.material.emissiveTexture) {
+                mesh.material.emissiveTexture.dispose();
+            }
+            mesh.material.dispose();
+        }
+        scene.removeMesh(mesh);
+        mesh.dispose();
+    });
+}
+
+// Écouter les changements de configuration depuis le sélecteur d'images
+window.addEventListener('storage', function(e) {
+    if (e.key === 'imageConfiguration' || e.key === 'imageConfigurationUpdate') {
+        console.log('Configuration d\'images mise à jour, rechargement...');
+        setTimeout(() => {
+            reloadWithNewImageConfiguration();
+        }, 100); // Petit délai pour s'assurer que la configuration est bien sauvegardée
+    }
+});
+
+// Exposer la fonction de rechargement pour le sélecteur d'images
+window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
 
 //scene.debugLayer.show()
