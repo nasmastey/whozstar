@@ -672,8 +672,7 @@ scene.onBeforeRenderObservable.add(() => {
    
    
             // Draw text with stroke (border) first, then fill
-            const spriteLevel = n.level || 5;
-            const textY = (spriteLevel <= 3) ? font_size * 65 : font_size * 53; // Below parentheses for levels 1-3, centered for others
+            const textY = font_size * 53; // Center the sprite name
             const fontSize = font_size;
             const fontFamily = "FreeMono, monospace";
             const textToDisplay = n.textureName.toUpperCase(); // Convert to uppercase
