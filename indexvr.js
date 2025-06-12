@@ -155,8 +155,9 @@ scene.createDefaultXRExperienceAsync({
     });
     advancedTexture.addControl(searchPanel);
 
-    // Global variables for suggestions
+    // Global variables for suggestions and virtual keyboard
     let suggestionsPanel, currentSuggestions = [], maxSuggestions = 5;
+    let virtualKeyboard, keyboardVisible = false;
 
     // Header
     const header = new BABYLON.GUI.TextBlock();
@@ -254,6 +255,121 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
+    // Create Virtual Keyboard Panel
+    virtualKeyboard = new BABYLON.GUI.StackPanel();
+    Object.assign(virtualKeyboard, {
+        width: "600px",
+        height: "300px",
+        background: "rgba(50,50,50,0.95)",
+        isVisible: false,
+        paddingTop: "10px",
+        paddingBottom: "10px"
+    });
+    advancedTexture.addControl(virtualKeyboard);
+
+    // Create keyboard layout
+    const keyboardRows = [
+        ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '⎵', '✓']
+    ];
+
+    keyboardRows.forEach((row, rowIndex) => {
+        const rowPanel = new BABYLON.GUI.StackPanel();
+        rowPanel.isVertical = false;
+        rowPanel.height = "60px";
+        rowPanel.paddingBottom = "5px";
+        
+        row.forEach(key => {
+            const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${key}`, key);
+            Object.assign(keyButton, {
+                width: key === '⎵' ? "120px" : "50px",
+                height: "50px",
+                color: "white",
+                background: "rgba(100,100,100,0.8)",
+                cornerRadius: 5,
+                thickness: 1,
+                fontSize: key === '⌫' || key === '✓' ? 20 : 16,
+                marginLeft: "2px",
+                marginRight: "2px"
+            });
+
+            // Add hover effect
+            keyButton.onPointerEnterObservable.add(() => {
+                keyButton.background = "rgba(150,150,150,0.9)";
+            });
+
+            keyButton.onPointerOutObservable.add(() => {
+                keyButton.background = "rgba(100,100,100,0.8)";
+            });
+
+            // Handle key press
+            keyButton.onPointerClickObservable.add(() => {
+                handleVirtualKeyPress(key);
+            });
+
+            rowPanel.addControl(keyButton);
+        });
+        
+        virtualKeyboard.addControl(rowPanel);
+    });
+
+    // Function to handle virtual key presses
+    function handleVirtualKeyPress(key) {
+        const currentText = inputText.text || "";
+        
+        switch(key) {
+            case '⌫': // Backspace
+                inputText.text = currentText.slice(0, -1);
+                break;
+            case '⎵': // Space
+                inputText.text = currentText + " ";
+                break;
+            case '✓': // Enter/Search
+                hideVirtualKeyboard();
+                if (inputText.text.trim()) {
+                    // Trigger search
+                    setTimeout(() => {
+                        try {
+                            moveCameraToSprite(inputText.text.trim());
+                            searchResultText.text = "Recherche : " + inputText.text.trim();
+                        } catch (error) {
+                            console.error("Error during search:", error);
+                            searchResultText.text = "Erreur lors de la recherche";
+                        }
+                    }, 10);
+                }
+                break;
+            default:
+                inputText.text = currentText + key;
+                break;
+        }
+        
+        // Trigger text change event for suggestions
+        if (inputText.onTextChangedObservable) {
+            inputText.onTextChangedObservable.notifyObservers(inputText);
+        }
+    }
+
+    // Function to show virtual keyboard
+    function showVirtualKeyboard() {
+        if (!keyboardVisible) {
+            virtualKeyboard.isVisible = true;
+            keyboardVisible = true;
+            console.log("Virtual keyboard shown");
+        }
+    }
+
+    // Function to hide virtual keyboard
+    function hideVirtualKeyboard() {
+        if (keyboardVisible) {
+            virtualKeyboard.isVisible = false;
+            keyboardVisible = false;
+            console.log("Virtual keyboard hidden");
+        }
+    }
+
     // Keep panel facing camera
     scene.onBeforeRenderObservable.add(() => {
         if (searchPanel.isVisible) {
@@ -264,13 +380,38 @@ scene.createDefaultXRExperienceAsync({
         }
     });
 
-    // Search action
+    // Search action with protection against freezes
+    let searchInProgress = false;
     searchBtn.onPointerUpObservable.add(() => {
+        // Prevent multiple simultaneous searches
+        if (searchInProgress) {
+            console.log("Search already in progress, skipping...");
+            return;
+        }
+        
         const query = inputText.text.trim();
         if (query) {
+            searchInProgress = true;
             hideSuggestions();
-            moveCameraToSprite(query);
-            searchResultText.text = "Recherche : " + query;
+            
+            try {
+                // Use setTimeout to prevent UI freeze
+                setTimeout(() => {
+                    try {
+                        moveCameraToSprite(query);
+                        searchResultText.text = "Recherche : " + query;
+                    } catch (error) {
+                        console.error("Error during camera movement:", error);
+                        searchResultText.text = "Erreur lors de la recherche";
+                    } finally {
+                        searchInProgress = false;
+                    }
+                }, 10);
+            } catch (error) {
+                console.error("Error initiating search:", error);
+                searchResultText.text = "Erreur lors de la recherche";
+                searchInProgress = false;
+            }
         } else {
             searchResultText.text = "Entrer un nom valide.";
         }
@@ -292,6 +433,7 @@ scene.createDefaultXRExperienceAsync({
                                 searchResultText.text = "";
                             } else {
                                 hideSuggestions();
+                                hideVirtualKeyboard();
                             }
                         }
                     });
@@ -326,7 +468,7 @@ scene.createDefaultXRExperienceAsync({
     );
 });
 
-// Function to show VR virtual keyboard
+// Function to show VR virtual keyboard (integrated)
 let keyboardRequestInProgress = false;
 
 function showVRKeyboard(inputElement) {
@@ -337,45 +479,16 @@ function showVRKeyboard(inputElement) {
     }
     
     keyboardRequestInProgress = true;
-    console.log("Attempting to show VR virtual keyboard");
+    console.log("Showing integrated VR keyboard");
     
     try {
-        // Method 1: Simple focus (most reliable for VR browsers)
+        // Focus the input element
         if (inputElement && inputElement.focus) {
             inputElement.focus();
         }
         
-        // Method 2: Try WebXR DOM Overlay API if available
-        if (navigator.xr && typeof xrHelper !== "undefined" && xrHelper && xrHelper.baseExperience) {
-            const session = xrHelper.baseExperience.sessionManager?.session;
-            if (session) {
-                try {
-                    // Check if DOM overlay is supported
-                    if (session.domOverlayState && session.domOverlayState.type !== null) {
-                        // Create a temporary HTML input to trigger system keyboard
-                        const tempInput = document.createElement('input');
-                        tempInput.type = 'text';
-                        tempInput.style.position = 'absolute';
-                        tempInput.style.left = '-9999px';
-                        tempInput.style.opacity = '0';
-                        tempInput.style.pointerEvents = 'none';
-                        document.body.appendChild(tempInput);
-                        
-                        // Focus without triggering events
-                        tempInput.focus();
-                        
-                        // Clean up after a delay
-                        setTimeout(() => {
-                            if (tempInput.parentNode) {
-                                document.body.removeChild(tempInput);
-                            }
-                        }, 200);
-                    }
-                } catch (e) {
-                    console.log("DOM overlay keyboard not available:", e);
-                }
-            }
-        }
+        // Show the integrated virtual keyboard
+        showVirtualKeyboard();
         
     } catch (e) {
         console.error("Error showing VR keyboard:", e);
@@ -383,7 +496,7 @@ function showVRKeyboard(inputElement) {
         // Reset the flag after a short delay
         setTimeout(() => {
             keyboardRequestInProgress = false;
-        }, 500);
+        }, 200);
     }
 }
 
@@ -1182,72 +1295,92 @@ function blinkSprite(sprite) {
 }
 
 function moveCameraToSprite(spriteName) {
-	console.log('Moving VR camera to sprite:', spriteName);
+    try {
+        console.log('Moving VR camera to sprite:', spriteName);
 
-    const camera = scene.activeCamera;
-    
-    // Get all sprites from all managers
-    const sprites = getAllSprites();
-    let targetSprite = sprites.find(s => s.name === spriteName);
-
-    if (targetSprite) {
-        console.log('VR Target sprite found:', targetSprite.name, 'at position:', targetSprite.position);
+        const camera = scene.activeCamera;
+        if (!camera) {
+            console.error("No active camera found");
+            return;
+        }
         
-        const targetPosition = new BABYLON.Vector3(targetSprite.position.x, targetSprite.position.y, targetSprite.position.z);
-        const cameraStartPosition = camera.position.clone();
-        const cameraStartTarget = camera.getTarget().clone();
-
-        const bufferDistance = 9; // Distance from sprite
-        const directionVector = targetPosition.subtract(camera.position).normalize();
-        const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
-
-        const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
-        const numberOfFrames = Math.min(85, Math.max(10, Math.round(moveDistance)));
+        // Get all sprites from all managers with timeout protection
+        const sprites = getAllSprites();
+        if (!sprites || sprites.length === 0) {
+            console.error("No sprites available");
+            return;
+        }
         
-        console.log('VR Animation frames:', numberOfFrames, 'Distance:', moveDistance);
-        
-        // Stop any existing animations
-        scene.stopAnimation(camera);
-        
-        // Create animation for camera position
-        const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamPosition.setKeys([
-            {frame: 0, value: cameraStartPosition},
-            {frame: numberOfFrames, value: adjustedTargetPosition}
-        ]);
+        let targetSprite = sprites.find(s => s.name === spriteName);
 
-        // Create animation for camera target
-        const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        animCamTarget.setKeys([
-            {frame: 0, value: cameraStartTarget},
-            {frame: numberOfFrames, value: targetPosition}
-        ]);
+        if (targetSprite) {
+            console.log('VR Target sprite found:', targetSprite.name, 'at position:', targetSprite.position);
+            
+            const targetPosition = new BABYLON.Vector3(targetSprite.position.x, targetSprite.position.y, targetSprite.position.z);
+            const cameraStartPosition = camera.position.clone();
+            const cameraStartTarget = camera.getTarget().clone();
 
-        // Start the animation
-        const animationGroup = scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
-        
-        // Add completion callback
-        animationGroup.onAnimationEndObservable.add(() => {
-            console.log('VR Camera animation completed');
-        });
+            const bufferDistance = 9; // Distance from sprite
+            const directionVector = targetPosition.subtract(camera.position).normalize();
+            const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
 
-        // Make the sprite blink to indicate selection
-        blinkSprite(targetSprite);
+            const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
+            const numberOfFrames = Math.min(85, Math.max(10, Math.round(moveDistance)));
+            
+            console.log('VR Animation frames:', numberOfFrames, 'Distance:', moveDistance);
+            
+            // Stop any existing animations
+            scene.stopAnimation(camera);
+            
+            // Create animation for camera position
+            const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            animCamPosition.setKeys([
+                {frame: 0, value: cameraStartPosition},
+                {frame: numberOfFrames, value: adjustedTargetPosition}
+            ]);
 
-        // Find and update nearest particles list
-        let distances = sprites.filter(s => s.isVisible).map(sprite => {
-            return {
-                name: sprite.name,
-                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
-            };
-        });
-        distances.sort((a, b) => a.distance - b.distance);
-        
-        updateNearestList(distances, spriteName, targetSprite.metadata.subType);
-        
-    } else {
-        console.error("VR Sprite not found:", spriteName);
-        console.log("Available VR sprites:", sprites.map(s => s.name));
+            // Create animation for camera target
+            const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 30, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            animCamTarget.setKeys([
+                {frame: 0, value: cameraStartTarget},
+                {frame: numberOfFrames, value: targetPosition}
+            ]);
+
+            // Start the animation
+            const animationGroup = scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
+            
+            // Add completion callback
+            animationGroup.onAnimationEndObservable.add(() => {
+                console.log('VR Camera animation completed');
+            });
+
+            // Make the sprite blink to indicate selection
+            blinkSprite(targetSprite);
+
+            // Find and update nearest particles list with protection
+            try {
+                const visibleSprites = sprites.filter(s => s.isVisible);
+                if (visibleSprites.length > 0 && targetSprite.originalPosition) {
+                    let distances = visibleSprites.map(sprite => {
+                        return {
+                            name: sprite.name,
+                            distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
+                        };
+                    });
+                    distances.sort((a, b) => a.distance - b.distance);
+                    
+                    updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+                }
+            } catch (nearestError) {
+                console.error("Error updating nearest list:", nearestError);
+            }
+            
+        } else {
+            console.error("VR Sprite not found:", spriteName);
+            console.log("Available VR sprites:", sprites.slice(0, 10).map(s => s.name)); // Limit log output
+        }
+    } catch (error) {
+        console.error("Error in moveCameraToSprite:", error);
     }
 }
 
