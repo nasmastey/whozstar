@@ -141,6 +141,84 @@
     border-radius: 5px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
+
+/* Styles pour le clavier virtuel HTML de fallback */
+#virtualKeyboardHTML {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(40, 40, 40, 0.95);
+    border-radius: 10px;
+    padding: 15px;
+    display: none;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+#virtualKeyboardHTML .keyboard-title {
+    color: white;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#virtualKeyboardHTML .keyboard-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 5px;
+    gap: 3px;
+}
+
+#virtualKeyboardHTML .key {
+    background: rgba(70, 70, 70, 0.9);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 40px;
+    height: 45px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#virtualKeyboardHTML .key:hover {
+    background: rgba(120, 120, 120, 1.0);
+    transform: scale(1.05);
+}
+
+#virtualKeyboardHTML .key:active {
+    transform: scale(0.95);
+}
+
+#virtualKeyboardHTML .key.special {
+    background: rgba(80, 80, 80, 0.9);
+}
+
+#virtualKeyboardHTML .key.backspace {
+    background: rgba(150, 0, 0, 0.9);
+    min-width: 70px;
+}
+
+#virtualKeyboardHTML .key.enter {
+    background: rgba(0, 150, 0, 0.9);
+    min-width: 80px;
+}
+
+#virtualKeyboardHTML .key.space {
+    min-width: 300px;
+}
+
+#virtualKeyboardHTML .key.shift.active {
+    background: rgba(100, 100, 150, 0.9);
+}
+
+#virtualKeyboardHTML .key.caps.active {
+    background: rgba(100, 150, 100, 0.9);
+}
         </style>
     </head>
 <body>
@@ -164,11 +242,86 @@
     <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
     <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
 	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
-    <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
-        <label for="passwordInput">Enter password:</label>
-        <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
-        <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
-    </div>
+	   <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
+	       <label for="passwordInput">Enter password:</label>
+	       <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
+	       <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
+	   </div>
+</div>
+
+<!-- Clavier virtuel HTML de fallback -->
+<div id="virtualKeyboardHTML">
+	   <div class="keyboard-title">⌨️ Clavier QWERTY Virtuel</div>
+	   
+	   <div class="keyboard-row">
+	       <button class="key" data-key="`">`</button>
+	       <button class="key" data-key="1">1</button>
+	       <button class="key" data-key="2">2</button>
+	       <button class="key" data-key="3">3</button>
+	       <button class="key" data-key="4">4</button>
+	       <button class="key" data-key="5">5</button>
+	       <button class="key" data-key="6">6</button>
+	       <button class="key" data-key="7">7</button>
+	       <button class="key" data-key="8">8</button>
+	       <button class="key" data-key="9">9</button>
+	       <button class="key" data-key="0">0</button>
+	       <button class="key" data-key="-">-</button>
+	       <button class="key" data-key="=">=</button>
+	       <button class="key backspace" data-key="Backspace">⌫</button>
+	   </div>
+	   
+	   <div class="keyboard-row">
+	       <button class="key special" data-key="Tab">⇥</button>
+	       <button class="key" data-key="q">Q</button>
+	       <button class="key" data-key="w">W</button>
+	       <button class="key" data-key="e">E</button>
+	       <button class="key" data-key="r">R</button>
+	       <button class="key" data-key="t">T</button>
+	       <button class="key" data-key="y">Y</button>
+	       <button class="key" data-key="u">U</button>
+	       <button class="key" data-key="i">I</button>
+	       <button class="key" data-key="o">O</button>
+	       <button class="key" data-key="p">P</button>
+	       <button class="key" data-key="[">[</button>
+	       <button class="key" data-key="]">]</button>
+	       <button class="key" data-key="\">\</button>
+	   </div>
+	   
+	   <div class="keyboard-row">
+	       <button class="key caps special" data-key="CapsLock">⇪</button>
+	       <button class="key" data-key="a">A</button>
+	       <button class="key" data-key="s">S</button>
+	       <button class="key" data-key="d">D</button>
+	       <button class="key" data-key="f">F</button>
+	       <button class="key" data-key="g">G</button>
+	       <button class="key" data-key="h">H</button>
+	       <button class="key" data-key="j">J</button>
+	       <button class="key" data-key="k">K</button>
+	       <button class="key" data-key="l">L</button>
+	       <button class="key" data-key=";">;</button>
+	       <button class="key" data-key="'">'</button>
+	       <button class="key enter" data-key="Enter">↵</button>
+	   </div>
+	   
+	   <div class="keyboard-row">
+	       <button class="key shift special" data-key="Shift">⇧</button>
+	       <button class="key" data-key="z">Z</button>
+	       <button class="key" data-key="x">X</button>
+	       <button class="key" data-key="c">C</button>
+	       <button class="key" data-key="v">V</button>
+	       <button class="key" data-key="b">B</button>
+	       <button class="key" data-key="n">N</button>
+	       <button class="key" data-key="m">M</button>
+	       <button class="key" data-key=",">,</button>
+	       <button class="key" data-key=".">.</button>
+	       <button class="key" data-key="/">/</button>
+	       <button class="key shift special" data-key="Shift">⇧</button>
+	   </div>
+	   
+	   <div class="keyboard-row">
+	       <button class="key space" data-key=" ">⎵</button>
+	       <button class="key enter" data-key="Search">✓</button>
+	   </div>
 </div>
 	    <script>
 	 const toggleButtons = document.querySelectorAll('.toggleButton');
@@ -185,6 +338,133 @@
 	       document.getElementById('imageSelectorButton').addEventListener('click', function() {
 	           window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
 	       });
+
+	       // Clavier virtuel HTML - Variables d'état
+	       let htmlKeyboardVisible = false;
+	       let isShiftActive = false;
+	       let isCapsLockActive = false;
+
+	       // Fonction pour afficher/masquer le clavier HTML
+	       function toggleHTMLKeyboard() {
+	           const keyboard = document.getElementById('virtualKeyboardHTML');
+	           htmlKeyboardVisible = !htmlKeyboardVisible;
+	           keyboard.style.display = htmlKeyboardVisible ? 'block' : 'none';
+	           console.log('HTML Keyboard toggled:', htmlKeyboardVisible);
+	       }
+
+	       // Fonction pour gérer les touches du clavier HTML
+	       function handleHTMLKeyPress(key) {
+	           const searchInput = document.getElementById('searchInput');
+	           if (!searchInput) return;
+
+	           const currentValue = searchInput.value;
+
+	           switch(key) {
+	               case 'Backspace':
+	                   searchInput.value = currentValue.slice(0, -1);
+	                   break;
+	               case 'Tab':
+	                   searchInput.value = currentValue + '\t';
+	                   break;
+	               case 'Enter':
+	               case 'Search':
+	                   // Déclencher la recherche
+	                   const searchButton = document.getElementById('searchButton');
+	                   if (searchButton) searchButton.click();
+	                   toggleHTMLKeyboard();
+	                   break;
+	               case 'CapsLock':
+	                   isCapsLockActive = !isCapsLockActive;
+	                   updateKeyboardState();
+	                   break;
+	               case 'Shift':
+	                   isShiftActive = !isShiftActive;
+	                   updateKeyboardState();
+	                   break;
+	               case ' ':
+	                   searchInput.value = currentValue + ' ';
+	                   break;
+	               default:
+	                   let charToAdd = key;
+	                   
+	                   // Gestion des majuscules/minuscules
+	                   if (/^[a-zA-Z]$/.test(key)) {
+	                       if (isCapsLockActive || isShiftActive) {
+	                           charToAdd = key.toUpperCase();
+	                       } else {
+	                           charToAdd = key.toLowerCase();
+	                       }
+	                   } else if (isShiftActive) {
+	                       // Symboles avec Shift
+	                       const shiftMap = {
+	                           '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+	                           '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
+	                           '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
+	                           ',': '<', '.': '>', '/': '?'
+	                       };
+	                       charToAdd = shiftMap[key] || key;
+	                   }
+	                   
+	                   searchInput.value = currentValue + charToAdd;
+	                   
+	                   // Réinitialiser Shift après saisie
+	                   if (isShiftActive) {
+	                       isShiftActive = false;
+	                       updateKeyboardState();
+	                   }
+	                   break;
+	           }
+
+	           // Déclencher l'événement input pour les suggestions
+	           searchInput.dispatchEvent(new Event('input'));
+	       }
+
+	       // Fonction pour mettre à jour l'état visuel du clavier
+	       function updateKeyboardState() {
+	           const shiftKeys = document.querySelectorAll('.key.shift');
+	           const capsKey = document.querySelector('.key.caps');
+	           
+	           shiftKeys.forEach(key => {
+	               if (isShiftActive) {
+	                   key.classList.add('active');
+	               } else {
+	                   key.classList.remove('active');
+	               }
+	           });
+	           
+	           if (capsKey) {
+	               if (isCapsLockActive) {
+	                   capsKey.classList.add('active');
+	               } else {
+	                   capsKey.classList.remove('active');
+	               }
+	           }
+	       }
+
+	       // Initialiser le clavier HTML
+	       document.addEventListener('DOMContentLoaded', function() {
+	           // Ajouter les événements aux touches du clavier HTML
+	           const keys = document.querySelectorAll('#virtualKeyboardHTML .key');
+	           keys.forEach(key => {
+	               key.addEventListener('click', function() {
+	                   const keyValue = this.getAttribute('data-key');
+	                   handleHTMLKeyPress(keyValue);
+	               });
+	           });
+
+	           // Afficher le clavier HTML quand on clique sur le champ de recherche
+	           const searchInput = document.getElementById('searchInput');
+	           if (searchInput) {
+	               searchInput.addEventListener('focus', function() {
+	                   if (!htmlKeyboardVisible) {
+	                       toggleHTMLKeyboard();
+	                   }
+	               });
+	           }
+	       });
+
+	       // Exposer la fonction pour l'utiliser depuis le code VR
+	       window.toggleHTMLKeyboard = toggleHTMLKeyboard;
 	   </script>
 </body>
 </body>

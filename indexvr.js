@@ -597,9 +597,21 @@ scene.createDefaultXRExperienceAsync({
                             if (searchPanel.isVisible) {
                                 inputText.text = "";
                                 searchResultText.text = "";
+                                // Afficher automatiquement le clavier virtuel avec le panneau de recherche
+                                showVirtualKeyboard();
+                                // Afficher aussi le clavier HTML comme fallback
+                                if (window.toggleHTMLKeyboard && !window.htmlKeyboardVisible) {
+                                    window.toggleHTMLKeyboard();
+                                }
+                                console.log("Search panel and virtual keyboard opened with X button");
                             } else {
                                 hideSuggestions();
                                 hideVirtualKeyboard();
+                                // Masquer aussi le clavier HTML
+                                if (window.toggleHTMLKeyboard && window.htmlKeyboardVisible) {
+                                    window.toggleHTMLKeyboard();
+                                }
+                                console.log("Search panel and virtual keyboard closed with X button");
                             }
                         }
                     });
