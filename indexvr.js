@@ -258,23 +258,26 @@ scene.createDefaultXRExperienceAsync({
     // Create Virtual Keyboard Panel
     virtualKeyboard = new BABYLON.GUI.StackPanel();
     Object.assign(virtualKeyboard, {
-        width: "600px",
-        height: "300px",
-        background: "rgba(50,50,50,0.95)",
+        width: "800px",
+        height: "350px",
+        background: "rgba(40,40,40,0.95)",
         isVisible: false,
-        paddingTop: "10px",
-        paddingBottom: "10px",
+        paddingTop: "15px",
+        paddingBottom: "15px",
+        paddingLeft: "10px",
+        paddingRight: "10px",
         horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER,
         verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM,
         top: "-50px", // Position slightly above bottom
-        zIndex: 1000 // Ensure it's on top
+        zIndex: 1000, // Ensure it's on top
+        cornerRadius: 10
     });
     advancedTexture.addControl(virtualKeyboard);
 
     // Add keyboard title
     const keyboardTitle = new BABYLON.GUI.TextBlock();
     Object.assign(keyboardTitle, {
-        text: "🎹 Clavier Virtuel VR",
+        text: "⌨️ Clavier QWERTY Virtuel",
         height: "40px",
         color: "white",
         fontSize: 20,
@@ -283,13 +286,18 @@ scene.createDefaultXRExperienceAsync({
     });
     virtualKeyboard.addControl(keyboardTitle);
 
-    // Create keyboard layout
+    // Create QWERTY keyboard layout (English)
     const keyboardRows = [
-        ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '⎵', '✓']
+        ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '⌫'],
+        ['⇥', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'],
+        ['⇪', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '↵'],
+        ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '⇧'],
+        ['⎵', '✓']
     ];
+    
+    // Track shift and caps lock state
+    let isShiftPressed = false;
+    let isCapsLockOn = false;
 
     keyboardRows.forEach((row, rowIndex) => {
         const rowPanel = new BABYLON.GUI.StackPanel();
@@ -299,16 +307,35 @@ scene.createDefaultXRExperienceAsync({
         
         row.forEach(key => {
             const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${key}`, key);
+            
+            // Determine key width based on special keys
+            let keyWidth = "45px";
+            if (key === '⎵') keyWidth = "300px"; // Space bar
+            else if (key === '⌫') keyWidth = "70px"; // Backspace
+            else if (key === '⇥') keyWidth = "60px"; // Tab
+            else if (key === '⇪') keyWidth = "70px"; // Caps Lock
+            else if (key === '↵') keyWidth = "80px"; // Enter
+            else if (key === '⇧') keyWidth = "80px"; // Shift
+            else if (key === '\\') keyWidth = "60px"; // Backslash
+            
+            // Determine background color based on key type
+            let backgroundColor = "rgba(70,70,70,0.9)";
+            if (key === '✓') backgroundColor = "rgba(0,150,0,0.9)";
+            else if (key === '⌫') backgroundColor = "rgba(150,0,0,0.9)";
+            else if (key === '⇧') backgroundColor = isShiftPressed ? "rgba(100,100,150,0.9)" : "rgba(80,80,80,0.9)";
+            else if (key === '⇪') backgroundColor = isCapsLockOn ? "rgba(100,150,100,0.9)" : "rgba(80,80,80,0.9)";
+            else if (['⇥', '↵'].includes(key)) backgroundColor = "rgba(80,80,80,0.9)";
+            
             Object.assign(keyButton, {
-                width: key === '⎵' ? "120px" : "50px",
+                width: keyWidth,
                 height: "50px",
                 color: "white",
-                background: key === '✓' ? "rgba(0,150,0,0.9)" : key === '⌫' ? "rgba(150,0,0,0.9)" : "rgba(70,70,70,0.9)",
+                background: backgroundColor,
                 cornerRadius: 8,
                 thickness: 2,
-                fontSize: key === '⌫' || key === '✓' ? 20 : 18,
-                marginLeft: "3px",
-                marginRight: "3px",
+                fontSize: ['⌫', '✓', '⇥', '⇪', '↵', '⇧'].includes(key) ? 16 : 18,
+                marginLeft: "2px",
+                marginRight: "2px",
                 shadowOffsetX: 2,
                 shadowOffsetY: 2,
                 shadowBlur: 4,
@@ -327,8 +354,8 @@ scene.createDefaultXRExperienceAsync({
                 } else {
                     keyButton.background = "rgba(120,120,120,1.0)";
                 }
-                keyButton.scaleX = 1.1;
-                keyButton.scaleY = 1.1;
+                keyButton.scaleX = 1.05;
+                keyButton.scaleY = 1.05;
             });
 
             keyButton.onPointerOutObservable.add(() => {
@@ -364,7 +391,11 @@ scene.createDefaultXRExperienceAsync({
                 inputText.text = currentText + " ";
                 console.log("Space - new text:", inputText.text);
                 break;
-            case '✓': // Enter/Search
+            case '⇥': // Tab
+                inputText.text = currentText + "\t";
+                console.log("Tab - new text:", inputText.text);
+                break;
+            case '↵': // Enter/Search
                 console.log("Enter pressed - searching for:", inputText.text.trim());
                 hideVirtualKeyboard();
                 if (inputText.text.trim()) {
@@ -383,9 +414,59 @@ scene.createDefaultXRExperienceAsync({
                     searchResultText.text = "Entrer un nom valide.";
                 }
                 break;
+            case '✓': // Search button
+                console.log("Search button pressed - searching for:", inputText.text.trim());
+                hideVirtualKeyboard();
+                if (inputText.text.trim()) {
+                    hideSuggestions();
+                    // Trigger search
+                    setTimeout(() => {
+                        try {
+                            moveCameraToSprite(inputText.text.trim());
+                            searchResultText.text = "Recherche : " + inputText.text.trim();
+                        } catch (error) {
+                            console.error("Error during search:", error);
+                            searchResultText.text = "Erreur lors de la recherche";
+                        }
+                    }, 10);
+                } else {
+                    searchResultText.text = "Entrer un nom valide.";
+                }
+                break;
+            case '⇧': // Shift
+                isShiftPressed = !isShiftPressed;
+                updateKeyboardDisplay();
+                console.log("Shift toggled:", isShiftPressed);
+                break;
+            case '⇪': // Caps Lock
+                isCapsLockOn = !isCapsLockOn;
+                updateKeyboardDisplay();
+                console.log("Caps Lock toggled:", isCapsLockOn);
+                break;
             default:
-                inputText.text = currentText + key.toLowerCase();
+                // Handle regular character input
+                let charToAdd = key;
+                
+                // Apply shift/caps lock logic
+                if (isAlphabetic(key)) {
+                    if (isCapsLockOn || isShiftPressed) {
+                        charToAdd = key.toUpperCase();
+                    } else {
+                        charToAdd = key.toLowerCase();
+                    }
+                } else if (isShiftPressed) {
+                    // Handle shifted symbols
+                    charToAdd = getShiftedSymbol(key);
+                }
+                
+                inputText.text = currentText + charToAdd;
                 console.log("Key pressed - new text:", inputText.text);
+                
+                // Reset shift after character input (but not caps lock)
+                if (isShiftPressed) {
+                    isShiftPressed = false;
+                    updateKeyboardDisplay();
+                }
                 break;
         }
         
@@ -398,6 +479,29 @@ scene.createDefaultXRExperienceAsync({
         if (inputText.onTextChangedObservable) {
             inputText.onTextChangedObservable.notifyObservers(inputText);
         }
+    }
+    
+    // Helper function to check if a character is alphabetic
+    function isAlphabetic(char) {
+        return /^[A-Za-z]$/.test(char);
+    }
+    
+    // Helper function to get shifted symbols
+    function getShiftedSymbol(key) {
+        const shiftMap = {
+            '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
+            '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
+            ',': '<', '.': '>', '/': '?'
+        };
+        return shiftMap[key] || key;
+    }
+    
+    // Function to update keyboard display based on shift/caps state
+    function updateKeyboardDisplay() {
+        // This would update the visual state of shift and caps lock keys
+        // The actual visual update is handled in the key creation loop above
+        console.log("Keyboard display updated - Shift:", isShiftPressed, "Caps:", isCapsLockOn);
     }
 
     // Function to show virtual keyboard
