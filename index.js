@@ -430,9 +430,9 @@ scene.onBeforeRenderObservable.add(() => {
    textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
    textureContext.stroke();
    
-   // Draw cyan parentheses on top
-   textureContext.lineWidth = 2; // Original thickness for cyan
-   textureContext.strokeStyle = "cyan";
+   // Draw white parentheses on top
+   textureContext.lineWidth = 2; // Original thickness for white
+   textureContext.strokeStyle = "white";
    textureContext.beginPath();
    textureContext.arc(font_size*50, font_size*50, scaledRadius, -Math.PI/5, Math.PI/5);
    textureContext.stroke();
@@ -458,8 +458,8 @@ scene.onBeforeRenderObservable.add(() => {
             textureContext.lineWidth = 1;
             textureContext.strokeText(textToDisplay, null, textY);
             
-            // Draw cyan fill text on top for sprite name
-            planeTexture.drawText(textToDisplay, null, textY, fontSize + "px " + fontFamily, "cyan", "transparent", true, true);
+            // Draw white fill text on top for sprite name
+            planeTexture.drawText(textToDisplay, null, textY, fontSize + "px " + fontFamily, "white", "transparent", true, true);
             var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
