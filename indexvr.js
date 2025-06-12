@@ -267,10 +267,12 @@ scene.createDefaultXRExperienceAsync({
         paddingLeft: "10px",
         paddingRight: "10px",
         horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER,
-        verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM,
-        top: "-50px", // Position slightly above bottom
+        verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER,
+        top: "150px", // Position closer to search panel
+        left: "50px", // Slight offset for diagonal positioning
         zIndex: 1000, // Ensure it's on top
-        cornerRadius: 10
+        cornerRadius: 10,
+        rotation: -0.1 // Slight diagonal rotation for better ergonomics
     });
     advancedTexture.addControl(virtualKeyboard);
 
@@ -536,13 +538,21 @@ scene.createDefaultXRExperienceAsync({
         }
     }
 
-    // Keep panel facing camera
+    // Keep panel facing camera and position keyboard relative to panel
     scene.onBeforeRenderObservable.add(() => {
         if (searchPanel.isVisible) {
             const cam = scene.activeCamera;
             advancedTexture.layer.layerMask = cam.layerMask;
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
+            
+            // Position keyboard closer to search panel when both are visible
+            if (virtualKeyboard && virtualKeyboard.isVisible) {
+                // Adjust keyboard position to be just below and slightly offset from search panel
+                virtualKeyboard.top = "200px"; // Closer to search panel
+                virtualKeyboard.left = "80px"; // More diagonal offset
+                virtualKeyboard.rotation = -0.15; // More pronounced diagonal angle
+            }
         }
     });
 
