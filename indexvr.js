@@ -192,17 +192,27 @@ scene.createDefaultXRExperienceAsync({
         showVRKeyboard(inputText);
     });
     
-    // Handle focus event to show keyboard
+    // Handle focus event (removed keyboard call to prevent recursion)
     inputText.onFocusObservable.add(() => {
-        console.log("VR Input field focused - showing virtual keyboard");
-        showVRKeyboard(inputText);
+        console.log("VR Input field focused");
+        // Note: Not calling showVRKeyboard here to prevent recursive calls
     });
 
-    // Handle text input for suggestions
+    // Handle text input for suggestions with debouncing
+    let suggestionTimeout;
     inputText.onTextChangedObservable.add(() => {
         const query = inputText.text.trim();
+        
+        // Clear previous timeout to debounce
+        if (suggestionTimeout) {
+            clearTimeout(suggestionTimeout);
+        }
+        
         if (query.length >= 3) {
-            showSuggestions(query);
+            // Debounce suggestions to prevent excessive calls
+            suggestionTimeout = setTimeout(() => {
+                showSuggestions(query);
+            }, 300); // Wait 300ms after user stops typing
         } else {
             hideSuggestions();
         }
@@ -317,119 +327,139 @@ scene.createDefaultXRExperienceAsync({
 });
 
 // Function to show VR virtual keyboard
+let keyboardRequestInProgress = false;
+
 function showVRKeyboard(inputElement) {
+    // Prevent recursive calls
+    if (keyboardRequestInProgress) {
+        console.log("Keyboard request already in progress, skipping...");
+        return;
+    }
+    
+    keyboardRequestInProgress = true;
     console.log("Attempting to show VR virtual keyboard");
     
-    // Method 1: Try WebXR DOM Overlay API if available
-    if (navigator.xr && xrHelper && xrHelper.baseExperience) {
-        const session = xrHelper.baseExperience.sessionManager?.session;
-        if (session) {
-            try {
-                // Check if DOM overlay is supported
-                if (session.domOverlayState && session.domOverlayState.type !== null) {
-                    // Create a temporary HTML input to trigger system keyboard
-                    const tempInput = document.createElement('input');
-                    tempInput.type = 'text';
-                    tempInput.style.position = 'absolute';
-                    tempInput.style.left = '-9999px';
-                    tempInput.style.opacity = '0';
-                    document.body.appendChild(tempInput);
-                    
-                    tempInput.focus();
-                    tempInput.click();
-                    
-                    // Clean up after a delay
-                    setTimeout(() => {
-                        if (tempInput.parentNode) {
-                            document.body.removeChild(tempInput);
-                        }
-                    }, 100);
-                }
-            } catch (e) {
-                console.log("DOM overlay keyboard not available:", e);
-            }
+    try {
+        // Method 1: Simple focus (most reliable for VR browsers)
+        if (inputElement && inputElement.focus) {
+            inputElement.focus();
         }
-    }
-    
-    // Method 2: Try to use WebXR input events
-    if (xrHelper && xrHelper.input) {
-        try {
-            // Dispatch a custom event that might trigger VR keyboard
-            const keyboardEvent = new CustomEvent('xr-keyboard-request', {
-                detail: { inputElement: inputElement }
-            });
-            window.dispatchEvent(keyboardEvent);
-        } catch (e) {
-            console.log("Custom keyboard event failed:", e);
-        }
-    }
-    
-    // Method 3: Focus the Babylon.js input (this should work on most VR browsers)
-    if (inputElement && inputElement.focus) {
-        inputElement.focus();
         
-        // Try to simulate a text input event
-        setTimeout(() => {
-            if (inputElement.onTextInputObservable) {
-                inputElement.onTextInputObservable.notifyObservers(inputElement);
+        // Method 2: Try WebXR DOM Overlay API if available
+        if (navigator.xr && typeof xrHelper !== "undefined" && xrHelper && xrHelper.baseExperience) {
+            const session = xrHelper.baseExperience.sessionManager?.session;
+            if (session) {
+                try {
+                    // Check if DOM overlay is supported
+                    if (session.domOverlayState && session.domOverlayState.type !== null) {
+                        // Create a temporary HTML input to trigger system keyboard
+                        const tempInput = document.createElement('input');
+                        tempInput.type = 'text';
+                        tempInput.style.position = 'absolute';
+                        tempInput.style.left = '-9999px';
+                        tempInput.style.opacity = '0';
+                        tempInput.style.pointerEvents = 'none';
+                        document.body.appendChild(tempInput);
+                        
+                        // Focus without triggering events
+                        tempInput.focus();
+                        
+                        // Clean up after a delay
+                        setTimeout(() => {
+                            if (tempInput.parentNode) {
+                                document.body.removeChild(tempInput);
+                            }
+                        }, 200);
+                    }
+                } catch (e) {
+                    console.log("DOM overlay keyboard not available:", e);
+                }
             }
-        }, 50);
+        }
+        
+    } catch (e) {
+        console.error("Error showing VR keyboard:", e);
+    } finally {
+        // Reset the flag after a short delay
+        setTimeout(() => {
+            keyboardRequestInProgress = false;
+        }, 500);
     }
 }
 
 // Function to show suggestions based on input
 function showSuggestions(query) {
-    // Get all available sprite names
-    const allSprites = getAllSprites();
-    const allNames = allSprites.filter(sprite => sprite.isVisible).map(sprite => sprite.name);
-    
-    // Filter names that start with or contain the query (case insensitive)
-    const matches = allNames.filter(name =>
-        name.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, maxSuggestions);
-    
-    // Clear existing suggestions
-    suggestionsPanel.clearControls();
-    currentSuggestions = [];
-    
-    if (matches.length > 0) {
-        matches.forEach((match, index) => {
-            const suggestionButton = BABYLON.GUI.Button.CreateSimpleButton(`suggestion_${index}`, match);
-            Object.assign(suggestionButton, {
-                width: "360px",
-                height: "30px",
-                color: "black",
-                background: "rgba(255,255,255,0.8)",
-                cornerRadius: 3,
-                thickness: 1,
-                paddingTop: "2px",
-                paddingBottom: "2px"
-            });
-            
-            // Add hover effect
-            suggestionButton.onPointerEnterObservable.add(() => {
-                suggestionButton.background = "rgba(200,220,255,0.9)";
-            });
-            
-            suggestionButton.onPointerOutObservable.add(() => {
-                suggestionButton.background = "rgba(255,255,255,0.8)";
-            });
-            
-            // Handle click on suggestion
-            suggestionButton.onPointerClickObservable.add(() => {
-                inputText.text = match;
-                hideSuggestions();
-                moveCameraToSprite(match);
-                searchResultText.text = "Recherche : " + match;
-            });
-            
-            suggestionsPanel.addControl(suggestionButton);
-            currentSuggestions.push(match);
-        });
+    try {
+        // Prevent suggestions if panel is not visible
+        if (!searchPanel.isVisible) {
+            return;
+        }
         
-        suggestionsPanel.isVisible = true;
-    } else {
-        suggestionsPanel.isVisible = false;
+        // Get all available sprite names (cached for performance)
+        const allSprites = getAllSprites();
+        if (!allSprites || allSprites.length === 0) {
+            hideSuggestions();
+            return;
+        }
+        
+        // Limit the search to visible sprites and use more efficient filtering
+        const queryLower = query.toLowerCase();
+        const matches = [];
+        
+        // Use a more efficient loop with early exit
+        for (let i = 0; i < allSprites.length && matches.length < maxSuggestions; i++) {
+            const sprite = allSprites[i];
+            if (sprite.isVisible && sprite.name && sprite.name.toLowerCase().includes(queryLower)) {
+                matches.push(sprite.name);
+            }
+        }
+        
+        // Clear existing suggestions
+        suggestionsPanel.clearControls();
+        currentSuggestions = [];
+        
+        if (matches.length > 0) {
+            matches.forEach((match, index) => {
+                const suggestionButton = BABYLON.GUI.Button.CreateSimpleButton(`suggestion_${index}`, match);
+                Object.assign(suggestionButton, {
+                    width: "360px",
+                    height: "30px",
+                    color: "black",
+                    background: "rgba(255,255,255,0.8)",
+                    cornerRadius: 3,
+                    thickness: 1,
+                    paddingTop: "2px",
+                    paddingBottom: "2px"
+                });
+                
+                // Add hover effect
+                suggestionButton.onPointerEnterObservable.add(() => {
+                    suggestionButton.background = "rgba(200,220,255,0.9)";
+                });
+                
+                suggestionButton.onPointerOutObservable.add(() => {
+                    suggestionButton.background = "rgba(255,255,255,0.8)";
+                });
+                
+                // Handle click on suggestion
+                suggestionButton.onPointerClickObservable.add(() => {
+                    inputText.text = match;
+                    hideSuggestions();
+                    moveCameraToSprite(match);
+                    searchResultText.text = "Recherche : " + match;
+                });
+                
+                suggestionsPanel.addControl(suggestionButton);
+                currentSuggestions.push(match);
+            });
+            
+            suggestionsPanel.isVisible = true;
+        } else {
+            suggestionsPanel.isVisible = false;
+        }
+    } catch (error) {
+        console.error("Error in showSuggestions:", error);
+        hideSuggestions();
     }
 }
 
@@ -537,68 +567,71 @@ const spriteRatio = 1;
 
 
 // Function to ensure minimum distance between sprites
-function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+async function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+    // Skip adjustment for large datasets to prevent freezes
+    if (data.length > 1000) {
+        console.log("Skipping position adjustment for large dataset to prevent freeze");
+        return data;
+    }
+    
     const adjustedData = [...data];
-    const maxIterations = 50; // Reduced from 100 to prevent freezes
+    const maxIterations = Math.min(20, Math.floor(data.length / 10)); // Adaptive max iterations
     let iteration = 0;
-    let progressThreshold = 0.01; // Minimum progress required to continue
+    let progressThreshold = 0.05; // Increased threshold for faster exit
     let lastCollisionCount = Infinity;
     
     while (iteration < maxIterations) {
         let hasCollisions = false;
         let collisionCount = 0;
         
-        // Process in smaller batches to prevent UI freezing
-        const batchSize = Math.min(50, adjustedData.length);
+        // Process in smaller batches with yield to prevent UI freezing
+        const batchSize = Math.min(25, adjustedData.length); // Smaller batch size
+        
         for (let batch = 0; batch < adjustedData.length; batch += batchSize) {
             const endBatch = Math.min(batch + batchSize, adjustedData.length);
             
+            // Yield control to prevent UI freeze
+            if (batch > 0 && batch % 100 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
+            
             for (let i = batch; i < endBatch; i++) {
-                for (let j = i + 1; j < adjustedData.length; j++) {
+                // Limit inner loop for performance
+                const maxJ = Math.min(i + 50, adjustedData.length);
+                for (let j = i + 1; j < maxJ; j++) {
                     const sprite1 = adjustedData[i];
                     const sprite2 = adjustedData[j];
                     
-                    const distance = Math.sqrt(
-                        Math.pow(sprite1.x - sprite2.x, 2) +
-                        Math.pow(sprite1.y - sprite2.y, 2) +
-                        Math.pow(sprite1.z - sprite2.z, 2)
-                    );
+                    const dx = sprite1.x - sprite2.x;
+                    const dy = sprite1.y - sprite2.y;
+                    const dz = sprite1.z - sprite2.z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
                     
-                    if (distance < minDistance && distance > 0.001) { // Avoid division by zero
+                    if (distance < minDistance && distance > 0.001) {
                         hasCollisions = true;
                         collisionCount++;
                         
-                        // Calculate direction vector from sprite2 to sprite1
-                        const dx = sprite1.x - sprite2.x;
-                        const dy = sprite1.y - sprite2.y;
-                        const dz = sprite1.z - sprite2.z;
-                        
-                        // Normalize the direction vector
-                        const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                        const normalizedDx = length > 0.001 ? dx / length : (Math.random() - 0.5) * 2;
-                        const normalizedDy = length > 0.001 ? dy / length : (Math.random() - 0.5) * 2;
-                        const normalizedDz = length > 0.001 ? dz / length : (Math.random() - 0.5) * 2;
-                        
-                        // Calculate how much to move each sprite (reduced movement for stability)
+                        // Simplified movement calculation
+                        const length = distance || 0.001;
                         const overlap = minDistance - distance;
-                        const moveDistance = Math.min(overlap * 0.3, 2); // Limit movement to prevent overshooting
+                        const moveDistance = Math.min(overlap * 0.2, 1); // Reduced movement
                         
-                        // Move sprites apart
-                        sprite1.x += normalizedDx * moveDistance;
-                        sprite1.y += normalizedDy * moveDistance;
-                        sprite1.z += normalizedDz * moveDistance;
+                        const factor = moveDistance / length;
+                        sprite1.x += dx * factor;
+                        sprite1.y += dy * factor;
+                        sprite1.z += dz * factor;
                         
-                        sprite2.x -= normalizedDx * moveDistance;
-                        sprite2.y -= normalizedDy * moveDistance;
-                        sprite2.z -= normalizedDz * moveDistance;
+                        sprite2.x -= dx * factor;
+                        sprite2.y -= dy * factor;
+                        sprite2.z -= dz * factor;
                     }
                 }
             }
         }
         
-        // Check for progress to avoid infinite loops
+        // Early exit conditions
         const progress = (lastCollisionCount - collisionCount) / Math.max(lastCollisionCount, 1);
-        if (!hasCollisions || (iteration > 10 && progress < progressThreshold)) {
+        if (!hasCollisions || (iteration > 5 && progress < progressThreshold)) {
             break;
         }
         
@@ -610,7 +643,7 @@ function adjustPositionsForMinimumDistance(data, minDistance = 8) {
     return adjustedData;
 }
 
-function main(currentData, ratio) {
+async function main(currentData, ratio) {
     // Charger la configuration des images personnalisées
     const imageConfiguration = loadImageConfiguration();
     
@@ -627,7 +660,7 @@ function main(currentData, ratio) {
     }));
     
     // Adjust positions to ensure minimum distance of 8 between sprites
-    data = adjustPositionsForMinimumDistance(data, 8);
+    data = await adjustPositionsForMinimumDistance(data, 8);
 
     // Group data by level to create separate sprite managers for each PNG
     const dataByLevel = {};
@@ -982,7 +1015,7 @@ loadFileButton.addEventListener('click', async () => {
             const reader = new FileReader();
             reader.onload = async function(event) {
                 const newdata = JSON.parse(event.target.result);
-                main(newdata, 20);
+                await main(newdata, 20);
                 document.getElementById('fileInputContainer').style.display = 'none';
             };
             reader.readAsText(file);
@@ -999,12 +1032,12 @@ loadFileButton.addEventListener('click', async () => {
 				const encryptedData = await response.text();
 				const password = await showPasswordModal();
 				const data = decryptData(encryptedData, password);
-				main(data, 1);
+				await main(data, 1);
 			} catch (encryptedError) {
 				console.log("Encrypted data not available, loading test data with levels");
 				const response = await fetch('./test_data_with_levels.json');
 				const data = await response.json();
-				main(data, 1);
+				await main(data, 1);
 			}
             document.getElementById('fileInputContainer').style.display = 'none';
         } catch (error) {
@@ -1426,7 +1459,7 @@ function getDefaultImageForLevel(level) {
 }
 
 // Fonction pour recharger les données avec la nouvelle configuration d'images
-function reloadWithNewImageConfiguration() {
+async function reloadWithNewImageConfiguration() {
     // Récupérer les données actuelles
     const currentData = getAllSprites().map(sprite => ({
         prefLabel: sprite.name,
@@ -1442,7 +1475,7 @@ function reloadWithNewImageConfiguration() {
         clearScene();
         
         // Recharger avec la nouvelle configuration
-        main(currentData, 20);
+        await main(currentData, 20);
         
         console.log('Données VR rechargées avec la nouvelle configuration d\'images');
     }
@@ -1478,8 +1511,8 @@ function clearScene() {
 window.addEventListener('storage', function(e) {
     if (e.key === 'imageConfiguration' || e.key === 'imageConfigurationUpdate') {
         console.log('Configuration d\'images VR mise à jour, rechargement...');
-        setTimeout(() => {
-            reloadWithNewImageConfiguration();
+        setTimeout(async () => {
+            await reloadWithNewImageConfiguration();
         }, 100); // Petit délai pour s'assurer que la configuration est bien sauvegardée
     }
 });
