@@ -263,9 +263,25 @@ scene.createDefaultXRExperienceAsync({
         background: "rgba(50,50,50,0.95)",
         isVisible: false,
         paddingTop: "10px",
-        paddingBottom: "10px"
+        paddingBottom: "10px",
+        horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER,
+        verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM,
+        top: "-50px", // Position slightly above bottom
+        zIndex: 1000 // Ensure it's on top
     });
     advancedTexture.addControl(virtualKeyboard);
+
+    // Add keyboard title
+    const keyboardTitle = new BABYLON.GUI.TextBlock();
+    Object.assign(keyboardTitle, {
+        text: "🎹 Clavier Virtuel VR",
+        height: "40px",
+        color: "white",
+        fontSize: 20,
+        fontWeight: "bold",
+        paddingBottom: "10px"
+    });
+    virtualKeyboard.addControl(keyboardTitle);
 
     // Create keyboard layout
     const keyboardRows = [
@@ -287,21 +303,38 @@ scene.createDefaultXRExperienceAsync({
                 width: key === '⎵' ? "120px" : "50px",
                 height: "50px",
                 color: "white",
-                background: "rgba(100,100,100,0.8)",
-                cornerRadius: 5,
-                thickness: 1,
-                fontSize: key === '⌫' || key === '✓' ? 20 : 16,
-                marginLeft: "2px",
-                marginRight: "2px"
+                background: key === '✓' ? "rgba(0,150,0,0.9)" : key === '⌫' ? "rgba(150,0,0,0.9)" : "rgba(70,70,70,0.9)",
+                cornerRadius: 8,
+                thickness: 2,
+                fontSize: key === '⌫' || key === '✓' ? 20 : 18,
+                marginLeft: "3px",
+                marginRight: "3px",
+                shadowOffsetX: 2,
+                shadowOffsetY: 2,
+                shadowBlur: 4,
+                shadowColor: "rgba(0,0,0,0.5)"
             });
 
+            // Store original background for hover effects
+            const originalBackground = keyButton.background;
+            
             // Add hover effect
             keyButton.onPointerEnterObservable.add(() => {
-                keyButton.background = "rgba(150,150,150,0.9)";
+                if (key === '✓') {
+                    keyButton.background = "rgba(0,200,0,1.0)";
+                } else if (key === '⌫') {
+                    keyButton.background = "rgba(200,0,0,1.0)";
+                } else {
+                    keyButton.background = "rgba(120,120,120,1.0)";
+                }
+                keyButton.scaleX = 1.1;
+                keyButton.scaleY = 1.1;
             });
 
             keyButton.onPointerOutObservable.add(() => {
-                keyButton.background = "rgba(100,100,100,0.8)";
+                keyButton.background = originalBackground;
+                keyButton.scaleX = 1.0;
+                keyButton.scaleY = 1.0;
             });
 
             // Handle key press
@@ -317,18 +350,25 @@ scene.createDefaultXRExperienceAsync({
 
     // Function to handle virtual key presses
     function handleVirtualKeyPress(key) {
+        console.log("Virtual key pressed:", key);
         const currentText = inputText.text || "";
         
         switch(key) {
             case '⌫': // Backspace
-                inputText.text = currentText.slice(0, -1);
+                if (currentText.length > 0) {
+                    inputText.text = currentText.slice(0, -1);
+                    console.log("Backspace - new text:", inputText.text);
+                }
                 break;
             case '⎵': // Space
                 inputText.text = currentText + " ";
+                console.log("Space - new text:", inputText.text);
                 break;
             case '✓': // Enter/Search
+                console.log("Enter pressed - searching for:", inputText.text.trim());
                 hideVirtualKeyboard();
                 if (inputText.text.trim()) {
+                    hideSuggestions();
                     // Trigger search
                     setTimeout(() => {
                         try {
@@ -339,11 +379,19 @@ scene.createDefaultXRExperienceAsync({
                             searchResultText.text = "Erreur lors de la recherche";
                         }
                     }, 10);
+                } else {
+                    searchResultText.text = "Entrer un nom valide.";
                 }
                 break;
             default:
-                inputText.text = currentText + key;
+                inputText.text = currentText + key.toLowerCase();
+                console.log("Key pressed - new text:", inputText.text);
                 break;
+        }
+        
+        // Force update the input text display
+        if (inputText.markAsDirty) {
+            inputText.markAsDirty();
         }
         
         // Trigger text change event for suggestions
@@ -354,19 +402,33 @@ scene.createDefaultXRExperienceAsync({
 
     // Function to show virtual keyboard
     function showVirtualKeyboard() {
-        if (!keyboardVisible) {
+        if (!keyboardVisible && virtualKeyboard) {
             virtualKeyboard.isVisible = true;
             keyboardVisible = true;
-            console.log("Virtual keyboard shown");
+            console.log("Virtual keyboard shown - isVisible:", virtualKeyboard.isVisible);
+            
+            // Force a render update
+            if (advancedTexture && advancedTexture.markAsDirty) {
+                advancedTexture.markAsDirty();
+            }
+        } else {
+            console.log("Virtual keyboard already visible or not initialized");
         }
     }
 
     // Function to hide virtual keyboard
     function hideVirtualKeyboard() {
-        if (keyboardVisible) {
+        if (keyboardVisible && virtualKeyboard) {
             virtualKeyboard.isVisible = false;
             keyboardVisible = false;
-            console.log("Virtual keyboard hidden");
+            console.log("Virtual keyboard hidden - isVisible:", virtualKeyboard.isVisible);
+            
+            // Force a render update
+            if (advancedTexture && advancedTexture.markAsDirty) {
+                advancedTexture.markAsDirty();
+            }
+        } else {
+            console.log("Virtual keyboard already hidden or not initialized");
         }
     }
 
