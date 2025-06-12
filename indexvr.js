@@ -477,7 +477,7 @@ function main(currentData, ratio) {
 
         // Calculate size based on level: level 1 = 6, level 2 = 5.5, level 3 = 5, etc.
         const level = point.level || 5;
-        const spriteSize = Math.max(1, 6.5 - (level * 0.5)); // Formula: 6.5 - (level * 0.5)
+        const spriteSize = level === 1 ? 12 : Math.max(1, 6.5 - (level * 0.5)); // Level 1 = 12, others use original formula
 
         const sprite = new BABYLON.Sprite(point.prefLabel, spriteManager);
         Object.assign(sprite, {
@@ -594,7 +594,7 @@ scene.onBeforeRenderObservable.add(() => {
         if (distance > 2 && distance < 12 && angle < fov && s.isVisible) {
             // Get sprite level for size calculation
             const spriteLevel = s.metadata && s.metadata.level ? s.metadata.level : 5;
-            const spriteSize = Math.max(1, 6.5 - (spriteLevel * 0.5));
+            const spriteSize = spriteLevel === 1 ? 12 : Math.max(1, 6.5 - (spriteLevel * 0.5));
             
             names.push({
                 "name": s.name + '_layer',
@@ -841,10 +841,10 @@ function getColor(type) {
     return randColor;
 }
 
-// Update sprite positions to add small movements
+// Update sprite positions to add small movements and orbital mechanics
 function updateSpritePositions() {
     time += 0.004;
-	const camera = scene.activeCamera; 
+	const camera = scene.activeCamera;
 	const cameraDirection = camera.getForwardRay().direction.normalize();
 	const fov = camera.fov; // Champs de vision de la caméra
 	const cameraPosition = camera.position;
@@ -858,9 +858,48 @@ function updateSpritePositions() {
 			const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
 			if( angle < fov) {
 				const originalPosition = originalPositions[idx];
-				sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
-				sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
-				sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+				const spriteLevel = sprite.metadata && sprite.metadata.level ? sprite.metadata.level : 5;
+				
+				// Find nearby higher level sprites to orbit around
+				let orbitCenter = null;
+				let bestLevel = Infinity; // Track the highest level (lowest number)
+				let minDistance = Infinity;
+				
+				labelSprites.forEach((otherSprite, otherIdx) => {
+					if (otherSprite !== sprite && otherSprite.metadata && otherSprite.metadata.level) {
+						const otherLevel = otherSprite.metadata.level;
+						// Only orbit around sprites with higher level (lower number = higher level)
+						if (otherLevel < spriteLevel) {
+							const distanceToOther = BABYLON.Vector3.Distance(originalPosition, originalPositions[otherIdx]);
+							// Only consider sprites within orbital range (adjust this value as needed)
+							if (distanceToOther < 15) {
+								// Prioritize higher level (lower number) first, then closer distance
+								if (otherLevel < bestLevel || (otherLevel === bestLevel && distanceToOther < minDistance)) {
+									bestLevel = otherLevel;
+									minDistance = distanceToOther;
+									orbitCenter = originalPositions[otherIdx];
+								}
+							}
+						}
+					}
+				});
+				
+				if (orbitCenter) {
+					// Orbital motion around higher level sprite
+					const orbitRadius = spriteLevel === 1 ? Math.min(minDistance * 5.6, 64) : Math.min(minDistance * 0.7, 8); // Level 1 has octuple orbit radius
+					const orbitSpeed = 0.5 + (13 - spriteLevel) * 0.1; // Lower levels orbit faster
+					const orbitAngle = time * orbitSpeed + idx * 0.5; // Offset each sprite's orbit
+					
+					sprite.position.x = orbitCenter.x + orbitRadius * Math.cos(orbitAngle);
+					sprite.position.y = orbitCenter.y + orbitRadius * Math.sin(orbitAngle) * 0.5; // Flatten Y orbit
+					sprite.position.z = orbitCenter.z + orbitRadius * Math.sin(orbitAngle);
+				} else {
+					// Default floating motion for sprites without orbital targets
+					sprite.position.x = originalPosition.x + 0.8 * Math.sin(time + idx);
+					sprite.position.y = originalPosition.y + 0.8 * Math.cos(time + idx);
+					sprite.position.z = originalPosition.z + 0.8 * Math.sin(time + idx);
+				}
+				
 				sprite.angle = 0.01*idx;
 			}
 		}

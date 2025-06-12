@@ -5,8 +5,8 @@
     "x": 0.9681740333353521,
     "y": -0.9833655455859047,
     "z": 1.2528934298554186,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_002",
@@ -14,8 +14,8 @@
     "x": 1.3101385657220752,
     "y": -0.6802381103093832,
     "z": 0.27543858182820236,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_003",
@@ -32,8 +32,8 @@
     "x": -0.8493448445780772,
     "y": -0.25240516102008503,
     "z": 1.5450090420549794,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_005",
@@ -41,8 +41,8 @@
     "x": 0.36938547641051755,
     "y": 1.4042498051667933,
     "z": 1.0027331977590594,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_006",
@@ -50,8 +50,8 @@
     "x": 1.9636773591993442,
     "y": 0.7863569554082592,
     "z": 1.850118825329468,
-    "level": 12,
-    "imageFile": "12asteroid.png"
+    "level": 13,
+    "imageFile": "13asteroid.png"
   },
   {
     "prefLabel": "Element_007",
@@ -59,8 +59,8 @@
     "x": 1.674277777431311,
     "y": 0.8379569682852885,
     "z": 1.1578218838279013,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_008",
@@ -77,8 +77,8 @@
     "x": 1.6916243096997867,
     "y": 1.2309663264787547,
     "z": 0.42402331046916,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_010",
@@ -104,8 +104,8 @@
     "x": -0.17620765924738513,
     "y": -0.7675499384057926,
     "z": -0.14281554741054248,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_013",
@@ -122,8 +122,8 @@
     "x": -0.5848778154515328,
     "y": -0.30621556081543966,
     "z": 1.0818494368971567,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_015",
@@ -149,15 +149,15 @@
     "x": 0.26043055332027687,
     "y": 1.7145154350205307,
     "z": 0.7522382426126755,
-    "level": 6,
-    "imageFile": "6etoile.png"
+    "level": 9,
+    "imageFile": "9planet.png"
   },
   {
     "prefLabel": "Element_018",
     "subType": "OPERATING_SYSTEM",
-    "x": 1.086568959493904,
-    "y": 1.5701960969118027,
-    "z": 1.2967837283542085,
+    "x": 0,
+    "y": 0,
+    "z": 0,
     "level": 1,
     "imageFile": "1blackhole.png"
   },
@@ -167,8 +167,8 @@
     "x": 0.14114308678313492,
     "y": -0.9823117492480208,
     "z": 0.055276408015473955,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_020",
@@ -176,8 +176,8 @@
     "x": 1.2604253751781576,
     "y": 1.560343851707314,
     "z": 1.860291015410319,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 2,
+    "imageFile": "2blackhole.png"
   },
   {
     "prefLabel": "Element_021",
@@ -185,8 +185,8 @@
     "x": 0.25706384788946557,
     "y": 1.2425470069341524,
     "z": 0.6383969292015172,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 4,
+    "imageFile": "4nebuleuse.png"
   },
   {
     "prefLabel": "Element_022",
@@ -203,8 +203,8 @@
     "x": 0.3075079281399098,
     "y": -0.9129255401598543,
     "z": 0.008388631095147314,
-    "level": 6,
-    "imageFile": "6etoile.png"
+    "level": 9,
+    "imageFile": "9planet.png"
   },
   {
     "prefLabel": "Element_024",
@@ -221,8 +221,8 @@
     "x": 0.40217044769693056,
     "y": -0.6171166081565179,
     "z": 0.8667708829221941,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_026",
@@ -230,8 +230,8 @@
     "x": -0.9191006442845869,
     "y": 0.18206076901911405,
     "z": 0.6931759490743223,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_027",
@@ -239,8 +239,8 @@
     "x": -0.9186938609790627,
     "y": 0.9282489440280073,
     "z": -0.5929015383083073,
-    "level": 5,
-    "imageFile": "5etoile.png"
+    "level": 8,
+    "imageFile": "8planet.png"
   },
   {
     "prefLabel": "Element_028",
@@ -248,8 +248,8 @@
     "x": 0.3850953321545352,
     "y": -0.8491460995341173,
     "z": 0.13731159256441883,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 5,
+    "imageFile": "5etoile.png"
   },
   {
     "prefLabel": "Element_029",
@@ -266,8 +266,8 @@
     "x": 0.13737864669240896,
     "y": 1.2560294706643544,
     "z": 1.4957728554658178,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
+    "level": 7,
+    "imageFile": "7neutronstar.png"
   },
   {
     "prefLabel": "Element_031",
@@ -293,8 +293,8 @@
     "x": 0.950432279749625,
     "y": 1.3436991488326848,
     "z": 0.9552639657316684,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_034",
@@ -302,8 +302,8 @@
     "x": 1.2626996121785785,
     "y": 1.8488351981479667,
     "z": -0.4019179529124013,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_035",
@@ -311,8 +311,8 @@
     "x": -0.938859948039003,
     "y": -0.5428529626456289,
     "z": -0.6213370753773813,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_036",
@@ -320,8 +320,8 @@
     "x": 1.0083765338597321,
     "y": 0.6919087457900575,
     "z": -0.3461063772804891,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 6,
+    "imageFile": "6etoile.png"
   },
   {
     "prefLabel": "Element_037",
@@ -329,8 +329,8 @@
     "x": 1.0983949137384523,
     "y": 1.3006942950687224,
     "z": -0.4966325698965932,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
+    "level": 7,
+    "imageFile": "7neutronstar.png"
   },
   {
     "prefLabel": "Element_038",
@@ -338,8 +338,8 @@
     "x": 0.821742481672795,
     "y": 1.2437769558658576,
     "z": -0.656401385863307,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_039",
@@ -347,8 +347,8 @@
     "x": 1.4579035229332553,
     "y": 1.894162319102263,
     "z": -0.6757037510271803,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_040",
@@ -365,8 +365,8 @@
     "x": 1.8745185146176877,
     "y": 0.18996332454988196,
     "z": 1.145044115148405,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_042",
@@ -374,8 +374,8 @@
     "x": -0.7720105664708201,
     "y": 1.0718432477989408,
     "z": 0.8817271868031333,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_043",
@@ -392,8 +392,8 @@
     "x": 0.8012348444505324,
     "y": -0.6368348047980547,
     "z": 1.9515330545440142,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_045",
@@ -401,8 +401,8 @@
     "x": 1.3479060390830586,
     "y": 0.04161129592534696,
     "z": 0.28513403970423346,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_046",
@@ -410,8 +410,8 @@
     "x": 0.11171262865416853,
     "y": 0.5178823690312337,
     "z": 0.023693524583849435,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_047",
@@ -437,8 +437,8 @@
     "x": 1.1219259311182306,
     "y": 0.306461435023031,
     "z": 1.2013859120401755,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_050",
@@ -455,8 +455,8 @@
     "x": 0.6145187193447672,
     "y": 0.45049251164958837,
     "z": 0.30672347901168284,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_052",
@@ -464,8 +464,8 @@
     "x": 1.193078642915367,
     "y": -0.194813385852324,
     "z": 1.5551394800579956,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_053",
@@ -473,8 +473,8 @@
     "x": 1.4921930566718102,
     "y": -0.7400113058329768,
     "z": 1.644893552008316,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_054",
@@ -482,8 +482,8 @@
     "x": -0.26840968242713203,
     "y": 0.3941253998096952,
     "z": 0.830995112691562,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_055",
@@ -491,8 +491,8 @@
     "x": 0.136967912384792,
     "y": -0.9139000066897313,
     "z": 1.5528585089373772,
-    "level": 5,
-    "imageFile": "5etoile.png"
+    "level": 8,
+    "imageFile": "8planet.png"
   },
   {
     "prefLabel": "Element_056",
@@ -500,8 +500,8 @@
     "x": -0.4544804285269246,
     "y": -0.363640449460783,
     "z": 1.3934970704842895,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_057",
@@ -509,8 +509,8 @@
     "x": 0.02101652949285082,
     "y": 1.6409599392746763,
     "z": 1.1035512509966048,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
+    "level": 7,
+    "imageFile": "7neutronstar.png"
   },
   {
     "prefLabel": "Element_058",
@@ -527,8 +527,8 @@
     "x": -0.7431611141259362,
     "y": 1.160223992312583,
     "z": 0.46573354054636207,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_060",
@@ -536,8 +536,8 @@
     "x": 1.2744939604473995,
     "y": 1.071828018339569,
     "z": 0.9377086992228567,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_061",
@@ -545,8 +545,8 @@
     "x": 0.4724640052357585,
     "y": 1.3787986043969522,
     "z": -0.720839948335985,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_062",
@@ -563,8 +563,8 @@
     "x": 0.7446667559971014,
     "y": 0.4197814662785744,
     "z": 0.5927657934373034,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_064",
@@ -581,8 +581,8 @@
     "x": 1.108564826557307,
     "y": -0.187250719071411,
     "z": -0.24578897139717548,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_066",
@@ -590,8 +590,8 @@
     "x": -0.6380323457430825,
     "y": -0.4222471196454478,
     "z": -0.6413357762348415,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
+    "level": 7,
+    "imageFile": "7neutronstar.png"
   },
   {
     "prefLabel": "Element_067",
@@ -599,8 +599,8 @@
     "x": 0.6075918961512494,
     "y": 1.286568828452309,
     "z": -0.4445504726870141,
-    "level": 5,
-    "imageFile": "5etoile.png"
+    "level": 8,
+    "imageFile": "8planet.png"
   },
   {
     "prefLabel": "Element_068",
@@ -617,8 +617,8 @@
     "x": 1.9298210686491704,
     "y": 0.5739106073258236,
     "z": -0.15100389017513494,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_070",
@@ -626,8 +626,8 @@
     "x": -0.6984216757276277,
     "y": -0.4176472657267797,
     "z": -0.3175505095523359,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_071",
@@ -635,8 +635,8 @@
     "x": -0.46167536894379,
     "y": -0.9575548982318085,
     "z": 0.6024052678029899,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_072",
@@ -644,8 +644,8 @@
     "x": -0.17706601965019808,
     "y": 1.9228847933082136,
     "z": 0.6600769003958249,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_073",
@@ -653,8 +653,8 @@
     "x": 1.0922521787305834,
     "y": -0.6211615211247733,
     "z": 1.605383591788832,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
+    "level": 10,
+    "imageFile": "10protoplanet.png"
   },
   {
     "prefLabel": "Element_074",
@@ -671,8 +671,8 @@
     "x": 0.4081908347915306,
     "y": 0.32140639440803076,
     "z": -0.4469089888297548,
-    "level": 1,
-    "imageFile": "1blackhole.png"
+    "level": 4,
+    "imageFile": "4nebuleuse.png"
   },
   {
     "prefLabel": "Element_076",
@@ -680,8 +680,8 @@
     "x": -0.8458698484492665,
     "y": 1.8231907903043099,
     "z": 0.4331875617970631,
-    "level": 9,
-    "imageFile": "9planet.png"
+    "level": 12,
+    "imageFile": "12asteroid.png"
   },
   {
     "prefLabel": "Element_077",
@@ -689,8 +689,8 @@
     "x": 1.466346935898291,
     "y": 0.20212232675581943,
     "z": -0.7777534892330806,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_078",
@@ -698,8 +698,8 @@
     "x": 0.8883371208559949,
     "y": -0.8391727771224006,
     "z": -0.5524072465790345,
-    "level": 6,
-    "imageFile": "6etoile.png"
+    "level": 9,
+    "imageFile": "9planet.png"
   },
   {
     "prefLabel": "Element_079",
@@ -707,8 +707,8 @@
     "x": 0.6885187912536925,
     "y": -0.08849346447331696,
     "z": 1.9817543681306606,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
+    "level": 7,
+    "imageFile": "7neutronstar.png"
   },
   {
     "prefLabel": "Element_080",
@@ -716,8 +716,8 @@
     "x": -0.6446453133656153,
     "y": 1.2933303359785828,
     "z": 0.8189529537288882,
-    "level": 8,
-    "imageFile": "8planet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_081",
@@ -725,8 +725,8 @@
     "x": 1.3722224895302584,
     "y": -0.3229385888048961,
     "z": 0.5677176053906536,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_082",
@@ -734,8 +734,8 @@
     "x": 0.3515433946662627,
     "y": 0.32816301205798504,
     "z": 1.5804999974785403,
-    "level": 6,
-    "imageFile": "6etoile.png"
+    "level": 9,
+    "imageFile": "9planet.png"
   },
   {
     "prefLabel": "Element_083",
@@ -743,8 +743,8 @@
     "x": 1.9700937814003936,
     "y": -0.08385926704191882,
     "z": 0.8630819632164455,
-    "level": 2,
-    "imageFile": "2blackhole.png"
+    "level": 3,
+    "imageFile": "3whitehole.png"
   },
   {
     "prefLabel": "Element_084",
@@ -761,8 +761,8 @@
     "x": -0.376636282529346,
     "y": -0.36692441408382104,
     "z": 0.9812844115761099,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_086",
@@ -770,8 +770,8 @@
     "x": -0.5288287198573686,
     "y": -0.4785593550206966,
     "z": -0.7748053932964962,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
+    "level": 11,
+    "imageFile": "11moon.png"
   },
   {
     "prefLabel": "Element_087",
@@ -779,502 +779,7 @@
     "x": -0.9919728321913428,
     "y": 0.3515111138531073,
     "z": 0.7814335853586898,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_088",
-    "subType": "PLATFORM",
-    "x": -0.1262221329069172,
-    "y": -0.3055712963319225,
-    "z": 1.1208674896370998,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_089",
-    "subType": "NORMS_AND_STANDARDS",
-    "x": 1.1089626742811514,
-    "y": 0.36209397922112974,
-    "z": 1.062154760213728,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_090",
-    "subType": "LANGUAGE",
-    "x": 1.771733133447646,
-    "y": 1.3634840799401942,
-    "z": 0.8751740214926658,
-    "level": 3,
-    "imageFile": "3whitehole.png"
-  },
-  {
-    "prefLabel": "Element_091",
-    "subType": "TECHNICAL",
-    "x": 0.9835491285601035,
-    "y": 1.8010053753365396,
-    "z": 0.27541689831263483,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
-  },
-  {
-    "prefLabel": "Element_092",
-    "subType": "PROTOCOL",
-    "x": 0.633687136131736,
-    "y": 0.9429041702074423,
-    "z": 1.7252343356378184,
-    "level": 13,
-    "imageFile": "13asteroid.png"
-  },
-  {
-    "prefLabel": "Element_093",
-    "subType": "OPERATING_SYSTEM",
-    "x": 1.4798934789501788,
-    "y": -0.7857704894325576,
-    "z": -0.502231632337826,
-    "level": 5,
-    "imageFile": "5etoile.png"
-  },
-  {
-    "prefLabel": "Element_094",
-    "subType": "BUSINESS_SOFTWARE",
-    "x": -0.07716456215730239,
-    "y": 1.2468731662088697,
-    "z": 0.7076211479572772,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_095",
-    "subType": "TOOL",
-    "x": -0.13416823508247477,
-    "y": -0.6269390254758753,
-    "z": 1.066033973636281,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
-  },
-  {
-    "prefLabel": "Element_096",
-    "subType": "FUNCTIONAL",
-    "x": 1.099201054927152,
-    "y": 1.8280287222321223,
-    "z": 0.5014165313537768,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_097",
-    "subType": "PROGRAMMING_LANGUAGE",
-    "x": 0.4813856580352529,
-    "y": -0.7586744443020971,
-    "z": -0.8804176474491608,
-    "level": 13,
-    "imageFile": "13asteroid.png"
-  },
-  {
-    "prefLabel": "Element_098",
-    "subType": "METHOD",
-    "x": 0.2960859924823178,
-    "y": -0.033035249925100096,
-    "z": -0.24889629276398828,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_099",
-    "subType": "DATABASE",
-    "x": -0.7260193401070444,
-    "y": 1.8857333065785102,
-    "z": 1.507875841718544,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_100",
-    "subType": "BEHAVIORAL",
-    "x": 0.7255973276597913,
-    "y": 1.852358833419057,
-    "z": 1.998717250632354,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_101",
-    "subType": "FRAMEWORK",
-    "x": 1.0168447529097175,
-    "y": -0.1914669220988383,
-    "z": -0.8793049805661515,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
-  },
-  {
-    "prefLabel": "Element_102",
-    "subType": "TRANSVERSAL",
-    "x": 1.2688064912376715,
-    "y": 0.4115024697549008,
-    "z": 0.9545284683010591,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
-  },
-  {
-    "prefLabel": "Element_103",
-    "subType": "PLATFORM",
-    "x": 1.7482183637803024,
-    "y": -0.45553255833062223,
-    "z": 0.7559888758335631,
-    "level": 8,
-    "imageFile": "8planet.png"
-  },
-  {
-    "prefLabel": "Element_104",
-    "subType": "NORMS_AND_STANDARDS",
-    "x": 0.9043541583622607,
-    "y": 0.4751774065730401,
-    "z": -0.7262727811185185,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_105",
-    "subType": "LANGUAGE",
-    "x": 0.043883168883951384,
-    "y": -7.48190047239472e-05,
-    "z": 1.0104005285635562,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_106",
-    "subType": "TECHNICAL",
-    "x": 1.573199283201058,
-    "y": -0.010589009263103799,
-    "z": 1.0810210219502974,
     "level": 4,
     "imageFile": "4nebuleuse.png"
-  },
-  {
-    "prefLabel": "Element_107",
-    "subType": "PROTOCOL",
-    "x": -0.13534661391563274,
-    "y": 1.8355806186896317,
-    "z": 1.4406981042139178,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
-  },
-  {
-    "prefLabel": "Element_108",
-    "subType": "OPERATING_SYSTEM",
-    "x": 0.6502898269153488,
-    "y": 0.36447772580518834,
-    "z": -0.05644852848949622,
-    "level": 8,
-    "imageFile": "8planet.png"
-  },
-  {
-    "prefLabel": "Element_109",
-    "subType": "BUSINESS_SOFTWARE",
-    "x": -0.030178641172015963,
-    "y": 1.9105541804257316,
-    "z": 0.2125251710022369,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_110",
-    "subType": "TOOL",
-    "x": 0.5437887569873152,
-    "y": 1.9643576443452622,
-    "z": 0.9729811594493869,
-    "level": 2,
-    "imageFile": "2blackhole.png"
-  },
-  {
-    "prefLabel": "Element_111",
-    "subType": "FUNCTIONAL",
-    "x": 0.6277807830715849,
-    "y": 0.23974271239796452,
-    "z": -0.4372523758164186,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
-  },
-  {
-    "prefLabel": "Element_112",
-    "subType": "PROGRAMMING_LANGUAGE",
-    "x": 0.08533807745502564,
-    "y": 1.2693294621667213,
-    "z": 0.8762262264350269,
-    "level": 5,
-    "imageFile": "5etoile.png"
-  },
-  {
-    "prefLabel": "Element_113",
-    "subType": "METHOD",
-    "x": 1.2799716081830508,
-    "y": -0.3893252849491784,
-    "z": 0.647658917255995,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_114",
-    "subType": "DATABASE",
-    "x": 1.7830182825333432,
-    "y": 0.31434828521713465,
-    "z": 1.094750087366517,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_115",
-    "subType": "BEHAVIORAL",
-    "x": -0.6357217499121405,
-    "y": 1.919440447465083,
-    "z": 0.8266150012458948,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_116",
-    "subType": "FRAMEWORK",
-    "x": -0.2821076130170489,
-    "y": -0.5248655085843028,
-    "z": 0.65251702100801,
-    "level": 11,
-    "imageFile": "11moon.png"
-  },
-  {
-    "prefLabel": "Element_117",
-    "subType": "TRANSVERSAL",
-    "x": 0.656754227161199,
-    "y": -0.7203723961554324,
-    "z": 1.9767714181856588,
-    "level": 3,
-    "imageFile": "3whitehole.png"
-  },
-  {
-    "prefLabel": "Element_118",
-    "subType": "PLATFORM",
-    "x": 1.7387896354525036,
-    "y": 0.3843436825363502,
-    "z": -0.6476015527313274,
-    "level": 1,
-    "imageFile": "1blackhole.png"
-  },
-  {
-    "prefLabel": "Element_119",
-    "subType": "NORMS_AND_STANDARDS",
-    "x": 1.4964295213067036,
-    "y": 0.4951265141215857,
-    "z": 1.1498099779753734,
-    "level": 12,
-    "imageFile": "12asteroid.png"
-  },
-  {
-    "prefLabel": "Element_120",
-    "subType": "LANGUAGE",
-    "x": 0.5266160452085353,
-    "y": -0.17972530986017743,
-    "z": 1.504171836730083,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_121",
-    "subType": "TECHNICAL",
-    "x": 1.9407338978101265,
-    "y": -0.2688072817745849,
-    "z": 0.653795230641409,
-    "level": 11,
-    "imageFile": "11moon.png"
-  },
-  {
-    "prefLabel": "Element_122",
-    "subType": "PROTOCOL",
-    "x": 0.15075803974144986,
-    "y": 1.7656044497946857,
-    "z": 0.524722674778682,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
-  },
-  {
-    "prefLabel": "Element_123",
-    "subType": "OPERATING_SYSTEM",
-    "x": 1.6379787654394282,
-    "y": 1.5920808032857643,
-    "z": -0.1712577915338771,
-    "level": 3,
-    "imageFile": "3whitehole.png"
-  },
-  {
-    "prefLabel": "Element_124",
-    "subType": "BUSINESS_SOFTWARE",
-    "x": 1.3700185460093404,
-    "y": 0.24482727065403553,
-    "z": 1.8027451810475603,
-    "level": 12,
-    "imageFile": "12asteroid.png"
-  },
-  {
-    "prefLabel": "Element_125",
-    "subType": "TOOL",
-    "x": 0.5232130274289695,
-    "y": 1.461648419556735,
-    "z": -0.15148305015152008,
-    "level": 3,
-    "imageFile": "3whitehole.png"
-  },
-  {
-    "prefLabel": "Element_126",
-    "subType": "FUNCTIONAL",
-    "x": -0.10433245068469843,
-    "y": 0.7608131672424832,
-    "z": 1.9967069996880165,
-    "level": 8,
-    "imageFile": "8planet.png"
-  },
-  {
-    "prefLabel": "Element_127",
-    "subType": "PROGRAMMING_LANGUAGE",
-    "x": 0.4689210399671029,
-    "y": -0.5542137448516327,
-    "z": 0.6157417331116211,
-    "level": 4,
-    "imageFile": "4nebuleuse.png"
-  },
-  {
-    "prefLabel": "Element_128",
-    "subType": "METHOD",
-    "x": 0.03537182507902248,
-    "y": 0.655752251212433,
-    "z": 0.6302901888760191,
-    "level": 6,
-    "imageFile": "6etoile.png"
-  },
-  {
-    "prefLabel": "Element_129",
-    "subType": "DATABASE",
-    "x": 0.3660338505995031,
-    "y": -0.03466794931288775,
-    "z": -0.43404287887868376,
-    "level": 11,
-    "imageFile": "11moon.png"
-  },
-  {
-    "prefLabel": "Element_130",
-    "subType": "BEHAVIORAL",
-    "x": 1.092495282861714,
-    "y": 0.7153929259547034,
-    "z": -0.29931266182632066,
-    "level": 11,
-    "imageFile": "11moon.png"
-  },
-  {
-    "prefLabel": "Element_131",
-    "subType": "FRAMEWORK",
-    "x": 1.3266334252977767,
-    "y": -0.8690581027080942,
-    "z": 1.234115454695588,
-    "level": 5,
-    "imageFile": "5etoile.png"
-  },
-  {
-    "prefLabel": "Element_132",
-    "subType": "TRANSVERSAL",
-    "x": 1.1156836430750077,
-    "y": 1.4342267076946307,
-    "z": 0.158236257472947,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
-  },
-  {
-    "prefLabel": "Element_133",
-    "subType": "PLATFORM",
-    "x": 0.991066488453604,
-    "y": 1.462242655128665,
-    "z": 1.942454415979355,
-    "level": 13,
-    "imageFile": "13asteroid.png"
-  },
-  {
-    "prefLabel": "Element_134",
-    "subType": "NORMS_AND_STANDARDS",
-    "x": 0.4859859488492706,
-    "y": -0.8889411659632714,
-    "z": 0.5068734503988976,
-    "level": 2,
-    "imageFile": "2blackhole.png"
-  },
-  {
-    "prefLabel": "Element_135",
-    "subType": "LANGUAGE",
-    "x": 0.770541287928701,
-    "y": 1.6091009400866465,
-    "z": 1.6225711221629249,
-    "level": 9,
-    "imageFile": "9planet.png"
-  },
-  {
-    "prefLabel": "Element_136",
-    "subType": "TECHNICAL",
-    "x": 0.3209186293120314,
-    "y": 0.5778532604226843,
-    "z": 0.37078422342272654,
-    "level": 7,
-    "imageFile": "7neutronstar.png"
-  },
-  {
-    "prefLabel": "Element_137",
-    "subType": "PROTOCOL",
-    "x": 1.167331482711928,
-    "y": 0.2299358592390932,
-    "z": 0.9643439792832014,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
-  },
-  {
-    "prefLabel": "Element_138",
-    "subType": "OPERATING_SYSTEM",
-    "x": -0.5369163436853535,
-    "y": 0.40847180295419583,
-    "z": 1.9076108917226517,
-    "level": 13,
-    "imageFile": "13asteroid.png"
-  },
-  {
-    "prefLabel": "Element_139",
-    "subType": "BUSINESS_SOFTWARE",
-    "x": 0.015683702154295043,
-    "y": 1.078113795760646,
-    "z": 0.9495099577378179,
-    "level": 12,
-    "imageFile": "12asteroid.png"
-  },
-  {
-    "prefLabel": "Element_140",
-    "subType": "TOOL",
-    "x": 1.5552958770520742,
-    "y": 1.5570240096976793,
-    "z": 1.5780265525047996,
-    "level": 10,
-    "imageFile": "10protoplanet.png"
-  },
-  {
-    "prefLabel": "Element_141",
-    "subType": "FUNCTIONAL",
-    "x": 0.14002819256796517,
-    "y": -0.05001653819980101,
-    "z": 1.156152275668949,
-    "level": 11,
-    "imageFile": "11moon.png"
-  },
-  {
-    "prefLabel": "Element_142",
-    "subType": "PROGRAMMING_LANGUAGE",
-    "x": 1.278205428003091,
-    "y": 1.6171490521956091,
-    "z": -0.8923027004869403,
-    "level": 3,
-    "imageFile": "3whitehole.png"
   }
 ]
