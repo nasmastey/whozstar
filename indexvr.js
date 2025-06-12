@@ -155,6 +155,9 @@ scene.createDefaultXRExperienceAsync({
     });
     advancedTexture.addControl(searchPanel);
 
+    // Global variables for suggestions
+    let suggestionsPanel, currentSuggestions = [], maxSuggestions = 5;
+
     // Header
     const header = new BABYLON.GUI.TextBlock();
     Object.assign(header, {
@@ -173,8 +176,38 @@ scene.createDefaultXRExperienceAsync({
         height: "40px",
         color: "black",
         background: "white",
-        placeholderText: "Nom de particule..."
+        placeholderText: "Nom de particule...",
+        isPointerBlocker: true
     });
+    
+    // Add click handler to show VR keyboard when input is clicked
+    inputText.onPointerClickObservable.add(() => {
+        console.log("VR Input field clicked - attempting to show virtual keyboard");
+        showVRKeyboard(inputText);
+    });
+    
+    // Also handle pointer down for better trigger detection
+    inputText.onPointerDownObservable.add(() => {
+        console.log("VR Input field pointer down - showing virtual keyboard");
+        showVRKeyboard(inputText);
+    });
+    
+    // Handle focus event to show keyboard
+    inputText.onFocusObservable.add(() => {
+        console.log("VR Input field focused - showing virtual keyboard");
+        showVRKeyboard(inputText);
+    });
+
+    // Handle text input for suggestions
+    inputText.onTextChangedObservable.add(() => {
+        const query = inputText.text.trim();
+        if (query.length >= 3) {
+            showSuggestions(query);
+        } else {
+            hideSuggestions();
+        }
+    });
+    
     searchPanel.addControl(inputText);
 
     // Search Button
@@ -199,6 +232,18 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(searchResultText);
 
+    // Suggestions Panel (initially hidden)
+    suggestionsPanel = new BABYLON.GUI.StackPanel();
+    Object.assign(suggestionsPanel, {
+        width: "380px",
+        maxHeight: "200px",
+        background: "rgba(240,240,240,0.95)",
+        isVisible: false,
+        paddingTop: "5px",
+        paddingBottom: "5px"
+    });
+    searchPanel.addControl(suggestionsPanel);
+
     // Keep panel facing camera
     scene.onBeforeRenderObservable.add(() => {
         if (searchPanel.isVisible) {
@@ -213,6 +258,7 @@ scene.createDefaultXRExperienceAsync({
     searchBtn.onPointerUpObservable.add(() => {
         const query = inputText.text.trim();
         if (query) {
+            hideSuggestions();
             moveCameraToSprite(query);
             searchResultText.text = "Recherche : " + query;
         } else {
@@ -234,11 +280,26 @@ scene.createDefaultXRExperienceAsync({
                             if (searchPanel.isVisible) {
                                 inputText.text = "";
                                 searchResultText.text = "";
+                            } else {
+                                hideSuggestions();
                             }
                         }
                     });
                 }
             }
+            
+            // Handle triggers for both hands to show keyboard when search panel is visible
+            const trigger = motionController.getComponent("xr-standard-trigger");
+            if (trigger) {
+                trigger.onButtonStateChangedObservable.add(() => {
+                    if (trigger.pressed && searchPanel.isVisible) {
+                        // Check if the controller is pointing at the input field
+                        console.log(`${motionController.handness} trigger pressed while search panel visible - showing keyboard`);
+                        showVRKeyboard(inputText);
+                    }
+                });
+            }
+            
             // Add left joystick up/down to z translation
             const thumbstick = motionController.getComponent("xr-standard-thumbstick");
             if (thumbstick) {
@@ -255,6 +316,129 @@ scene.createDefaultXRExperienceAsync({
     );
 });
 
+// Function to show VR virtual keyboard
+function showVRKeyboard(inputElement) {
+    console.log("Attempting to show VR virtual keyboard");
+    
+    // Method 1: Try WebXR DOM Overlay API if available
+    if (navigator.xr && xrHelper && xrHelper.baseExperience) {
+        const session = xrHelper.baseExperience.sessionManager?.session;
+        if (session) {
+            try {
+                // Check if DOM overlay is supported
+                if (session.domOverlayState && session.domOverlayState.type !== null) {
+                    // Create a temporary HTML input to trigger system keyboard
+                    const tempInput = document.createElement('input');
+                    tempInput.type = 'text';
+                    tempInput.style.position = 'absolute';
+                    tempInput.style.left = '-9999px';
+                    tempInput.style.opacity = '0';
+                    document.body.appendChild(tempInput);
+                    
+                    tempInput.focus();
+                    tempInput.click();
+                    
+                    // Clean up after a delay
+                    setTimeout(() => {
+                        if (tempInput.parentNode) {
+                            document.body.removeChild(tempInput);
+                        }
+                    }, 100);
+                }
+            } catch (e) {
+                console.log("DOM overlay keyboard not available:", e);
+            }
+        }
+    }
+    
+    // Method 2: Try to use WebXR input events
+    if (xrHelper && xrHelper.input) {
+        try {
+            // Dispatch a custom event that might trigger VR keyboard
+            const keyboardEvent = new CustomEvent('xr-keyboard-request', {
+                detail: { inputElement: inputElement }
+            });
+            window.dispatchEvent(keyboardEvent);
+        } catch (e) {
+            console.log("Custom keyboard event failed:", e);
+        }
+    }
+    
+    // Method 3: Focus the Babylon.js input (this should work on most VR browsers)
+    if (inputElement && inputElement.focus) {
+        inputElement.focus();
+        
+        // Try to simulate a text input event
+        setTimeout(() => {
+            if (inputElement.onTextInputObservable) {
+                inputElement.onTextInputObservable.notifyObservers(inputElement);
+            }
+        }, 50);
+    }
+}
+
+// Function to show suggestions based on input
+function showSuggestions(query) {
+    // Get all available sprite names
+    const allSprites = getAllSprites();
+    const allNames = allSprites.filter(sprite => sprite.isVisible).map(sprite => sprite.name);
+    
+    // Filter names that start with or contain the query (case insensitive)
+    const matches = allNames.filter(name =>
+        name.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, maxSuggestions);
+    
+    // Clear existing suggestions
+    suggestionsPanel.clearControls();
+    currentSuggestions = [];
+    
+    if (matches.length > 0) {
+        matches.forEach((match, index) => {
+            const suggestionButton = BABYLON.GUI.Button.CreateSimpleButton(`suggestion_${index}`, match);
+            Object.assign(suggestionButton, {
+                width: "360px",
+                height: "30px",
+                color: "black",
+                background: "rgba(255,255,255,0.8)",
+                cornerRadius: 3,
+                thickness: 1,
+                paddingTop: "2px",
+                paddingBottom: "2px"
+            });
+            
+            // Add hover effect
+            suggestionButton.onPointerEnterObservable.add(() => {
+                suggestionButton.background = "rgba(200,220,255,0.9)";
+            });
+            
+            suggestionButton.onPointerOutObservable.add(() => {
+                suggestionButton.background = "rgba(255,255,255,0.8)";
+            });
+            
+            // Handle click on suggestion
+            suggestionButton.onPointerClickObservable.add(() => {
+                inputText.text = match;
+                hideSuggestions();
+                moveCameraToSprite(match);
+                searchResultText.text = "Recherche : " + match;
+            });
+            
+            suggestionsPanel.addControl(suggestionButton);
+            currentSuggestions.push(match);
+        });
+        
+        suggestionsPanel.isVisible = true;
+    } else {
+        suggestionsPanel.isVisible = false;
+    }
+}
+
+// Function to hide suggestions
+function hideSuggestions() {
+    suggestionsPanel.isVisible = false;
+    suggestionsPanel.clearControls();
+    currentSuggestions = [];
+}
 
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
