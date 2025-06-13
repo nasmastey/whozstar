@@ -1,0 +1,65 @@
+{
+  "projectMergeConfig": {
+    "version": "1.0.0",
+    "description": "Configuration template pour le merge de projets",
+    "projects": {
+      "projectA": {
+        "name": "Projet A",
+        "description": "Description du premier projet",
+        "mainFiles": [
+          "index.html",
+          "index.js",
+          "style.css"
+        ],
+        "dependencies": [],
+        "conflictResolution": {
+          "strategy": "rename",
+          "prefix": "projectA_"
+        }
+      },
+      "projectB": {
+        "name": "Projet B", 
+        "description": "Description du deuxième projet",
+        "mainFiles": [
+          "index.html",
+          "index.js", 
+          "style.css"
+        ],
+        "dependencies": [],
+        "conflictResolution": {
+          "strategy": "rename",
+          "prefix": "projectB_"
+        }
+      }
+    },
+    "mergeSettings": {
+      "targetBranch": "merge-branch",
+      "preserveHistory": true,
+      "createBackup": true,
+      "testAfterMerge": true
+    },
+    "fileMapping": {
+      "html": {
+        "strategy": "combine",
+        "outputFile": "index.html"
+      },
+      "js": {
+        "strategy": "modularize",
+        "outputPattern": "{projectName}.js"
+      },
+      "css": {
+        "strategy": "namespace",
+        "outputFile": "styles.css"
+      },
+      "assets": {
+        "strategy": "preserve",
+        "outputDir": "assets/"
+      }
+    },
+    "postMergeActions": [
+      "updateReferences",
+      "runTests",
+      "generateDocumentation"
+    ]
+  }
+}
