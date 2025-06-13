@@ -13,7 +13,7 @@ scene.createDefaultXRExperienceAsync({
     floorMeshes: [],
     disableTeleportation: true,
     inputOptions: { doNotLoadControllerMeshes: true },
-    optionalFeatures: ["dom-overlay", "keyboard-input"],
+    optionalFeatures: ["dom-overlay", "keyboard-input", "hand-tracking"],
     domOverlay: { root: document.body }
 }).then(xrHelper => {
     console.log("WebXR initialized.");
@@ -1671,29 +1671,48 @@ window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
 
 // Test function to verify Meta keyboard functionality
 window.testMetaKeyboard = function() {
-    console.log("Testing Meta WebXR keyboard functionality...");
+    console.log("=== TESTING META KEYBOARD FUNCTIONALITY ===");
+    
+    // Diagnostic information
+    console.log("Available functions:");
+    console.log("- showVirtualKeyboardGlobal:", typeof showVirtualKeyboardGlobal);
+    console.log("- window.showHTMLKeyboard:", typeof window.showHTMLKeyboard);
+    console.log("- window.searchPanel:", !!window.searchPanel);
+    console.log("- globalXrHelper:", !!globalXrHelper);
+    console.log("- globalInputText:", !!globalInputText);
     
     // First ensure search panel is visible
-    if (window.searchPanel && !window.searchPanel.isVisible) {
-        window.searchPanel.isVisible = true;
-        console.log("Search panel opened for keyboard test");
+    if (window.searchPanel) {
+        if (!window.searchPanel.isVisible) {
+            window.searchPanel.isVisible = true;
+            console.log("✅ Search panel opened for keyboard test");
+        } else {
+            console.log("✅ Search panel already visible");
+        }
+    } else {
+        console.error("❌ Search panel not available");
+        return;
     }
     
-    // Try to show the Meta keyboard
+    // Try to show the Meta keyboard with detailed logging
+    console.log("🔄 Attempting to show keyboard...");
     if (typeof showVirtualKeyboardGlobal === 'function') {
         showVirtualKeyboardGlobal();
-        console.log("Meta keyboard show function called");
+        console.log("✅ Meta keyboard show function called");
     } else {
-        console.error("showVirtualKeyboard function not available");
+        console.error("❌ showVirtualKeyboard function not available");
     }
     
-    // Also test HTML fallback
-    if (window.showHTMLKeyboard) {
-        console.log("HTML fallback keyboard available");
-        window.showHTMLKeyboard();
-    } else {
-        console.error("HTML fallback keyboard not available");
-    }
+    // Force HTML keyboard as backup
+    setTimeout(() => {
+        if (window.showHTMLKeyboard) {
+            console.log("🔄 Forcing HTML keyboard display...");
+            window.showHTMLKeyboard();
+            console.log("✅ HTML keyboard forced");
+        } else {
+            console.error("❌ HTML fallback keyboard not available");
+        }
+    }, 500);
 };
 
 // Global keyboard functions (moved outside WebXR callback for proper scope)
@@ -1702,58 +1721,50 @@ let globalInputText = null;
 
 // Function to show Meta WebXR virtual keyboard (global scope)
 function showVirtualKeyboardGlobal() {
-    console.log("Attempting to show Meta WebXR virtual keyboard (global)...");
+    console.log("=== DIAGNOSTIC: Attempting to show Meta WebXR virtual keyboard ===");
+    console.log("globalXrHelper:", !!globalXrHelper);
+    console.log("globalInputText:", !!globalInputText);
     
+    // ALWAYS show HTML fallback first for Meta Quest compatibility
+    console.log("Showing HTML fallback keyboard for Meta Quest compatibility");
+    if (window.showHTMLKeyboard) {
+        window.showHTMLKeyboard();
+        console.log("HTML keyboard shown successfully");
+    } else {
+        console.error("HTML keyboard function not available!");
+    }
+    
+    // Then try Meta native keyboard as enhancement
     if (globalXrHelper && globalXrHelper.baseExperience && globalXrHelper.baseExperience.sessionManager) {
         const session = globalXrHelper.baseExperience.sessionManager.session;
-        if (session) {
+        console.log("WebXR session available:", !!session);
+        
+        if (session && globalInputText) {
             try {
-                // Try to use WebXR keyboard input feature
-                if ('keyboard' in navigator && navigator.keyboard && navigator.keyboard.getLayoutMap) {
-                    // Modern WebXR keyboard API
-                    console.log("Using WebXR keyboard input feature");
-                    
-                    // Focus the input field to trigger Meta's virtual keyboard
-                    if (globalInputText) {
+                console.log("Focusing input field for Meta keyboard trigger");
+                globalInputText.focus();
+                
+                // Try multiple Meta Quest keyboard triggers
+                setTimeout(() => {
+                    if (globalInputText && globalInputText.focus) {
                         globalInputText.focus();
-                        console.log("Meta WebXR virtual keyboard should appear");
+                        console.log("Secondary focus attempt for Meta keyboard");
                     }
-                } else if (session.inputSources) {
-                    // Alternative: Check for hand tracking or controller input
-                    console.log("Using WebXR input sources for keyboard");
-                    
-                    // Focus the input to trigger system keyboard
-                    if (globalInputText) {
+                }, 100);
+                
+                setTimeout(() => {
+                    if (globalInputText && globalInputText.focus) {
                         globalInputText.focus();
-                        console.log("System virtual keyboard triggered");
+                        console.log("Tertiary focus attempt for Meta keyboard");
                     }
-                } else {
-                    console.log("WebXR keyboard features not available, showing HTML fallback");
-                    // Show HTML fallback keyboard if Meta keyboard not available
-                    if (window.showHTMLKeyboard) {
-                        window.showHTMLKeyboard();
-                    }
-                }
+                }, 300);
+                
             } catch (error) {
-                console.error("Error accessing WebXR keyboard:", error);
-                // Fallback to HTML keyboard on error
-                if (window.showHTMLKeyboard) {
-                    window.showHTMLKeyboard();
-                }
-            }
-        } else {
-            console.log("WebXR session not available for Meta keyboard, showing HTML fallback");
-            // Show HTML fallback keyboard if no WebXR session
-            if (window.showHTMLKeyboard) {
-                window.showHTMLKeyboard();
+                console.error("Error focusing input for Meta keyboard:", error);
             }
         }
     } else {
-        console.log("WebXR not initialized for Meta keyboard, showing HTML fallback");
-        // Show HTML fallback keyboard if WebXR not initialized
-        if (window.showHTMLKeyboard) {
-            window.showHTMLKeyboard();
-        }
+        console.log("WebXR not properly initialized - using HTML fallback only");
     }
 }
 
