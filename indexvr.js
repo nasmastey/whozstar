@@ -156,7 +156,7 @@ scene.createDefaultXRExperienceAsync({
         width: "400px",
         paddingTop: "20px",
         background: "rgba(255,255,255,0.7)",
-        isVisible: true, // Make search panel visible by default
+        isVisible: false, // Hidden by default, shown with X button
         isPointerBlocker: true // Enable pointer blocking for VR interaction
     });
     advancedTexture.addControl(searchPanel);
@@ -270,24 +270,87 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
-    // Create VR virtual keyboard using Babylon.js GUI
-    virtualKeyboard = new BABYLON.GUI.VirtualKeyboard();
-    virtualKeyboard.defaultButtonWidth = "40px";
-    virtualKeyboard.defaultButtonHeight = "40px";
-    virtualKeyboard.scaleX = 0.8;
-    virtualKeyboard.scaleY = 0.8;
+    // Create custom VR virtual keyboard using GUI panels
+    virtualKeyboard = new BABYLON.GUI.StackPanel();
+    virtualKeyboard.width = "600px";
+    virtualKeyboard.height = "300px";
+    virtualKeyboard.background = "rgba(0, 0, 0, 0.8)";
     virtualKeyboard.isVisible = false;
     virtualKeyboard.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     virtualKeyboard.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
     virtualKeyboard.paddingBottom = "50px";
-    virtualKeyboard.background = "rgba(0, 0, 0, 0.8)";
-    virtualKeyboard.color = "white";
+    virtualKeyboard.isPointerBlocker = true;
+    virtualKeyboard.isHitTestVisible = true;
     
-    // Connect keyboard to input field
-    virtualKeyboard.connect(inputText);
+    // Create keyboard rows
+    const keyboardRows = [
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '↵']
+    ];
+    
+    keyboardRows.forEach(row => {
+        const rowPanel = new BABYLON.GUI.StackPanel();
+        rowPanel.isVertical = false;
+        rowPanel.height = "60px";
+        rowPanel.paddingBottom = "5px";
+        
+        row.forEach(key => {
+            const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${key}`, key);
+            keyButton.width = key === '⌫' || key === '↵' ? "80px" : "50px";
+            keyButton.height = "50px";
+            keyButton.color = "white";
+            keyButton.background = "rgba(70, 70, 70, 0.9)";
+            keyButton.cornerRadius = 5;
+            keyButton.thickness = 1;
+            keyButton.fontSize = 18;
+            keyButton.isPointerBlocker = true;
+            keyButton.isHitTestVisible = true;
+            
+            // Add key functionality
+            keyButton.onPointerClickObservable.add(() => {
+                if (key === '⌫') {
+                    // Backspace
+                    inputText.text = inputText.text.slice(0, -1);
+                } else if (key === '↵') {
+                    // Enter - trigger search
+                    const query = inputText.text.trim();
+                    if (query) {
+                        moveCameraToSprite(query);
+                        searchResultText.text = "Recherche : " + query;
+                    }
+                    hideVirtualKeyboard();
+                } else {
+                    // Regular key
+                    inputText.text += key.toLowerCase();
+                }
+                console.log("VR Key pressed:", key, "Current text:", inputText.text);
+            });
+            
+            // Add hover effect
+            keyButton.onPointerEnterObservable.add(() => {
+                keyButton.background = "rgba(120, 120, 120, 1.0)";
+            });
+            
+            keyButton.onPointerOutObservable.add(() => {
+                keyButton.background = "rgba(70, 70, 70, 0.9)";
+            });
+            
+            rowPanel.addControl(keyButton);
+        });
+        
+        virtualKeyboard.addControl(rowPanel);
+    });
     
     advancedTexture.addControl(virtualKeyboard);
     keyboardVisible = false;
+    
+    // Expose all variables globally for testing (after full initialization)
+    window.searchPanel = searchPanel;
+    window.inputText = inputText;
+    window.searchResultText = searchResultText;
+    window.virtualKeyboard = virtualKeyboard;
+    window.suggestionsPanel = suggestionsPanel;
 
     // Function to show VR virtual keyboard
     function showVirtualKeyboard() {
@@ -394,14 +457,7 @@ scene.createDefaultXRExperienceAsync({
                                     // Opening panel
                                     inputText.text = "";
                                     searchResultText.text = "";
-                                    
-                                    // Show VR keyboard immediately when panel opens
-                                    try {
-                                        showVirtualKeyboard();
-                                        console.log("Search panel and VR keyboard opened with X button");
-                                    } catch (error) {
-                                        console.error("Error opening VR keyboard:", error);
-                                    }
+                                    console.log("Search panel opened with X button");
                                 } else {
                                     // Closing panel - hide keyboard immediately
                                     try {
@@ -577,6 +633,47 @@ function hideSuggestions() {
 }
 
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+// Test function to simulate X button press (for testing without VR headset)
+window.testXButton = function() {
+    console.log("Testing X button press simulation...");
+    if (window.searchPanel) {
+        const wasVisible = window.searchPanel.isVisible;
+        window.searchPanel.isVisible = !window.searchPanel.isVisible;
+        
+        if (window.searchPanel.isVisible) {
+            window.inputText.text = "";
+            window.searchResultText.text = "";
+            console.log("Search panel opened (test)");
+        } else {
+            try {
+                if (window.virtualKeyboard) {
+                    window.virtualKeyboard.isVisible = false;
+                }
+                console.log("Search panel and VR keyboard closed (test)");
+            } catch (error) {
+                console.error("Error closing keyboard (test):", error);
+            }
+        }
+    } else {
+        console.error("searchPanel not available");
+    }
+};
+
+// Test function to show VR keyboard (for testing)
+window.testShowKeyboard = function() {
+    console.log("Testing VR keyboard display...");
+    if (window.searchPanel && window.searchPanel.isVisible) {
+        if (window.virtualKeyboard) {
+            window.virtualKeyboard.isVisible = true;
+            console.log("VR keyboard shown (test)");
+        } else {
+            console.error("virtualKeyboard not available");
+        }
+    } else {
+        console.log("Search panel must be open first");
+    }
+};
 
 // Restore default movement, but add z translation for left joystick up/down
 scene.onBeforeRenderObservable.add(() => {
