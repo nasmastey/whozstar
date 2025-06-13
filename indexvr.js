@@ -286,8 +286,32 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
-    // Use Meta WebXR virtual keyboard instead of custom keyboard
-    virtualKeyboard = null;
+    // Create VR native keyboard panel positioned below search panel
+    const vrKeyboardPanel = new BABYLON.GUI.StackPanel();
+    Object.assign(vrKeyboardPanel, {
+        width: "600px",
+        height: "300px",
+        background: "rgba(40, 40, 40, 0.95)",
+        isVisible: false,
+        paddingTop: "10px",
+        paddingBottom: "10px",
+        paddingLeft: "10px",
+        paddingRight: "10px",
+        isPointerBlocker: true,
+        isHitTestVisible: true
+    });
+    
+    // Position VR keyboard below search panel
+    vrKeyboardPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    vrKeyboardPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    vrKeyboardPanel.top = "450px"; // Position below search panel
+    
+    advancedTexture.addControl(vrKeyboardPanel);
+    
+    // Create keyboard layout
+    createVRKeyboard(vrKeyboardPanel);
+    
+    virtualKeyboard = vrKeyboardPanel;
     keyboardVisible = false;
     
     // Expose all variables globally for testing (after full initialization)
@@ -314,11 +338,18 @@ scene.createDefaultXRExperienceAsync({
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
             
-            // Position VR keyboard below the search panel when visible
-            if (virtualKeyboard && virtualKeyboard.isVisible) {
-                virtualKeyboard.paddingBottom = "100px";
-                virtualKeyboard.isPointerBlocker = true;
-                virtualKeyboard.isHitTestVisible = true;
+            // Position HTML keyboard below the search panel in VR
+            const keyboardElement = document.getElementById('virtualKeyboardHTML');
+            if (keyboardElement && window.htmlKeyboardVisible) {
+                // Calculate position relative to search panel
+                const searchContainer = document.getElementById('searchContainer');
+                if (searchContainer) {
+                    const searchRect = searchContainer.getBoundingClientRect();
+                    keyboardElement.style.top = (searchRect.bottom + 20) + 'px';
+                    keyboardElement.style.left = searchRect.left + 'px';
+                    keyboardElement.style.transform = 'none';
+                    keyboardElement.style.position = 'fixed';
+                }
             }
         }
     });
@@ -429,6 +460,131 @@ scene.createDefaultXRExperienceAsync({
         console.log("VR Pointer selection enabled for GUI interaction");
     }
 });
+
+// Function to create VR native keyboard layout
+function createVRKeyboard(keyboardPanel) {
+    const keys = [
+        ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '↵']
+    ];
+    
+    keys.forEach((row, rowIndex) => {
+        const rowPanel = new BABYLON.GUI.StackPanel();
+        rowPanel.isVertical = false;
+        rowPanel.height = "60px";
+        rowPanel.paddingBottom = "5px";
+        
+        row.forEach(keyText => {
+            const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${keyText}`, keyText);
+            Object.assign(keyButton, {
+                width: keyText === '⌫' || keyText === '↵' ? "80px" : "50px",
+                height: "50px",
+                color: "white",
+                background: "rgba(70, 70, 70, 0.9)",
+                cornerRadius: 8,
+                thickness: 1,
+                fontSize: 18,
+                marginLeft: "2px",
+                marginRight: "2px",
+                isPointerBlocker: true,
+                isHitTestVisible: true
+            });
+            
+            // Add hover effect
+            keyButton.onPointerEnterObservable.add(() => {
+                keyButton.background = "rgba(120, 120, 120, 1.0)";
+            });
+            
+            keyButton.onPointerOutObservable.add(() => {
+                keyButton.background = "rgba(70, 70, 70, 0.9)";
+            });
+            
+            // Handle key press
+            keyButton.onPointerClickObservable.add(() => {
+                handleVRKeyPress(keyText);
+            });
+            
+            rowPanel.addControl(keyButton);
+        });
+        
+        keyboardPanel.addControl(rowPanel);
+    });
+    
+    // Add space bar
+    const spaceRow = new BABYLON.GUI.StackPanel();
+    spaceRow.isVertical = false;
+    spaceRow.height = "60px";
+    
+    const spaceButton = BABYLON.GUI.Button.CreateSimpleButton("key_space", "⎵ SPACE");
+    Object.assign(spaceButton, {
+        width: "300px",
+        height: "50px",
+        color: "white",
+        background: "rgba(70, 70, 70, 0.9)",
+        cornerRadius: 8,
+        thickness: 1,
+        fontSize: 16,
+        isPointerBlocker: true,
+        isHitTestVisible: true
+    });
+    
+    spaceButton.onPointerEnterObservable.add(() => {
+        spaceButton.background = "rgba(120, 120, 120, 1.0)";
+    });
+    
+    spaceButton.onPointerOutObservable.add(() => {
+        spaceButton.background = "rgba(70, 70, 70, 0.9)";
+    });
+    
+    spaceButton.onPointerClickObservable.add(() => {
+        handleVRKeyPress(' ');
+    });
+    
+    spaceRow.addControl(spaceButton);
+    keyboardPanel.addControl(spaceRow);
+}
+
+// Function to handle VR keyboard key presses
+function handleVRKeyPress(key) {
+    try {
+        if (globalInputText) {
+            const currentValue = globalInputText.text || '';
+            
+            switch(key) {
+                case '⌫': // Backspace
+                    globalInputText.text = currentValue.slice(0, -1);
+                    break;
+                case '↵': // Enter
+                    // Trigger search
+                    if (currentValue.trim()) {
+                        moveCameraToSprite(currentValue.trim());
+                        if (window.searchResultText) {
+                            window.searchResultText.text = "Recherche : " + currentValue.trim();
+                        }
+                    }
+                    break;
+                case ' ': // Space
+                    globalInputText.text = currentValue + ' ';
+                    break;
+                default:
+                    globalInputText.text = currentValue + key.toLowerCase();
+                    break;
+            }
+            
+            // Synchronize with HTML input
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = globalInputText.text;
+            }
+            
+            console.log("VR Key pressed:", key, "Current text:", globalInputText.text);
+        }
+    } catch (error) {
+        console.error("Error handling VR key press:", error);
+    }
+}
 
 // Function to show VR virtual keyboard (integrated)
 let keyboardRequestInProgress = false;
@@ -1766,70 +1922,72 @@ function initializeMetaKeyboardInVR() {
 
 // Function to show Meta WebXR virtual keyboard (global scope)
 function showVirtualKeyboardGlobal() {
-    console.log("=== DIAGNOSTIC: Attempting to show Meta WebXR virtual keyboard ===");
+    console.log("=== SHOWING VR KEYBOARD BELOW SEARCH PANEL ===");
     console.log("globalXrHelper:", !!globalXrHelper);
     console.log("globalInputText:", !!globalInputText);
     
-    // ALWAYS show HTML fallback first for Meta Quest compatibility
-    console.log("Showing HTML fallback keyboard for Meta Quest compatibility");
-    if (window.showHTMLKeyboard) {
-        window.showHTMLKeyboard();
-        console.log("HTML keyboard shown successfully");
-    } else {
-        console.error("HTML keyboard function not available!");
+    // Show VR native keyboard positioned below search panel
+    if (window.virtualKeyboard) {
+        window.virtualKeyboard.isVisible = true;
+        keyboardVisible = true;
+        console.log("✅ VR native keyboard shown below search panel");
     }
     
-    // Then try Meta native keyboard as enhancement
+    // Also show HTML fallback for additional compatibility
+    if (window.showHTMLKeyboard) {
+        window.showHTMLKeyboard();
+        console.log("✅ HTML fallback keyboard also available");
+    }
+    
+    // Try Meta native keyboard as enhancement
     if (globalXrHelper && globalXrHelper.baseExperience && globalXrHelper.baseExperience.sessionManager) {
         const session = globalXrHelper.baseExperience.sessionManager.session;
-        console.log("WebXR session available:", !!session);
         
         if (session && globalInputText) {
             try {
-                console.log("Focusing input field for Meta keyboard trigger");
+                console.log("🔄 Attempting Meta Quest native keyboard trigger");
                 globalInputText.focus();
                 
-                // Try multiple Meta Quest keyboard triggers
+                // Multiple focus attempts for Meta keyboard
                 setTimeout(() => {
                     if (globalInputText && globalInputText.focus) {
                         globalInputText.focus();
-                        console.log("Secondary focus attempt for Meta keyboard");
+                        console.log("🔄 Secondary Meta keyboard focus attempt");
                     }
                 }, 100);
                 
-                setTimeout(() => {
-                    if (globalInputText && globalInputText.focus) {
-                        globalInputText.focus();
-                        console.log("Tertiary focus attempt for Meta keyboard");
-                    }
-                }, 300);
-                
             } catch (error) {
-                console.error("Error focusing input for Meta keyboard:", error);
+                console.error("Error with Meta keyboard:", error);
             }
         }
-    } else {
-        console.log("WebXR not properly initialized - using HTML fallback only");
     }
 }
 
 // Function to hide Meta WebXR virtual keyboard (global scope)
 function hideVirtualKeyboardGlobal() {
-    console.log("Attempting to hide Meta WebXR virtual keyboard (global)...");
+    console.log("=== HIDING VR KEYBOARD ===");
     
     try {
-        // Blur the input field to hide the virtual keyboard
-        if (globalInputText) {
-            globalInputText.blur();
-            console.log("Meta WebXR virtual keyboard hidden");
+        // Hide VR native keyboard
+        if (window.virtualKeyboard) {
+            window.virtualKeyboard.isVisible = false;
+            keyboardVisible = false;
+            console.log("✅ VR native keyboard hidden");
         }
         
-        // Also hide HTML fallback keyboard
+        // Hide HTML fallback keyboard
         if (window.hideHTMLKeyboard) {
             window.hideHTMLKeyboard();
+            console.log("✅ HTML fallback keyboard hidden");
+        }
+        
+        // Blur the input field to hide Meta keyboard
+        if (globalInputText) {
+            globalInputText.blur();
+            console.log("✅ Meta WebXR virtual keyboard hidden");
         }
     } catch (error) {
-        console.error("Error hiding Meta keyboard:", error);
+        console.error("Error hiding keyboards:", error);
     }
 }
 
