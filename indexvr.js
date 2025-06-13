@@ -278,17 +278,48 @@ scene.createDefaultXRExperienceAsync({
 
     // Function to show HTML keyboard
     function showVirtualKeyboard() {
-        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && !window.htmlKeyboardVisible) {
-            window.toggleHTMLKeyboard();
-            console.log("HTML keyboard shown");
+        console.log("Attempting to show HTML keyboard...");
+        console.log("toggleHTMLKeyboard exists:", typeof window.toggleHTMLKeyboard);
+        console.log("htmlKeyboardVisible:", window.htmlKeyboardVisible);
+        
+        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
+            if (!window.htmlKeyboardVisible) {
+                window.toggleHTMLKeyboard();
+                console.log("HTML keyboard shown");
+            } else {
+                console.log("HTML keyboard already visible");
+            }
+        } else {
+            console.error("toggleHTMLKeyboard function not available");
+            // Fallback: try to show keyboard directly
+            const keyboard = document.getElementById('virtualKeyboardHTML');
+            if (keyboard) {
+                keyboard.style.display = 'block';
+                window.htmlKeyboardVisible = true;
+                console.log("HTML keyboard shown via fallback");
+            }
         }
     }
 
     // Function to hide HTML keyboard
     function hideVirtualKeyboard() {
-        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && window.htmlKeyboardVisible) {
-            window.toggleHTMLKeyboard();
-            console.log("HTML keyboard hidden");
+        console.log("Attempting to hide HTML keyboard...");
+        
+        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
+            if (window.htmlKeyboardVisible) {
+                window.toggleHTMLKeyboard();
+                console.log("HTML keyboard hidden");
+            } else {
+                console.log("HTML keyboard already hidden");
+            }
+        } else {
+            // Fallback: try to hide keyboard directly
+            const keyboard = document.getElementById('virtualKeyboardHTML');
+            if (keyboard) {
+                keyboard.style.display = 'none';
+                window.htmlKeyboardVisible = false;
+                console.log("HTML keyboard hidden via fallback");
+            }
         }
     }
 
@@ -388,7 +419,7 @@ scene.createDefaultXRExperienceAsync({
                                             }
                                             console.log("Search panel and virtual keyboard closed with X button");
                                         } catch (error) {
-                                            console.error("Error closing keyboards:", error);
+                                            console.error("Error closing keyboard:", error);
                                         }
                                     }, 10);
                                 }
@@ -1070,22 +1101,23 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // This prevents any default form submitting
-				const spriteName = document.getElementById('searchInput').value;
-				searchInput.blur();
+    const spriteName = document.getElementById('searchInput').value;
+    searchInput.blur();
                 moveCameraToSprite(spriteName);
             }
         });
-		
-		searchInput.addEventListener('focus', function(event) {
+  
+  searchInput.addEventListener('focus', function(event) {
             searchInput.value = '';
         });
 
         searchInput.addEventListener('change', function(event) {
-			const spriteName = document.getElementById('searchInput').value;
+   const spriteName = document.getElementById('searchInput').value;
             moveCameraToSprite(spriteName);
         });
     }
@@ -1226,7 +1258,7 @@ function blinkSprite(sprite) {
     }
     
     let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
-    const defaultColor = sprite.color
+    const defaultColor = sprite.color;
     const highlightColor = new BABYLON.Color4(1, 1, 1, 1);
 	const mediumMediumlightColor = new BABYLON.Color4((sprite.color.r+1)/2, (sprite.color.g+1)/2, (sprite.color.b+1)/2, (sprite.color.a+1)/2);
 	const mediumLowlightColor = new BABYLON.Color4((3*sprite.color.r+1)/4, (3*sprite.color.g+1)/4, (3*sprite.color.b+1)/4, (3*sprite.color.a+1)/4);
@@ -1364,7 +1396,7 @@ function updateNearestList(distances, spriteName, subType) {
         // Update the nearest list
 		const nearestList = document.getElementById('nearestList');
 			nearestList.innerHTML = '';
-			let i=0
+			let i=0;
 			
 			
 		let listItem = document.createElement('li');
@@ -1381,7 +1413,10 @@ function updateNearestList(distances, spriteName, subType) {
 
 				// Ajouter un écouteur d'événements click à chaque élément de la liste
 				listItem.addEventListener('click', function() {
-					searchInput.value = particle.name;
+					const searchInput = document.getElementById('searchInput');
+					if (searchInput) {
+						searchInput.value = particle.name;
+					}
 					moveCameraToSprite(particle.name);
 				});
 

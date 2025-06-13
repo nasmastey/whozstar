@@ -372,7 +372,7 @@
 	       });
 
 	       // Clavier virtuel HTML - Variables d'état
-	       let htmlKeyboardVisible = false;
+	       window.htmlKeyboardVisible = false;
 	       let isShiftActive = false;
 	       let isCapsLockActive = false;
 
@@ -385,13 +385,13 @@
 	                   return;
 	               }
 	               
-	               htmlKeyboardVisible = !htmlKeyboardVisible;
+	               window.htmlKeyboardVisible = !window.htmlKeyboardVisible;
 	               
 	               // Use requestAnimationFrame to prevent blocking
 	               requestAnimationFrame(() => {
 	                   try {
-	                       keyboard.style.display = htmlKeyboardVisible ? 'block' : 'none';
-	                       console.log('HTML Keyboard toggled:', htmlKeyboardVisible);
+	                       keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
+	                       console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
 	                   } catch (error) {
 	                       console.error('Error updating keyboard display:', error);
 	                   }
@@ -574,7 +574,7 @@
 	           const searchInput = document.getElementById('searchInput');
 	           if (searchInput) {
 	               searchInput.addEventListener('focus', function() {
-	                   if (!htmlKeyboardVisible) {
+	                   if (!window.htmlKeyboardVisible) {
 	                       toggleHTMLKeyboard();
 	                   }
 	               });
