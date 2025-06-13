@@ -146,12 +146,18 @@ scene.createDefaultXRExperienceAsync({
 
     // UI Setup
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
+    
+    // Configure advanced texture for VR pointer interaction
+    advancedTexture.isForeground = false;
+    advancedTexture.layer.layerMask = 0x10000000;
+    
     const searchPanel = new BABYLON.GUI.StackPanel();
     Object.assign(searchPanel, {
         width: "400px",
         paddingTop: "20px",
         background: "rgba(255,255,255,0.7)",
-        isVisible: false
+        isVisible: false,
+        isPointerBlocker: true // Enable pointer blocking for VR interaction
     });
     advancedTexture.addControl(searchPanel);
 
@@ -178,7 +184,8 @@ scene.createDefaultXRExperienceAsync({
         color: "black",
         background: "white",
         placeholderText: "Nom de particule...",
-        isPointerBlocker: true
+        isPointerBlocker: true,
+        isHitTestVisible: true // Ensure VR pointer can interact
     });
     
     // Add click handler to show VR keyboard when input is clicked
@@ -234,7 +241,9 @@ scene.createDefaultXRExperienceAsync({
         background: "#007bff",
         cornerRadius: 5,
         thickness: 0,
-        paddingTop: "10px"
+        paddingTop: "10px",
+        isPointerBlocker: true,
+        isHitTestVisible: true // Ensure VR pointer can interact
     });
     searchPanel.addControl(searchBtn);
 
@@ -255,7 +264,9 @@ scene.createDefaultXRExperienceAsync({
         background: "rgba(240,240,240,0.95)",
         isVisible: false,
         paddingTop: "5px",
-        paddingBottom: "5px"
+        paddingBottom: "5px",
+        isPointerBlocker: true, // Enable pointer blocking for VR interaction
+        isHitTestVisible: true // Ensure VR pointer can interact
     });
     searchPanel.addControl(suggestionsPanel);
 
@@ -274,7 +285,9 @@ scene.createDefaultXRExperienceAsync({
         verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER,
         top: "280px", // Position directly below search panel
         zIndex: 1000, // Ensure it's on top
-        cornerRadius: 10
+        cornerRadius: 10,
+        isPointerBlocker: true, // Enable pointer blocking for VR interaction
+        isHitTestVisible: true // Ensure VR pointer can interact
     });
     advancedTexture.addControl(virtualKeyboard);
 
@@ -343,7 +356,9 @@ scene.createDefaultXRExperienceAsync({
                 shadowOffsetX: 2,
                 shadowOffsetY: 2,
                 shadowBlur: 4,
-                shadowColor: "rgba(0,0,0,0.5)"
+                shadowColor: "rgba(0,0,0,0.5)",
+                isPointerBlocker: true, // Enable pointer blocking for VR interaction
+                isHitTestVisible: true // Ensure VR pointer can interact with keys
             });
 
             // Store original background for hover effects
@@ -585,7 +600,14 @@ scene.createDefaultXRExperienceAsync({
     scene.onBeforeRenderObservable.add(() => {
         if (searchPanel.isVisible) {
             const cam = scene.activeCamera;
-            advancedTexture.layer.layerMask = cam.layerMask;
+            
+            // Ensure GUI layer is visible to VR cameras
+            if (xrHelper && xrHelper.baseExperience && xrHelper.baseExperience.camera) {
+                advancedTexture.layer.layerMask = 0x0FFFFFFF; // Make visible to all cameras
+            } else {
+                advancedTexture.layer.layerMask = cam.layerMask;
+            }
+            
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
             
@@ -690,11 +712,22 @@ scene.createDefaultXRExperienceAsync({
     });
 
     // Enable POINTER_SELECTION for controller pointer ray selection
-    xrHelper.baseExperience.featuresManager.enableFeature(
+    const pointerSelection = xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.POINTER_SELECTION, 'latest', {
-            xrInput: xrHelper.input
+            xrInput: xrHelper.input,
+            enablePointerSelectionOnAllControllers: true,
+            preferredHandedness: "none", // Allow both hands
+            gazeCamera: scene.activeCamera,
+            disablePointerUpOnTouchOut: false,
+            overrideButtonId: "xr-standard-trigger"
         }
     );
+    
+    // Configure pointer selection to work with GUI
+    if (pointerSelection) {
+        pointerSelection.attach();
+        console.log("VR Pointer selection enabled for GUI interaction");
+    }
 });
 
 // Function to show VR virtual keyboard (integrated)
@@ -771,7 +804,9 @@ function showSuggestions(query) {
                     cornerRadius: 3,
                     thickness: 1,
                     paddingTop: "2px",
-                    paddingBottom: "2px"
+                    paddingBottom: "2px",
+                    isPointerBlocker: true, // Enable pointer blocking for VR interaction
+                    isHitTestVisible: true // Ensure VR pointer can interact
                 });
                 
                 // Add hover effect
