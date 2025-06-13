@@ -254,6 +254,40 @@
         </style>
     </head>
 <body>
+    <script>
+        // Définir les variables globales et fonctions avant le chargement du module VR
+        window.htmlKeyboardVisible = false;
+        let isShiftActive = false;
+        let isCapsLockActive = false;
+
+        // Fonction pour afficher/masquer le clavier HTML
+        function toggleHTMLKeyboard() {
+            try {
+                const keyboard = document.getElementById('virtualKeyboardHTML');
+                if (!keyboard) {
+                    console.error('Virtual keyboard HTML element not found');
+                    return;
+                }
+                
+                window.htmlKeyboardVisible = !window.htmlKeyboardVisible;
+                
+                // Use requestAnimationFrame to prevent blocking
+                requestAnimationFrame(() => {
+                    try {
+                        keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
+                        console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
+                    } catch (error) {
+                        console.error('Error updating keyboard display:', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in toggleHTMLKeyboard:', error);
+            }
+        }
+
+        // Exposer la fonction globalement
+        window.toggleHTMLKeyboard = toggleHTMLKeyboard;
+    </script>
     <script type="module" src="./indexvr.js"></script>
 	<div id="fileInputContainer">
 	       <input type="file" id="fileInput" accept=".json">
@@ -271,8 +305,8 @@
     <ul id="nearestList"></ul>
     </div>
 	<button class="toggleButton" data-target="searchContainer">Search</button>
-    <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
-    <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+	<button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
+	<button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
 	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
 	   <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
 	       <label for="passwordInput">Enter password:</label>
@@ -371,35 +405,7 @@
 	           window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
 	       });
 
-	       // Clavier virtuel HTML - Variables d'état
-	       window.htmlKeyboardVisible = false;
-	       let isShiftActive = false;
-	       let isCapsLockActive = false;
-
-	       // Fonction pour afficher/masquer le clavier HTML
-	       function toggleHTMLKeyboard() {
-	           try {
-	               const keyboard = document.getElementById('virtualKeyboardHTML');
-	               if (!keyboard) {
-	                   console.error('Virtual keyboard HTML element not found');
-	                   return;
-	               }
-	               
-	               window.htmlKeyboardVisible = !window.htmlKeyboardVisible;
-	               
-	               // Use requestAnimationFrame to prevent blocking
-	               requestAnimationFrame(() => {
-	                   try {
-	                       keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
-	                       console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
-	                   } catch (error) {
-	                       console.error('Error updating keyboard display:', error);
-	                   }
-	               });
-	           } catch (error) {
-	               console.error('Error in toggleHTMLKeyboard:', error);
-	           }
-	       }
+	       // Les variables et fonction toggleHTMLKeyboard sont maintenant définies plus haut
 
 	       // Fonction pour gérer les touches du clavier HTML
 	       function handleHTMLKeyPress(key) {
@@ -599,8 +605,7 @@
 	           }
 	       });
 
-	       // Exposer la fonction pour l'utiliser depuis le code VR
-	       window.toggleHTMLKeyboard = toggleHTMLKeyboard;
+	       // La fonction toggleHTMLKeyboard est déjà exposée plus haut
 	   </script>
 </body>
 </body>

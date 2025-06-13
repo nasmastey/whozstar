@@ -282,45 +282,54 @@ scene.createDefaultXRExperienceAsync({
         console.log("toggleHTMLKeyboard exists:", typeof window.toggleHTMLKeyboard);
         console.log("htmlKeyboardVisible:", window.htmlKeyboardVisible);
         
-        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
-            if (!window.htmlKeyboardVisible) {
-                window.toggleHTMLKeyboard();
-                console.log("HTML keyboard shown");
+        // Wait a bit for DOM to be ready if needed
+        setTimeout(() => {
+            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
+                if (!window.htmlKeyboardVisible) {
+                    window.toggleHTMLKeyboard();
+                    console.log("HTML keyboard shown");
+                } else {
+                    console.log("HTML keyboard already visible");
+                }
             } else {
-                console.log("HTML keyboard already visible");
+                console.error("toggleHTMLKeyboard function not available, using fallback");
+                // Fallback: try to show keyboard directly
+                const keyboard = document.getElementById('virtualKeyboardHTML');
+                if (keyboard) {
+                    keyboard.style.display = 'block';
+                    window.htmlKeyboardVisible = true;
+                    console.log("HTML keyboard shown via fallback");
+                } else {
+                    console.error("Virtual keyboard HTML element not found");
+                }
             }
-        } else {
-            console.error("toggleHTMLKeyboard function not available");
-            // Fallback: try to show keyboard directly
-            const keyboard = document.getElementById('virtualKeyboardHTML');
-            if (keyboard) {
-                keyboard.style.display = 'block';
-                window.htmlKeyboardVisible = true;
-                console.log("HTML keyboard shown via fallback");
-            }
-        }
+        }, 100);
     }
 
     // Function to hide HTML keyboard
     function hideVirtualKeyboard() {
         console.log("Attempting to hide HTML keyboard...");
         
-        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
-            if (window.htmlKeyboardVisible) {
-                window.toggleHTMLKeyboard();
-                console.log("HTML keyboard hidden");
+        setTimeout(() => {
+            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
+                if (window.htmlKeyboardVisible) {
+                    window.toggleHTMLKeyboard();
+                    console.log("HTML keyboard hidden");
+                } else {
+                    console.log("HTML keyboard already hidden");
+                }
             } else {
-                console.log("HTML keyboard already hidden");
+                // Fallback: try to hide keyboard directly
+                const keyboard = document.getElementById('virtualKeyboardHTML');
+                if (keyboard) {
+                    keyboard.style.display = 'none';
+                    window.htmlKeyboardVisible = false;
+                    console.log("HTML keyboard hidden via fallback");
+                } else {
+                    console.error("Virtual keyboard HTML element not found");
+                }
             }
-        } else {
-            // Fallback: try to hide keyboard directly
-            const keyboard = document.getElementById('virtualKeyboardHTML');
-            if (keyboard) {
-                keyboard.style.display = 'none';
-                window.htmlKeyboardVisible = false;
-                console.log("HTML keyboard hidden via fallback");
-            }
-        }
+        }, 50);
     }
 
     // Keep panel facing camera and position keyboard relative to panel
