@@ -155,6 +155,8 @@
     z-index: 10000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
+    pointer-events: auto; /* Ensure VR pointer interaction */
+    touch-action: manipulation; /* Optimize for VR touch */
 }
 
 #virtualKeyboardHTML .keyboard-title {
@@ -184,6 +186,9 @@
     font-size: 16px;
     transition: all 0.2s;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    pointer-events: auto; /* Ensure VR pointer can interact */
+    touch-action: manipulation; /* Optimize for VR interaction */
+    user-select: none; /* Prevent text selection in VR */
 }
 
 #virtualKeyboardHTML .key:hover {
@@ -219,6 +224,32 @@
 
 #virtualKeyboardHTML .key.caps.active {
     background: rgba(100, 150, 100, 0.9);
+}
+
+/* Styles pour l'interaction VR */
+#virtualKeyboardHTML .key.active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+#virtualKeyboardHTML .key:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Amélioration de la visibilité pour VR */
+#virtualKeyboardHTML {
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#virtualKeyboardHTML .key {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#virtualKeyboardHTML .key:hover,
+#virtualKeyboardHTML .key:focus {
+    border-color: rgba(255, 255, 255, 0.3);
 }
         </style>
     </head>
@@ -347,98 +378,145 @@
 
 	       // Fonction pour afficher/masquer le clavier HTML
 	       function toggleHTMLKeyboard() {
-	           const keyboard = document.getElementById('virtualKeyboardHTML');
-	           htmlKeyboardVisible = !htmlKeyboardVisible;
-	           keyboard.style.display = htmlKeyboardVisible ? 'block' : 'none';
-	           console.log('HTML Keyboard toggled:', htmlKeyboardVisible);
+	           try {
+	               const keyboard = document.getElementById('virtualKeyboardHTML');
+	               if (!keyboard) {
+	                   console.error('Virtual keyboard HTML element not found');
+	                   return;
+	               }
+	               
+	               htmlKeyboardVisible = !htmlKeyboardVisible;
+	               
+	               // Use requestAnimationFrame to prevent blocking
+	               requestAnimationFrame(() => {
+	                   try {
+	                       keyboard.style.display = htmlKeyboardVisible ? 'block' : 'none';
+	                       console.log('HTML Keyboard toggled:', htmlKeyboardVisible);
+	                   } catch (error) {
+	                       console.error('Error updating keyboard display:', error);
+	                   }
+	               });
+	           } catch (error) {
+	               console.error('Error in toggleHTMLKeyboard:', error);
+	           }
 	       }
 
 	       // Fonction pour gérer les touches du clavier HTML
 	       function handleHTMLKeyPress(key) {
-	           const searchInput = document.getElementById('searchInput');
-	           if (!searchInput) return;
-
-	           const currentValue = searchInput.value;
-
-	           switch(key) {
-	               case 'Backspace':
-	                   searchInput.value = currentValue.slice(0, -1);
-	                   break;
-	               case 'Tab':
-	                   searchInput.value = currentValue + '\t';
-	                   break;
-	               case 'Enter':
-	               case 'Search':
-	                   // Déclencher la recherche
-	                   const searchButton = document.getElementById('searchButton');
-	                   if (searchButton) searchButton.click();
-	                   toggleHTMLKeyboard();
-	                   break;
-	               case 'CapsLock':
-	                   isCapsLockActive = !isCapsLockActive;
-	                   updateKeyboardState();
-	                   break;
-	               case 'Shift':
-	                   isShiftActive = !isShiftActive;
-	                   updateKeyboardState();
-	                   break;
-	               case ' ':
-	                   searchInput.value = currentValue + ' ';
-	                   break;
-	               default:
-	                   let charToAdd = key;
-	                   
-	                   // Gestion des majuscules/minuscules
-	                   if (/^[a-zA-Z]$/.test(key)) {
-	                       if (isCapsLockActive || isShiftActive) {
-	                           charToAdd = key.toUpperCase();
-	                       } else {
-	                           charToAdd = key.toLowerCase();
-	                       }
-	                   } else if (isShiftActive) {
-	                       // Symboles avec Shift
-	                       const shiftMap = {
-	                           '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
-	                           '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
-	                           '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
-	                           ',': '<', '.': '>', '/': '?'
-	                       };
-	                       charToAdd = shiftMap[key] || key;
-	                   }
-	                   
-	                   searchInput.value = currentValue + charToAdd;
-	                   
-	                   // Réinitialiser Shift après saisie
-	                   if (isShiftActive) {
-	                       isShiftActive = false;
+	           try {
+	               const searchInput = document.getElementById('searchInput');
+	               if (!searchInput) {
+	                   console.error('Search input not found');
+	                   return;
+	               }
+	
+	               const currentValue = searchInput.value;
+	
+	               switch(key) {
+	                   case 'Backspace':
+	                       searchInput.value = currentValue.slice(0, -1);
+	                       break;
+	                   case 'Tab':
+	                       searchInput.value = currentValue + '\t';
+	                       break;
+	                   case 'Enter':
+	                   case 'Search':
+	                       // Déclencher la recherche avec protection
+	                       setTimeout(() => {
+	                           try {
+	                               const searchButton = document.getElementById('searchButton');
+	                               if (searchButton) searchButton.click();
+	                               toggleHTMLKeyboard();
+	                           } catch (error) {
+	                               console.error('Error triggering search:', error);
+	                           }
+	                       }, 10);
+	                       break;
+	                   case 'CapsLock':
+	                       isCapsLockActive = !isCapsLockActive;
 	                       updateKeyboardState();
+	                       break;
+	                   case 'Shift':
+	                       isShiftActive = !isShiftActive;
+	                       updateKeyboardState();
+	                       break;
+	                   case ' ':
+	                       searchInput.value = currentValue + ' ';
+	                       break;
+	                   default:
+	                       let charToAdd = key;
+	                       
+	                       // Gestion des majuscules/minuscules
+	                       if (/^[a-zA-Z]$/.test(key)) {
+	                           if (isCapsLockActive || isShiftActive) {
+	                               charToAdd = key.toUpperCase();
+	                           } else {
+	                               charToAdd = key.toLowerCase();
+	                           }
+	                       } else if (isShiftActive) {
+	                           // Symboles avec Shift
+	                           const shiftMap = {
+	                               '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+	                               '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
+	                               '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
+	                               ',': '<', '.': '>', '/': '?'
+	                           };
+	                           charToAdd = shiftMap[key] || key;
+	                       }
+	                       
+	                       searchInput.value = currentValue + charToAdd;
+	                       
+	                       // Réinitialiser Shift après saisie
+	                       if (isShiftActive) {
+	                           isShiftActive = false;
+	                           updateKeyboardState();
+	                       }
+	                       break;
+	               }
+	
+	               // Déclencher l'événement input pour les suggestions avec protection
+	               setTimeout(() => {
+	                   try {
+	                       searchInput.dispatchEvent(new Event('input'));
+	                   } catch (error) {
+	                       console.error('Error dispatching input event:', error);
 	                   }
-	                   break;
+	               }, 1);
+	           } catch (error) {
+	               console.error('Error in handleHTMLKeyPress:', error);
 	           }
-
-	           // Déclencher l'événement input pour les suggestions
-	           searchInput.dispatchEvent(new Event('input'));
 	       }
 
 	       // Fonction pour mettre à jour l'état visuel du clavier
 	       function updateKeyboardState() {
-	           const shiftKeys = document.querySelectorAll('.key.shift');
-	           const capsKey = document.querySelector('.key.caps');
-	           
-	           shiftKeys.forEach(key => {
-	               if (isShiftActive) {
-	                   key.classList.add('active');
-	               } else {
-	                   key.classList.remove('active');
-	               }
-	           });
-	           
-	           if (capsKey) {
-	               if (isCapsLockActive) {
-	                   capsKey.classList.add('active');
-	               } else {
-	                   capsKey.classList.remove('active');
-	               }
+	           try {
+	               const shiftKeys = document.querySelectorAll('.key.shift');
+	               const capsKey = document.querySelector('.key.caps');
+	               
+	               // Use requestAnimationFrame to prevent blocking
+	               requestAnimationFrame(() => {
+	                   try {
+	                       shiftKeys.forEach(key => {
+	                           if (isShiftActive) {
+	                               key.classList.add('active');
+	                           } else {
+	                               key.classList.remove('active');
+	                           }
+	                       });
+	                       
+	                       if (capsKey) {
+	                           if (isCapsLockActive) {
+	                               capsKey.classList.add('active');
+	                           } else {
+	                               capsKey.classList.remove('active');
+	                           }
+	                       }
+	                   } catch (error) {
+	                       console.error('Error updating keyboard visual state:', error);
+	                   }
+	               });
+	           } catch (error) {
+	               console.error('Error in updateKeyboardState:', error);
 	           }
 	       }
 
@@ -447,12 +525,45 @@
 	           // Ajouter les événements aux touches du clavier HTML
 	           const keys = document.querySelectorAll('#virtualKeyboardHTML .key');
 	           keys.forEach(key => {
-	               key.addEventListener('click', function() {
+	               // Améliorer l'interaction VR avec plusieurs types d'événements
+	               key.addEventListener('click', function(e) {
+	                   e.preventDefault();
+	                   e.stopPropagation();
 	                   const keyValue = this.getAttribute('data-key');
 	                   handleHTMLKeyPress(keyValue);
+	                   console.log("HTML Key clicked (VR compatible):", keyValue);
+	               });
+	               
+	               // Ajouter support pour les événements tactiles VR
+	               key.addEventListener('touchstart', function(e) {
+	                   e.preventDefault();
+	                   this.classList.add('active');
+	               });
+	               
+	               key.addEventListener('touchend', function(e) {
+	                   e.preventDefault();
+	                   this.classList.remove('active');
+	                   const keyValue = this.getAttribute('data-key');
+	                   handleHTMLKeyPress(keyValue);
+	                   console.log("HTML Key touched (VR):", keyValue);
+	               });
+	               
+	               // Ajouter support pour les événements de pointeur VR
+	               key.addEventListener('pointerdown', function(e) {
+	                   e.preventDefault();
+	                   this.classList.add('active');
+	                   console.log("HTML Key pointer down (VR):", this.getAttribute('data-key'));
+	               });
+	               
+	               key.addEventListener('pointerup', function(e) {
+	                   e.preventDefault();
+	                   this.classList.remove('active');
+	                   const keyValue = this.getAttribute('data-key');
+	                   handleHTMLKeyPress(keyValue);
+	                   console.log("HTML Key pointer up (VR):", keyValue);
 	               });
 	           });
-
+	
 	           // Afficher le clavier HTML quand on clique sur le champ de recherche
 	           const searchInput = document.getElementById('searchInput');
 	           if (searchInput) {
@@ -470,6 +581,15 @@
 	                       console.log("HTML input synchronized with VR field:", searchInput.value);
 	                   }
 	               });
+	           }
+	           
+	           // S'assurer que le clavier HTML est visible aux pointeurs VR
+	           const virtualKeyboard = document.getElementById('virtualKeyboardHTML');
+	           if (virtualKeyboard) {
+	               // Forcer la détection par les pointeurs VR
+	               virtualKeyboard.style.pointerEvents = 'auto';
+	               virtualKeyboard.setAttribute('data-vr-interactive', 'true');
+	               console.log("HTML Virtual keyboard configured for VR interaction");
 	           }
 	       });
 
