@@ -13,7 +13,8 @@ scene.createDefaultXRExperienceAsync({
     floorMeshes: [],
     disableTeleportation: true,
     inputOptions: { doNotLoadControllerMeshes: true },
-    optionalFeatures: true
+    optionalFeatures: ["dom-overlay", "keyboard-input"],
+    domOverlay: { root: document.body }
 }).then(xrHelper => {
     console.log("WebXR initialized.");
     // Global reference for left thumbstick
@@ -188,17 +189,8 @@ scene.createDefaultXRExperienceAsync({
         isHitTestVisible: true // Ensure VR pointer can interact
     });
     
-    // Add click handler to show VR keyboard when input is clicked
-    inputText.onPointerClickObservable.add(() => {
-        console.log("VR Input field clicked - showing VR keyboard");
-        showVirtualKeyboard();
-    });
-    
-    // Also handle pointer down for better trigger detection
-    inputText.onPointerDownObservable.add(() => {
-        console.log("VR Input field pointer down - showing VR keyboard");
-        showVirtualKeyboard();
-    });
+    // Note: Keyboard is now controlled only by X button, not by clicking input field
+    // inputText click handlers removed to prevent automatic keyboard display
     
     // Handle focus event (removed keyboard call to prevent recursion)
     inputText.onFocusObservable.add(() => {
@@ -270,79 +262,8 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
-    // Create custom VR virtual keyboard using GUI panels
-    virtualKeyboard = new BABYLON.GUI.StackPanel();
-    virtualKeyboard.width = "600px";
-    virtualKeyboard.height = "300px";
-    virtualKeyboard.background = "rgba(0, 0, 0, 0.8)";
-    virtualKeyboard.isVisible = false;
-    virtualKeyboard.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    virtualKeyboard.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    virtualKeyboard.paddingBottom = "50px";
-    virtualKeyboard.isPointerBlocker = true;
-    virtualKeyboard.isHitTestVisible = true;
-    
-    // Create keyboard rows
-    const keyboardRows = [
-        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '↵']
-    ];
-    
-    keyboardRows.forEach(row => {
-        const rowPanel = new BABYLON.GUI.StackPanel();
-        rowPanel.isVertical = false;
-        rowPanel.height = "60px";
-        rowPanel.paddingBottom = "5px";
-        
-        row.forEach(key => {
-            const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${key}`, key);
-            keyButton.width = key === '⌫' || key === '↵' ? "80px" : "50px";
-            keyButton.height = "50px";
-            keyButton.color = "white";
-            keyButton.background = "rgba(70, 70, 70, 0.9)";
-            keyButton.cornerRadius = 5;
-            keyButton.thickness = 1;
-            keyButton.fontSize = 18;
-            keyButton.isPointerBlocker = true;
-            keyButton.isHitTestVisible = true;
-            
-            // Add key functionality
-            keyButton.onPointerClickObservable.add(() => {
-                if (key === '⌫') {
-                    // Backspace
-                    inputText.text = inputText.text.slice(0, -1);
-                } else if (key === '↵') {
-                    // Enter - trigger search
-                    const query = inputText.text.trim();
-                    if (query) {
-                        moveCameraToSprite(query);
-                        searchResultText.text = "Recherche : " + query;
-                    }
-                    hideVirtualKeyboard();
-                } else {
-                    // Regular key
-                    inputText.text += key.toLowerCase();
-                }
-                console.log("VR Key pressed:", key, "Current text:", inputText.text);
-            });
-            
-            // Add hover effect
-            keyButton.onPointerEnterObservable.add(() => {
-                keyButton.background = "rgba(120, 120, 120, 1.0)";
-            });
-            
-            keyButton.onPointerOutObservable.add(() => {
-                keyButton.background = "rgba(70, 70, 70, 0.9)";
-            });
-            
-            rowPanel.addControl(keyButton);
-        });
-        
-        virtualKeyboard.addControl(rowPanel);
-    });
-    
-    advancedTexture.addControl(virtualKeyboard);
+    // Use Meta WebXR virtual keyboard instead of custom keyboard
+    virtualKeyboard = null;
     keyboardVisible = false;
     
     // Expose all variables globally for testing (after full initialization)
@@ -352,29 +273,62 @@ scene.createDefaultXRExperienceAsync({
     window.virtualKeyboard = virtualKeyboard;
     window.suggestionsPanel = suggestionsPanel;
 
-    // Function to show VR virtual keyboard
+    // Function to show Meta WebXR virtual keyboard
     function showVirtualKeyboard() {
-        console.log("Attempting to show VR virtual keyboard...");
+        console.log("Attempting to show Meta WebXR virtual keyboard...");
         
-        if (virtualKeyboard) {
-            virtualKeyboard.isVisible = true;
-            keyboardVisible = true;
-            console.log("VR virtual keyboard shown");
+        if (xrHelper && xrHelper.baseExperience && xrHelper.baseExperience.sessionManager) {
+            const session = xrHelper.baseExperience.sessionManager.session;
+            if (session) {
+                try {
+                    // Try to use WebXR keyboard input feature
+                    if ('keyboard' in navigator && navigator.keyboard && navigator.keyboard.getLayoutMap) {
+                        // Modern WebXR keyboard API
+                        console.log("Using WebXR keyboard input feature");
+                        keyboardVisible = true;
+                        
+                        // Focus the input field to trigger Meta's virtual keyboard
+                        if (inputText) {
+                            inputText.focus();
+                            console.log("Meta WebXR virtual keyboard should appear");
+                        }
+                    } else if (session.inputSources) {
+                        // Alternative: Check for hand tracking or controller input
+                        console.log("Using WebXR input sources for keyboard");
+                        keyboardVisible = true;
+                        
+                        // Focus the input to trigger system keyboard
+                        if (inputText) {
+                            inputText.focus();
+                            console.log("System virtual keyboard triggered");
+                        }
+                    } else {
+                        console.log("WebXR keyboard features not available");
+                    }
+                } catch (error) {
+                    console.error("Error accessing WebXR keyboard:", error);
+                }
+            } else {
+                console.log("WebXR session not available for Meta keyboard");
+            }
         } else {
-            console.error("VR virtual keyboard not available");
+            console.log("WebXR not initialized for Meta keyboard");
         }
     }
 
-    // Function to hide VR virtual keyboard
+    // Function to hide Meta WebXR virtual keyboard
     function hideVirtualKeyboard() {
-        console.log("Attempting to hide VR virtual keyboard...");
+        console.log("Attempting to hide Meta WebXR virtual keyboard...");
         
-        if (virtualKeyboard) {
-            virtualKeyboard.isVisible = false;
-            keyboardVisible = false;
-            console.log("VR virtual keyboard hidden");
-        } else {
-            console.error("VR virtual keyboard not available");
+        try {
+            // Blur the input field to hide the virtual keyboard
+            if (inputText) {
+                inputText.blur();
+                keyboardVisible = false;
+                console.log("Meta WebXR virtual keyboard hidden");
+            }
+        } catch (error) {
+            console.error("Error hiding Meta keyboard:", error);
         }
     }
 
@@ -454,16 +408,19 @@ scene.createDefaultXRExperienceAsync({
                                 searchPanel.isVisible = !searchPanel.isVisible;
                                 
                                 if (searchPanel.isVisible) {
-                                    // Opening panel
+                                    // Opening panel and showing Meta keyboard
                                     inputText.text = "";
                                     searchResultText.text = "";
-                                    console.log("Search panel opened with X button");
+                                    
+                                    // Show Meta WebXR keyboard when panel opens
+                                    showVirtualKeyboard();
+                                    console.log("Search panel and Meta keyboard opened with X button");
                                 } else {
                                     // Closing panel - hide keyboard immediately
                                     try {
                                         hideSuggestions();
                                         hideVirtualKeyboard();
-                                        console.log("Search panel and virtual keyboard closed with X button");
+                                        console.log("Search panel and Meta keyboard closed with X button");
                                     } catch (error) {
                                         console.error("Error closing keyboard:", error);
                                     }
@@ -476,17 +433,8 @@ scene.createDefaultXRExperienceAsync({
                 }
             }
             
-            // Handle triggers for both hands to show keyboard when search panel is visible
-            const trigger = motionController.getComponent("xr-standard-trigger");
-            if (trigger) {
-                trigger.onButtonStateChangedObservable.add(() => {
-                    if (trigger.pressed && searchPanel.isVisible) {
-                        // Check if the controller is pointing at the input field
-                        console.log(`${motionController.handness} trigger pressed while search panel visible - showing keyboard`);
-                        showVRKeyboard(inputText);
-                    }
-                });
-            }
+            // Note: Triggers no longer show keyboard - only X button controls keyboard
+            // Trigger handlers removed to ensure keyboard is only controlled by X button
             
             // Add left joystick up/down to z translation
             const thumbstick = motionController.getComponent("xr-standard-thumbstick");
@@ -644,13 +592,19 @@ window.testXButton = function() {
         if (window.searchPanel.isVisible) {
             window.inputText.text = "";
             window.searchResultText.text = "";
-            console.log("Search panel opened (test)");
+            
+            // Show Meta keyboard when panel opens (simulate X button behavior)
+            if (window.inputText) {
+                window.inputText.focus();
+                console.log("Search panel and Meta keyboard opened (test)");
+            }
         } else {
             try {
-                if (window.virtualKeyboard) {
-                    window.virtualKeyboard.isVisible = false;
+                // Hide Meta keyboard when panel closes
+                if (window.inputText) {
+                    window.inputText.blur();
                 }
-                console.log("Search panel and VR keyboard closed (test)");
+                console.log("Search panel and Meta keyboard closed (test)");
             } catch (error) {
                 console.error("Error closing keyboard (test):", error);
             }
@@ -660,15 +614,16 @@ window.testXButton = function() {
     }
 };
 
-// Test function to show VR keyboard (for testing)
+// Test function to show Meta VR keyboard (for testing)
 window.testShowKeyboard = function() {
-    console.log("Testing VR keyboard display...");
+    console.log("Testing Meta WebXR keyboard display...");
     if (window.searchPanel && window.searchPanel.isVisible) {
-        if (window.virtualKeyboard) {
-            window.virtualKeyboard.isVisible = true;
-            console.log("VR keyboard shown (test)");
+        // Simulate showing Meta WebXR keyboard
+        if (window.inputText) {
+            window.inputText.focus();
+            console.log("Meta WebXR keyboard triggered (test)");
         } else {
-            console.error("virtualKeyboard not available");
+            console.error("inputText not available");
         }
     } else {
         console.log("Search panel must be open first");
