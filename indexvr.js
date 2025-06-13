@@ -1143,6 +1143,9 @@ loadFileButton.addEventListener('click', async () => {
                 const newdata = JSON.parse(event.target.result);
                 await main(newdata, 20);
                 document.getElementById('fileInputContainer').style.display = 'none';
+                
+                // Initialize Meta keyboard in VR environment after data load
+                initializeMetaKeyboardInVR();
             };
             reader.readAsText(file);
         } catch (error) {
@@ -1166,6 +1169,9 @@ loadFileButton.addEventListener('click', async () => {
 				await main(data, 1);
 			}
             document.getElementById('fileInputContainer').style.display = 'none';
+            
+            // Initialize Meta keyboard in VR environment after data load
+            initializeMetaKeyboardInVR();
         } catch (error) {
             console.error("Failed to load JSON:", error);
         }
@@ -1719,6 +1725,45 @@ window.testMetaKeyboard = function() {
 let globalXrHelper = null;
 let globalInputText = null;
 
+// Function to initialize Meta keyboard availability in VR environment after data load
+function initializeMetaKeyboardInVR() {
+    console.log("=== INITIALIZING META KEYBOARD AVAILABILITY IN VR ===");
+    
+    // Wait a bit for VR environment to be fully loaded
+    setTimeout(() => {
+        try {
+            // Ensure search panel is available but keep it hidden
+            if (window.searchPanel) {
+                // Keep panel hidden but ensure it's ready
+                window.searchPanel.isVisible = false;
+                console.log("✅ Search panel ready in VR (hidden, available via X button)");
+                
+                // Ensure global references are properly set
+                if (globalXrHelper && globalInputText) {
+                    console.log("✅ Meta keyboard system ready in VR environment");
+                    console.log("✅ Press X button on left controller to access keyboard");
+                } else {
+                    console.warn("⚠️ Meta keyboard references not fully initialized");
+                    console.log("globalXrHelper:", !!globalXrHelper);
+                    console.log("globalInputText:", !!globalInputText);
+                }
+                
+                // Pre-initialize HTML keyboard (but keep it hidden)
+                if (window.showHTMLKeyboard && window.hideHTMLKeyboard) {
+                    console.log("✅ HTML fallback keyboard system ready");
+                } else {
+                    console.warn("⚠️ HTML fallback keyboard not available");
+                }
+                
+            } else {
+                console.error("❌ Search panel not available for keyboard initialization");
+            }
+        } catch (error) {
+            console.error("❌ Error initializing Meta keyboard availability:", error);
+        }
+    }, 1000); // Wait 1 second for VR environment to stabilize
+}
+
 // Function to show Meta WebXR virtual keyboard (global scope)
 function showVirtualKeyboardGlobal() {
     console.log("=== DIAGNOSTIC: Attempting to show Meta WebXR virtual keyboard ===");
@@ -1791,5 +1836,6 @@ function hideVirtualKeyboardGlobal() {
 // Expose keyboard functions globally for debugging
 window.showVirtualKeyboard = showVirtualKeyboardGlobal;
 window.hideVirtualKeyboard = hideVirtualKeyboardGlobal;
+window.initializeMetaKeyboardInVR = initializeMetaKeyboardInVR;
 
 //scene.debugLayer.show()
