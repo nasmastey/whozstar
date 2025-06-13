@@ -220,6 +220,10 @@ scene.createDefaultXRExperienceAsync({
     });
     
     searchPanel.addControl(inputText);
+    
+    // Expose inputText globally for HTML synchronization
+    if (!window.scene) window.scene = {};
+    window.scene.inputText = inputText;
 
     // Search Button
     const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
@@ -380,26 +384,49 @@ scene.createDefaultXRExperienceAsync({
         console.log("Virtual key pressed:", key);
         const currentText = inputText.text || "";
         
+        // Always update HTML search input for better synchronization
+        const htmlSearchInput = document.getElementById('searchInput');
+        
         switch(key) {
             case '⌫': // Backspace
                 if (currentText.length > 0) {
-                    inputText.text = currentText.slice(0, -1);
-                    console.log("Backspace - new text:", inputText.text);
+                    const newText = currentText.slice(0, -1);
+                    inputText.text = newText;
+                    if (htmlSearchInput) {
+                        htmlSearchInput.value = newText;
+                        console.log("VR Backspace - HTML input updated:", newText);
+                    }
+                    console.log("Backspace - new text:", newText);
                 }
                 break;
             case '⎵': // Space
-                inputText.text = currentText + " ";
-                console.log("Space - new text:", inputText.text);
+                const spaceText = currentText + " ";
+                inputText.text = spaceText;
+                if (htmlSearchInput) {
+                    htmlSearchInput.value = spaceText;
+                    console.log("VR Space - HTML input updated:", spaceText);
+                }
+                console.log("Space - new text:", spaceText);
                 break;
             case '⇥': // Tab
-                inputText.text = currentText + "\t";
-                console.log("Tab - new text:", inputText.text);
+                const tabText = currentText + "\t";
+                inputText.text = tabText;
+                if (htmlSearchInput) {
+                    htmlSearchInput.value = tabText;
+                    console.log("VR Tab - HTML input updated:", tabText);
+                }
+                console.log("Tab - new text:", tabText);
                 break;
             case '↵': // Enter/Search
                 console.log("Enter pressed - searching for:", inputText.text.trim());
                 hideVirtualKeyboard();
                 if (inputText.text.trim()) {
                     hideSuggestions();
+                    // Update HTML input and trigger search
+                    if (htmlSearchInput) {
+                        htmlSearchInput.value = inputText.text.trim();
+                        console.log("VR Enter - HTML input updated for search:", inputText.text.trim());
+                    }
                     // Trigger search
                     setTimeout(() => {
                         try {
@@ -419,6 +446,11 @@ scene.createDefaultXRExperienceAsync({
                 hideVirtualKeyboard();
                 if (inputText.text.trim()) {
                     hideSuggestions();
+                    // Update HTML input and trigger search
+                    if (htmlSearchInput) {
+                        htmlSearchInput.value = inputText.text.trim();
+                        console.log("VR Search button - HTML input updated:", inputText.text.trim());
+                    }
                     // Trigger search
                     setTimeout(() => {
                         try {
@@ -459,8 +491,13 @@ scene.createDefaultXRExperienceAsync({
                     charToAdd = getShiftedSymbol(key);
                 }
                 
-                inputText.text = currentText + charToAdd;
-                console.log("Key pressed - new text:", inputText.text);
+                const newText = currentText + charToAdd;
+                inputText.text = newText;
+                if (htmlSearchInput) {
+                    htmlSearchInput.value = newText;
+                    console.log("VR Character input - HTML input updated:", newText);
+                }
+                console.log("Key pressed - new text:", newText);
                 
                 // Reset shift after character input (but not caps lock)
                 if (isShiftPressed) {
@@ -478,6 +515,14 @@ scene.createDefaultXRExperienceAsync({
         // Trigger text change event for suggestions
         if (inputText.onTextChangedObservable) {
             inputText.onTextChangedObservable.notifyObservers(inputText);
+        }
+        
+        // Trigger input event on HTML element for suggestions and ensure visibility
+        if (htmlSearchInput) {
+            htmlSearchInput.dispatchEvent(new Event('input'));
+            // Force focus to ensure the input is visible and active
+            htmlSearchInput.focus();
+            console.log("VR Keyboard - HTML input synchronized and focused");
         }
     }
     

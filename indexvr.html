@@ -461,6 +461,15 @@
 	                       toggleHTMLKeyboard();
 	                   }
 	               });
+	               
+	               // Synchroniser avec le champ VR quand l'utilisateur tape directement
+	               searchInput.addEventListener('input', function() {
+	                   // Synchroniser avec le champ VR si disponible
+	                   if (window.scene && window.scene.inputText) {
+	                       window.scene.inputText.text = searchInput.value;
+	                       console.log("HTML input synchronized with VR field:", searchInput.value);
+	                   }
+	               });
 	           }
 	       });
 
