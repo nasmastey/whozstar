@@ -270,329 +270,25 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
-    // Create Virtual Keyboard Panel
-    virtualKeyboard = new BABYLON.GUI.StackPanel();
-    Object.assign(virtualKeyboard, {
-        width: "800px",
-        height: "350px",
-        background: "rgba(40,40,40,0.95)",
-        isVisible: false,
-        paddingTop: "15px",
-        paddingBottom: "15px",
-        paddingLeft: "10px",
-        paddingRight: "10px",
-        horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER,
-        verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER,
-        top: "280px", // Position directly below search panel
-        zIndex: 1000, // Ensure it's on top
-        cornerRadius: 10,
-        isPointerBlocker: true, // Enable pointer blocking for VR interaction
-        isHitTestVisible: true // Ensure VR pointer can interact
-    });
-    advancedTexture.addControl(virtualKeyboard);
+    // Note: Virtual keyboard removed - using HTML keyboard only
+    virtualKeyboard = null;
+    keyboardVisible = false;
 
-    // Add keyboard title
-    const keyboardTitle = new BABYLON.GUI.TextBlock();
-    Object.assign(keyboardTitle, {
-        text: "⌨️ Clavier QWERTY Virtuel",
-        height: "40px",
-        color: "white",
-        fontSize: 20,
-        fontWeight: "bold",
-        paddingBottom: "10px"
-    });
-    virtualKeyboard.addControl(keyboardTitle);
+    // Note: Virtual keyboard functions removed - using HTML keyboard only
 
-    // Create QWERTY keyboard layout (English)
-    const keyboardRows = [
-        ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '⌫'],
-        ['⇥', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'],
-        ['⇪', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '↵'],
-        ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '⇧'],
-        ['⎵', '✓']
-    ];
-    
-    // Track shift and caps lock state
-    let isShiftPressed = false;
-    let isCapsLockOn = false;
-
-    keyboardRows.forEach((row, rowIndex) => {
-        const rowPanel = new BABYLON.GUI.StackPanel();
-        rowPanel.isVertical = false;
-        rowPanel.height = "60px";
-        rowPanel.paddingBottom = "5px";
-        
-        row.forEach(key => {
-            const keyButton = BABYLON.GUI.Button.CreateSimpleButton(`key_${key}`, key);
-            
-            // Determine key width based on special keys
-            let keyWidth = "45px";
-            if (key === '⎵') keyWidth = "300px"; // Space bar
-            else if (key === '⌫') keyWidth = "70px"; // Backspace
-            else if (key === '⇥') keyWidth = "60px"; // Tab
-            else if (key === '⇪') keyWidth = "70px"; // Caps Lock
-            else if (key === '↵') keyWidth = "80px"; // Enter
-            else if (key === '⇧') keyWidth = "80px"; // Shift
-            else if (key === '\\') keyWidth = "60px"; // Backslash
-            
-            // Determine background color based on key type
-            let backgroundColor = "rgba(70,70,70,0.9)";
-            if (key === '✓') backgroundColor = "rgba(0,150,0,0.9)";
-            else if (key === '⌫') backgroundColor = "rgba(150,0,0,0.9)";
-            else if (key === '⇧') backgroundColor = isShiftPressed ? "rgba(100,100,150,0.9)" : "rgba(80,80,80,0.9)";
-            else if (key === '⇪') backgroundColor = isCapsLockOn ? "rgba(100,150,100,0.9)" : "rgba(80,80,80,0.9)";
-            else if (['⇥', '↵'].includes(key)) backgroundColor = "rgba(80,80,80,0.9)";
-            
-            Object.assign(keyButton, {
-                width: keyWidth,
-                height: "50px",
-                color: "white",
-                background: backgroundColor,
-                cornerRadius: 8,
-                thickness: 2,
-                fontSize: ['⌫', '✓', '⇥', '⇪', '↵', '⇧'].includes(key) ? 16 : 18,
-                marginLeft: "2px",
-                marginRight: "2px",
-                shadowOffsetX: 2,
-                shadowOffsetY: 2,
-                shadowBlur: 4,
-                shadowColor: "rgba(0,0,0,0.5)",
-                isPointerBlocker: true, // Enable pointer blocking for VR interaction
-                isHitTestVisible: true // Ensure VR pointer can interact with keys
-            });
-
-            // Store original background for hover effects
-            const originalBackground = keyButton.background;
-            
-            // Add hover effect
-            keyButton.onPointerEnterObservable.add(() => {
-                if (key === '✓') {
-                    keyButton.background = "rgba(0,200,0,1.0)";
-                } else if (key === '⌫') {
-                    keyButton.background = "rgba(200,0,0,1.0)";
-                } else {
-                    keyButton.background = "rgba(120,120,120,1.0)";
-                }
-                keyButton.scaleX = 1.05;
-                keyButton.scaleY = 1.05;
-            });
-
-            keyButton.onPointerOutObservable.add(() => {
-                keyButton.background = originalBackground;
-                keyButton.scaleX = 1.0;
-                keyButton.scaleY = 1.0;
-            });
-
-            // Handle key press
-            keyButton.onPointerClickObservable.add(() => {
-                handleVirtualKeyPress(key);
-            });
-
-            rowPanel.addControl(keyButton);
-        });
-        
-        virtualKeyboard.addControl(rowPanel);
-    });
-
-    // Function to handle virtual key presses
-    function handleVirtualKeyPress(key) {
-        console.log("Virtual key pressed:", key);
-        const currentText = inputText.text || "";
-        
-        // Always update HTML search input for better synchronization
-        const htmlSearchInput = document.getElementById('searchInput');
-        
-        switch(key) {
-            case '⌫': // Backspace
-                if (currentText.length > 0) {
-                    const newText = currentText.slice(0, -1);
-                    inputText.text = newText;
-                    if (htmlSearchInput) {
-                        htmlSearchInput.value = newText;
-                        console.log("VR Backspace - HTML input updated:", newText);
-                    }
-                    console.log("Backspace - new text:", newText);
-                }
-                break;
-            case '⎵': // Space
-                const spaceText = currentText + " ";
-                inputText.text = spaceText;
-                if (htmlSearchInput) {
-                    htmlSearchInput.value = spaceText;
-                    console.log("VR Space - HTML input updated:", spaceText);
-                }
-                console.log("Space - new text:", spaceText);
-                break;
-            case '⇥': // Tab
-                const tabText = currentText + "\t";
-                inputText.text = tabText;
-                if (htmlSearchInput) {
-                    htmlSearchInput.value = tabText;
-                    console.log("VR Tab - HTML input updated:", tabText);
-                }
-                console.log("Tab - new text:", tabText);
-                break;
-            case '↵': // Enter/Search
-                console.log("Enter pressed - searching for:", inputText.text.trim());
-                hideVirtualKeyboard();
-                if (inputText.text.trim()) {
-                    hideSuggestions();
-                    // Update HTML input and trigger search
-                    if (htmlSearchInput) {
-                        htmlSearchInput.value = inputText.text.trim();
-                        console.log("VR Enter - HTML input updated for search:", inputText.text.trim());
-                    }
-                    // Trigger search
-                    setTimeout(() => {
-                        try {
-                            moveCameraToSprite(inputText.text.trim());
-                            searchResultText.text = "Recherche : " + inputText.text.trim();
-                        } catch (error) {
-                            console.error("Error during search:", error);
-                            searchResultText.text = "Erreur lors de la recherche";
-                        }
-                    }, 10);
-                } else {
-                    searchResultText.text = "Entrer un nom valide.";
-                }
-                break;
-            case '✓': // Search button
-                console.log("Search button pressed - searching for:", inputText.text.trim());
-                hideVirtualKeyboard();
-                if (inputText.text.trim()) {
-                    hideSuggestions();
-                    // Update HTML input and trigger search
-                    if (htmlSearchInput) {
-                        htmlSearchInput.value = inputText.text.trim();
-                        console.log("VR Search button - HTML input updated:", inputText.text.trim());
-                    }
-                    // Trigger search
-                    setTimeout(() => {
-                        try {
-                            moveCameraToSprite(inputText.text.trim());
-                            searchResultText.text = "Recherche : " + inputText.text.trim();
-                        } catch (error) {
-                            console.error("Error during search:", error);
-                            searchResultText.text = "Erreur lors de la recherche";
-                        }
-                    }, 10);
-                } else {
-                    searchResultText.text = "Entrer un nom valide.";
-                }
-                break;
-            case '⇧': // Shift
-                isShiftPressed = !isShiftPressed;
-                updateKeyboardDisplay();
-                console.log("Shift toggled:", isShiftPressed);
-                break;
-            case '⇪': // Caps Lock
-                isCapsLockOn = !isCapsLockOn;
-                updateKeyboardDisplay();
-                console.log("Caps Lock toggled:", isCapsLockOn);
-                break;
-            default:
-                // Handle regular character input
-                let charToAdd = key;
-                
-                // Apply shift/caps lock logic
-                if (isAlphabetic(key)) {
-                    if (isCapsLockOn || isShiftPressed) {
-                        charToAdd = key.toUpperCase();
-                    } else {
-                        charToAdd = key.toLowerCase();
-                    }
-                } else if (isShiftPressed) {
-                    // Handle shifted symbols
-                    charToAdd = getShiftedSymbol(key);
-                }
-                
-                const newText = currentText + charToAdd;
-                inputText.text = newText;
-                if (htmlSearchInput) {
-                    htmlSearchInput.value = newText;
-                    console.log("VR Character input - HTML input updated:", newText);
-                }
-                console.log("Key pressed - new text:", newText);
-                
-                // Reset shift after character input (but not caps lock)
-                if (isShiftPressed) {
-                    isShiftPressed = false;
-                    updateKeyboardDisplay();
-                }
-                break;
-        }
-        
-        // Force update the input text display
-        if (inputText.markAsDirty) {
-            inputText.markAsDirty();
-        }
-        
-        // Trigger text change event for suggestions
-        if (inputText.onTextChangedObservable) {
-            inputText.onTextChangedObservable.notifyObservers(inputText);
-        }
-        
-        // Trigger input event on HTML element for suggestions and ensure visibility
-        if (htmlSearchInput) {
-            htmlSearchInput.dispatchEvent(new Event('input'));
-            // Force focus to ensure the input is visible and active
-            htmlSearchInput.focus();
-            console.log("VR Keyboard - HTML input synchronized and focused");
-        }
-    }
-    
-    // Helper function to check if a character is alphabetic
-    function isAlphabetic(char) {
-        return /^[A-Za-z]$/.test(char);
-    }
-    
-    // Helper function to get shifted symbols
-    function getShiftedSymbol(key) {
-        const shiftMap = {
-            '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
-            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
-            '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
-            ',': '<', '.': '>', '/': '?'
-        };
-        return shiftMap[key] || key;
-    }
-    
-    // Function to update keyboard display based on shift/caps state
-    function updateKeyboardDisplay() {
-        // This would update the visual state of shift and caps lock keys
-        // The actual visual update is handled in the key creation loop above
-        console.log("Keyboard display updated - Shift:", isShiftPressed, "Caps:", isCapsLockOn);
-    }
-
-    // Function to show virtual keyboard
+    // Function to show HTML keyboard
     function showVirtualKeyboard() {
-        if (!keyboardVisible && virtualKeyboard) {
-            virtualKeyboard.isVisible = true;
-            keyboardVisible = true;
-            console.log("Virtual keyboard shown - isVisible:", virtualKeyboard.isVisible);
-            
-            // Force a render update
-            if (advancedTexture && advancedTexture.markAsDirty) {
-                advancedTexture.markAsDirty();
-            }
-        } else {
-            console.log("Virtual keyboard already visible or not initialized");
+        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && !window.htmlKeyboardVisible) {
+            window.toggleHTMLKeyboard();
+            console.log("HTML keyboard shown");
         }
     }
 
-    // Function to hide virtual keyboard
+    // Function to hide HTML keyboard
     function hideVirtualKeyboard() {
-        if (keyboardVisible && virtualKeyboard) {
-            virtualKeyboard.isVisible = false;
-            keyboardVisible = false;
-            console.log("Virtual keyboard hidden - isVisible:", virtualKeyboard.isVisible);
-            
-            // Force a render update
-            if (advancedTexture && advancedTexture.markAsDirty) {
-                advancedTexture.markAsDirty();
-            }
-        } else {
-            console.log("Virtual keyboard already hidden or not initialized");
+        if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && window.htmlKeyboardVisible) {
+            window.toggleHTMLKeyboard();
+            console.log("HTML keyboard hidden");
         }
     }
 
@@ -611,11 +307,7 @@ scene.createDefaultXRExperienceAsync({
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
             
-            // Position keyboard directly below search panel when both are visible
-            if (virtualKeyboard && virtualKeyboard.isVisible) {
-                // Keep keyboard directly attached to search panel
-                virtualKeyboard.top = "280px"; // Directly below search panel
-            }
+            // Note: No VR keyboard positioning needed - using HTML keyboard only
         }
     });
 
@@ -679,13 +371,9 @@ scene.createDefaultXRExperienceAsync({
                                     setTimeout(() => {
                                         try {
                                             showVirtualKeyboard();
-                                            // Afficher aussi le clavier HTML comme fallback
-                                            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && !window.htmlKeyboardVisible) {
-                                                window.toggleHTMLKeyboard();
-                                            }
-                                            console.log("Search panel and virtual keyboard opened with X button");
+                                            console.log("Search panel and HTML keyboard opened with X button");
                                         } catch (error) {
-                                            console.error("Error opening keyboards:", error);
+                                            console.error("Error opening keyboard:", error);
                                         }
                                     }, 10);
                                 } else {

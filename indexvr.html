@@ -474,6 +474,12 @@
 	                       break;
 	               }
 	
+	               // Synchroniser avec le champ VR
+	               if (window.scene && window.scene.inputText) {
+	                   window.scene.inputText.text = searchInput.value;
+	                   console.log("HTML keyboard - VR field synchronized:", searchInput.value);
+	               }
+	
 	               // Déclencher l'événement input pour les suggestions avec protection
 	               setTimeout(() => {
 	                   try {
