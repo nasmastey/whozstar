@@ -19,6 +19,9 @@ scene.createDefaultXRExperienceAsync({
     console.log("WebXR initialized.");
     // Global reference for left thumbstick
     window.leftThumbstick = null;
+    
+    // Store global references for keyboard functions
+    globalXrHelper = xrHelper;
 
     // XR legend panel setup (hidden by default)
 
@@ -145,6 +148,24 @@ scene.createDefaultXRExperienceAsync({
             movementOrientationFollowsViewerPose: true
     });
 
+    // Try to enable WebXR keyboard input feature for Meta Quest
+    try {
+        if (xrHelper.baseExperience.featuresManager.getEnabledFeatures().indexOf(BABYLON.WebXRFeatureName.KEYBOARD_INPUT) === -1) {
+            const keyboardFeature = xrHelper.baseExperience.featuresManager.enableFeature(
+                BABYLON.WebXRFeatureName.KEYBOARD_INPUT, 'latest', {
+                    xrInput: xrHelper.input
+                }
+            );
+            if (keyboardFeature) {
+                console.log("WebXR Keyboard Input feature enabled successfully");
+            } else {
+                console.log("WebXR Keyboard Input feature not available");
+            }
+        }
+    } catch (error) {
+        console.log("WebXR Keyboard Input feature not supported:", error);
+    }
+
     // UI Setup
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
     
@@ -223,6 +244,9 @@ scene.createDefaultXRExperienceAsync({
     // Expose inputText globally for HTML synchronization
     if (!window.scene) window.scene = {};
     window.scene.inputText = inputText;
+    
+    // Store global reference for keyboard functions
+    globalInputText = inputText;
 
     // Search Button
     const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
@@ -273,64 +297,7 @@ scene.createDefaultXRExperienceAsync({
     window.virtualKeyboard = virtualKeyboard;
     window.suggestionsPanel = suggestionsPanel;
 
-    // Function to show Meta WebXR virtual keyboard
-    function showVirtualKeyboard() {
-        console.log("Attempting to show Meta WebXR virtual keyboard...");
-        
-        if (xrHelper && xrHelper.baseExperience && xrHelper.baseExperience.sessionManager) {
-            const session = xrHelper.baseExperience.sessionManager.session;
-            if (session) {
-                try {
-                    // Try to use WebXR keyboard input feature
-                    if ('keyboard' in navigator && navigator.keyboard && navigator.keyboard.getLayoutMap) {
-                        // Modern WebXR keyboard API
-                        console.log("Using WebXR keyboard input feature");
-                        keyboardVisible = true;
-                        
-                        // Focus the input field to trigger Meta's virtual keyboard
-                        if (inputText) {
-                            inputText.focus();
-                            console.log("Meta WebXR virtual keyboard should appear");
-                        }
-                    } else if (session.inputSources) {
-                        // Alternative: Check for hand tracking or controller input
-                        console.log("Using WebXR input sources for keyboard");
-                        keyboardVisible = true;
-                        
-                        // Focus the input to trigger system keyboard
-                        if (inputText) {
-                            inputText.focus();
-                            console.log("System virtual keyboard triggered");
-                        }
-                    } else {
-                        console.log("WebXR keyboard features not available");
-                    }
-                } catch (error) {
-                    console.error("Error accessing WebXR keyboard:", error);
-                }
-            } else {
-                console.log("WebXR session not available for Meta keyboard");
-            }
-        } else {
-            console.log("WebXR not initialized for Meta keyboard");
-        }
-    }
-
-    // Function to hide Meta WebXR virtual keyboard
-    function hideVirtualKeyboard() {
-        console.log("Attempting to hide Meta WebXR virtual keyboard...");
-        
-        try {
-            // Blur the input field to hide the virtual keyboard
-            if (inputText) {
-                inputText.blur();
-                keyboardVisible = false;
-                console.log("Meta WebXR virtual keyboard hidden");
-            }
-        } catch (error) {
-            console.error("Error hiding Meta keyboard:", error);
-        }
-    }
+    // Note: Keyboard functions moved to global scope for proper accessibility
 
     // Keep panel facing camera and position keyboard relative to panel
     scene.onBeforeRenderObservable.add(() => {
@@ -413,13 +380,13 @@ scene.createDefaultXRExperienceAsync({
                                     searchResultText.text = "";
                                     
                                     // Show Meta WebXR keyboard when panel opens
-                                    showVirtualKeyboard();
+                                    showVirtualKeyboardGlobal();
                                     console.log("Search panel and Meta keyboard opened with X button");
                                 } else {
                                     // Closing panel - hide keyboard immediately
                                     try {
                                         hideSuggestions();
-                                        hideVirtualKeyboard();
+                                        hideVirtualKeyboardGlobal();
                                         console.log("Search panel and Meta keyboard closed with X button");
                                     } catch (error) {
                                         console.error("Error closing keyboard:", error);
@@ -483,7 +450,7 @@ function showVRKeyboard(inputElement) {
         }
         
         // Show the integrated virtual keyboard
-        showVirtualKeyboard();
+        showVirtualKeyboardGlobal();
         
     } catch (e) {
         console.error("Error showing VR keyboard:", e);
@@ -1701,5 +1668,117 @@ window.addEventListener('storage', function(e) {
 
 // Exposer la fonction de rechargement pour le sélecteur d'images
 window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
+
+// Test function to verify Meta keyboard functionality
+window.testMetaKeyboard = function() {
+    console.log("Testing Meta WebXR keyboard functionality...");
+    
+    // First ensure search panel is visible
+    if (window.searchPanel && !window.searchPanel.isVisible) {
+        window.searchPanel.isVisible = true;
+        console.log("Search panel opened for keyboard test");
+    }
+    
+    // Try to show the Meta keyboard
+    if (typeof showVirtualKeyboardGlobal === 'function') {
+        showVirtualKeyboardGlobal();
+        console.log("Meta keyboard show function called");
+    } else {
+        console.error("showVirtualKeyboard function not available");
+    }
+    
+    // Also test HTML fallback
+    if (window.showHTMLKeyboard) {
+        console.log("HTML fallback keyboard available");
+        window.showHTMLKeyboard();
+    } else {
+        console.error("HTML fallback keyboard not available");
+    }
+};
+
+// Global keyboard functions (moved outside WebXR callback for proper scope)
+let globalXrHelper = null;
+let globalInputText = null;
+
+// Function to show Meta WebXR virtual keyboard (global scope)
+function showVirtualKeyboardGlobal() {
+    console.log("Attempting to show Meta WebXR virtual keyboard (global)...");
+    
+    if (globalXrHelper && globalXrHelper.baseExperience && globalXrHelper.baseExperience.sessionManager) {
+        const session = globalXrHelper.baseExperience.sessionManager.session;
+        if (session) {
+            try {
+                // Try to use WebXR keyboard input feature
+                if ('keyboard' in navigator && navigator.keyboard && navigator.keyboard.getLayoutMap) {
+                    // Modern WebXR keyboard API
+                    console.log("Using WebXR keyboard input feature");
+                    
+                    // Focus the input field to trigger Meta's virtual keyboard
+                    if (globalInputText) {
+                        globalInputText.focus();
+                        console.log("Meta WebXR virtual keyboard should appear");
+                    }
+                } else if (session.inputSources) {
+                    // Alternative: Check for hand tracking or controller input
+                    console.log("Using WebXR input sources for keyboard");
+                    
+                    // Focus the input to trigger system keyboard
+                    if (globalInputText) {
+                        globalInputText.focus();
+                        console.log("System virtual keyboard triggered");
+                    }
+                } else {
+                    console.log("WebXR keyboard features not available, showing HTML fallback");
+                    // Show HTML fallback keyboard if Meta keyboard not available
+                    if (window.showHTMLKeyboard) {
+                        window.showHTMLKeyboard();
+                    }
+                }
+            } catch (error) {
+                console.error("Error accessing WebXR keyboard:", error);
+                // Fallback to HTML keyboard on error
+                if (window.showHTMLKeyboard) {
+                    window.showHTMLKeyboard();
+                }
+            }
+        } else {
+            console.log("WebXR session not available for Meta keyboard, showing HTML fallback");
+            // Show HTML fallback keyboard if no WebXR session
+            if (window.showHTMLKeyboard) {
+                window.showHTMLKeyboard();
+            }
+        }
+    } else {
+        console.log("WebXR not initialized for Meta keyboard, showing HTML fallback");
+        // Show HTML fallback keyboard if WebXR not initialized
+        if (window.showHTMLKeyboard) {
+            window.showHTMLKeyboard();
+        }
+    }
+}
+
+// Function to hide Meta WebXR virtual keyboard (global scope)
+function hideVirtualKeyboardGlobal() {
+    console.log("Attempting to hide Meta WebXR virtual keyboard (global)...");
+    
+    try {
+        // Blur the input field to hide the virtual keyboard
+        if (globalInputText) {
+            globalInputText.blur();
+            console.log("Meta WebXR virtual keyboard hidden");
+        }
+        
+        // Also hide HTML fallback keyboard
+        if (window.hideHTMLKeyboard) {
+            window.hideHTMLKeyboard();
+        }
+    } catch (error) {
+        console.error("Error hiding Meta keyboard:", error);
+    }
+}
+
+// Expose keyboard functions globally for debugging
+window.showVirtualKeyboard = showVirtualKeyboardGlobal;
+window.hideVirtualKeyboard = hideVirtualKeyboardGlobal;
 
 //scene.debugLayer.show()
