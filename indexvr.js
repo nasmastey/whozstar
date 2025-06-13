@@ -843,7 +843,7 @@ function getAllSprites() {
 
 // Default values - will be overridden by individual sprite images
 const defaultImageSize = 640;
-const spriteRatio = 1;
+const spriteRatio = 2;
 
 
 
@@ -1317,12 +1317,12 @@ loadFileButton.addEventListener('click', async () => {
 				const encryptedData = await response.text();
 				const password = await showPasswordModal();
 				const data = decryptData(encryptedData, password);
-				await main(data, 1);
+				await main(data, 20);
 			} catch (encryptedError) {
 				console.log("Encrypted data not available, loading test data with levels");
 				const response = await fetch('./test_data_with_levels.json');
 				const data = await response.json();
-				await main(data, 1);
+				await main(data, 20);
 			}
             document.getElementById('fileInputContainer').style.display = 'none';
             

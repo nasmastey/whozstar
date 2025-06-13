@@ -121,68 +121,71 @@ const spriteRatio = 2;
 
 
 // Function to ensure minimum distance between sprites
-function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+async function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+    // Skip adjustment for large datasets to prevent freezes
+    if (data.length > 1000) {
+        console.log("Skipping position adjustment for large dataset to prevent freeze");
+        return data;
+    }
+    
     const adjustedData = [...data];
-    const maxIterations = 50; // Reduced from 100 to prevent freezes
+    const maxIterations = Math.min(20, Math.floor(data.length / 10)); // Adaptive max iterations
     let iteration = 0;
-    let progressThreshold = 0.01; // Minimum progress required to continue
+    let progressThreshold = 0.05; // Increased threshold for faster exit
     let lastCollisionCount = Infinity;
     
     while (iteration < maxIterations) {
         let hasCollisions = false;
         let collisionCount = 0;
         
-        // Process in smaller batches to prevent UI freezing
-        const batchSize = Math.min(50, adjustedData.length);
+        // Process in smaller batches with yield to prevent UI freezing
+        const batchSize = Math.min(25, adjustedData.length); // Smaller batch size
+        
         for (let batch = 0; batch < adjustedData.length; batch += batchSize) {
             const endBatch = Math.min(batch + batchSize, adjustedData.length);
             
+            // Yield control to prevent UI freeze
+            if (batch > 0 && batch % 100 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
+            
             for (let i = batch; i < endBatch; i++) {
-                for (let j = i + 1; j < adjustedData.length; j++) {
+                // Limit inner loop for performance
+                const maxJ = Math.min(i + 50, adjustedData.length);
+                for (let j = i + 1; j < maxJ; j++) {
                     const sprite1 = adjustedData[i];
                     const sprite2 = adjustedData[j];
                     
-                    const distance = Math.sqrt(
-                        Math.pow(sprite1.x - sprite2.x, 2) +
-                        Math.pow(sprite1.y - sprite2.y, 2) +
-                        Math.pow(sprite1.z - sprite2.z, 2)
-                    );
+                    const dx = sprite1.x - sprite2.x;
+                    const dy = sprite1.y - sprite2.y;
+                    const dz = sprite1.z - sprite2.z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
                     
-                    if (distance < minDistance && distance > 0.001) { // Avoid division by zero
+                    if (distance < minDistance && distance > 0.001) {
                         hasCollisions = true;
                         collisionCount++;
                         
-                        // Calculate direction vector from sprite2 to sprite1
-                        const dx = sprite1.x - sprite2.x;
-                        const dy = sprite1.y - sprite2.y;
-                        const dz = sprite1.z - sprite2.z;
-                        
-                        // Normalize the direction vector
-                        const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                        const normalizedDx = length > 0.001 ? dx / length : (Math.random() - 0.5) * 2;
-                        const normalizedDy = length > 0.001 ? dy / length : (Math.random() - 0.5) * 2;
-                        const normalizedDz = length > 0.001 ? dz / length : (Math.random() - 0.5) * 2;
-                        
-                        // Calculate how much to move each sprite (reduced movement for stability)
+                        // Simplified movement calculation
+                        const length = distance || 0.001;
                         const overlap = minDistance - distance;
-                        const moveDistance = Math.min(overlap * 0.3, 2); // Limit movement to prevent overshooting
+                        const moveDistance = Math.min(overlap * 0.2, 1); // Reduced movement
                         
-                        // Move sprites apart
-                        sprite1.x += normalizedDx * moveDistance;
-                        sprite1.y += normalizedDy * moveDistance;
-                        sprite1.z += normalizedDz * moveDistance;
+                        const factor = moveDistance / length;
+                        sprite1.x += dx * factor;
+                        sprite1.y += dy * factor;
+                        sprite1.z += dz * factor;
                         
-                        sprite2.x -= normalizedDx * moveDistance;
-                        sprite2.y -= normalizedDy * moveDistance;
-                        sprite2.z -= normalizedDz * moveDistance;
+                        sprite2.x -= dx * factor;
+                        sprite2.y -= dy * factor;
+                        sprite2.z -= dz * factor;
                     }
                 }
             }
         }
         
-        // Check for progress to avoid infinite loops
+        // Early exit conditions
         const progress = (lastCollisionCount - collisionCount) / Math.max(lastCollisionCount, 1);
-        if (!hasCollisions || (iteration > 10 && progress < progressThreshold)) {
+        if (!hasCollisions || (iteration > 5 && progress < progressThreshold)) {
             break;
         }
         
@@ -194,7 +197,7 @@ function adjustPositionsForMinimumDistance(data, minDistance = 8) {
     return adjustedData;
 }
 
-function main(currentData, ratio) {
+async function main(currentData, ratio) {
     // Charger la configuration des images personnalisées
     const imageConfiguration = loadImageConfiguration();
     
@@ -211,7 +214,7 @@ function main(currentData, ratio) {
     }));
     
     // Adjust positions to ensure minimum distance of 8 between sprites
-    data = adjustPositionsForMinimumDistance(data, 8);
+    data = await adjustPositionsForMinimumDistance(data, 8);
 
     // Group data by level to create separate sprite managers for each PNG
     const dataByLevel = {};
@@ -371,8 +374,8 @@ scene.onBeforeRenderObservable.add(() => {
             
             names.push({
                 "name": s.name + '_layer',
-                "meshName": s.name + '_mesh',
-                "matName": s.name + '_mat',
+                "meshName": s.name + '_whoz_mesh',
+                "matName": s.name + '_whoz_mat',
                 "textureName": s.name,
     "color": s.color,
                 "position": s.position,
@@ -383,8 +386,9 @@ scene.onBeforeRenderObservable.add(() => {
     });
 
     // Dispose of unused meshes
-    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND').forEach(mesh => {
-        if (!names.some(n => n.meshName === mesh.name)) {
+    scene.meshes
+        .filter(mesh => mesh.name.endsWith('_whoz_mesh') && !names.some(n => n.meshName === mesh.name))
+        .forEach(mesh => {
             if (mesh.material) {
                 if (mesh.material.emissiveTexture) {
                     mesh.material.emissiveTexture.dispose(); // Dispose the emissive texture
@@ -393,19 +397,18 @@ scene.onBeforeRenderObservable.add(() => {
             }
             scene.removeMesh(mesh);
             mesh.dispose(); // Dispose the mesh
-        }
-    });
+        });
 
     // Dispose of unused materials
-    scene.materials.filter(material => material.name !== 'BACKGROUND').forEach(material => {
-        if (!names.some(n => n.matName === material.name)) {
+    scene.materials
+        .filter(material => material.name.endsWith('_whoz_mat') && !names.some(n => n.matName === material.name))
+        .forEach(material => {
             if (material.emissiveTexture) {
                 material.emissiveTexture.dispose(); // Dispose the emissive texture
             }
             scene.removeMaterial(material);
             material.dispose(); // Dispose the material
-        }
-    });
+        });
 
     names.forEach(n => {
         if (!scene.meshes.some(l => l.name === n.meshName)) {
@@ -460,14 +463,14 @@ scene.onBeforeRenderObservable.add(() => {
             
             // Draw white fill text on top for sprite name
             planeTexture.drawText(textToDisplay, null, textY, fontSize + "px " + fontFamily, "white", "transparent", true, true);
-            var material = new BABYLON.StandardMaterial(n.textureName + '_mat', scene);
+            var material = new BABYLON.StandardMaterial(n.textureName + '_whoz_mat', scene);
             material.emissiveTexture = planeTexture;
             material.opacityTexture = planeTexture;
             material.backFaceCulling = true;
             material.disableLighting = true;
             material.freeze();
 
-   var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_mesh', font_size, scene, false);
+   var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_whoz_mesh', font_size, scene, false);
             outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
             outputplane.isVisible = true;
             outputplane.position = n.position;
@@ -566,7 +569,7 @@ loadFileButton.addEventListener('click', async () => {
             const reader = new FileReader();
             reader.onload = async function(event) {
                 const newdata = JSON.parse(event.target.result);
-                main(newdata, 20);
+                await main(newdata, 20);
                 document.getElementById('fileInputContainer').style.display = 'none';
             };
             reader.readAsText(file);
@@ -578,7 +581,7 @@ loadFileButton.addEventListener('click', async () => {
         try {
             const response = await fetch('./test_data_with_levels.json');
             const data = await response.json();
-            main(data, 20);
+            await main(data, 20);
             document.getElementById('fileInputContainer').style.display = 'none';
         } catch (error) {
             console.error("Failed to load JSON:", error);
@@ -1171,7 +1174,7 @@ function getDefaultImageForLevel(level) {
 }
 
 // Fonction pour recharger les données avec la nouvelle configuration d'images
-function reloadWithNewImageConfiguration() {
+async function reloadWithNewImageConfiguration() {
     // Récupérer les données actuelles
     const currentData = getAllSprites().map(sprite => ({
         prefLabel: sprite.name,
@@ -1187,7 +1190,7 @@ function reloadWithNewImageConfiguration() {
         clearScene();
         
         // Recharger avec la nouvelle configuration
-        main(currentData, 20);
+        await main(currentData, 20);
         
         console.log('Données rechargées avec la nouvelle configuration d\'images');
     }
@@ -1207,7 +1210,7 @@ function clearScene() {
     originalPositions.length = 0;
     
     // Supprimer les meshes de texte
-    scene.meshes.filter(mesh => mesh.name !== 'BACKGROUND' && mesh.name !== 'starField').forEach(mesh => {
+    scene.meshes.filter(mesh => mesh.name.endsWith('_whoz_mesh')).forEach(mesh => {
         if (mesh.material) {
             if (mesh.material.emissiveTexture) {
                 mesh.material.emissiveTexture.dispose();
@@ -1223,8 +1226,8 @@ function clearScene() {
 window.addEventListener('storage', function(e) {
     if (e.key === 'imageConfiguration' || e.key === 'imageConfigurationUpdate') {
         console.log('Configuration d\'images mise à jour, rechargement...');
-        setTimeout(() => {
-            reloadWithNewImageConfiguration();
+        setTimeout(async () => {
+            await reloadWithNewImageConfiguration();
         }, 100); // Petit délai pour s'assurer que la configuration est bien sauvegardée
     }
 });
