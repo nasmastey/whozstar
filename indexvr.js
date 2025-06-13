@@ -156,7 +156,7 @@ scene.createDefaultXRExperienceAsync({
         width: "400px",
         paddingTop: "20px",
         background: "rgba(255,255,255,0.7)",
-        isVisible: false,
+        isVisible: true, // Make search panel visible by default
         isPointerBlocker: true // Enable pointer blocking for VR interaction
     });
     advancedTexture.addControl(searchPanel);
@@ -190,14 +190,14 @@ scene.createDefaultXRExperienceAsync({
     
     // Add click handler to show VR keyboard when input is clicked
     inputText.onPointerClickObservable.add(() => {
-        console.log("VR Input field clicked - attempting to show virtual keyboard");
-        showVRKeyboard(inputText);
+        console.log("VR Input field clicked - showing VR keyboard");
+        showVirtualKeyboard();
     });
     
     // Also handle pointer down for better trigger detection
     inputText.onPointerDownObservable.add(() => {
-        console.log("VR Input field pointer down - showing virtual keyboard");
-        showVRKeyboard(inputText);
+        console.log("VR Input field pointer down - showing VR keyboard");
+        showVirtualKeyboard();
     });
     
     // Handle focus event (removed keyboard call to prevent recursion)
@@ -270,66 +270,49 @@ scene.createDefaultXRExperienceAsync({
     });
     searchPanel.addControl(suggestionsPanel);
 
-    // Note: Virtual keyboard removed - using HTML keyboard only
-    virtualKeyboard = null;
+    // Create VR virtual keyboard using Babylon.js GUI
+    virtualKeyboard = new BABYLON.GUI.VirtualKeyboard();
+    virtualKeyboard.defaultButtonWidth = "40px";
+    virtualKeyboard.defaultButtonHeight = "40px";
+    virtualKeyboard.scaleX = 0.8;
+    virtualKeyboard.scaleY = 0.8;
+    virtualKeyboard.isVisible = false;
+    virtualKeyboard.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    virtualKeyboard.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    virtualKeyboard.paddingBottom = "50px";
+    virtualKeyboard.background = "rgba(0, 0, 0, 0.8)";
+    virtualKeyboard.color = "white";
+    
+    // Connect keyboard to input field
+    virtualKeyboard.connect(inputText);
+    
+    advancedTexture.addControl(virtualKeyboard);
     keyboardVisible = false;
 
-    // Note: Virtual keyboard functions removed - using HTML keyboard only
-
-    // Function to show HTML keyboard
+    // Function to show VR virtual keyboard
     function showVirtualKeyboard() {
-        console.log("Attempting to show HTML keyboard...");
-        console.log("toggleHTMLKeyboard exists:", typeof window.toggleHTMLKeyboard);
-        console.log("htmlKeyboardVisible:", window.htmlKeyboardVisible);
+        console.log("Attempting to show VR virtual keyboard...");
         
-        // Wait a bit for DOM to be ready if needed
-        setTimeout(() => {
-            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
-                if (!window.htmlKeyboardVisible) {
-                    window.toggleHTMLKeyboard();
-                    console.log("HTML keyboard shown");
-                } else {
-                    console.log("HTML keyboard already visible");
-                }
-            } else {
-                console.error("toggleHTMLKeyboard function not available, using fallback");
-                // Fallback: try to show keyboard directly
-                const keyboard = document.getElementById('virtualKeyboardHTML');
-                if (keyboard) {
-                    keyboard.style.display = 'block';
-                    window.htmlKeyboardVisible = true;
-                    console.log("HTML keyboard shown via fallback");
-                } else {
-                    console.error("Virtual keyboard HTML element not found");
-                }
-            }
-        }, 100);
+        if (virtualKeyboard) {
+            virtualKeyboard.isVisible = true;
+            keyboardVisible = true;
+            console.log("VR virtual keyboard shown");
+        } else {
+            console.error("VR virtual keyboard not available");
+        }
     }
 
-    // Function to hide HTML keyboard
+    // Function to hide VR virtual keyboard
     function hideVirtualKeyboard() {
-        console.log("Attempting to hide HTML keyboard...");
+        console.log("Attempting to hide VR virtual keyboard...");
         
-        setTimeout(() => {
-            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function') {
-                if (window.htmlKeyboardVisible) {
-                    window.toggleHTMLKeyboard();
-                    console.log("HTML keyboard hidden");
-                } else {
-                    console.log("HTML keyboard already hidden");
-                }
-            } else {
-                // Fallback: try to hide keyboard directly
-                const keyboard = document.getElementById('virtualKeyboardHTML');
-                if (keyboard) {
-                    keyboard.style.display = 'none';
-                    window.htmlKeyboardVisible = false;
-                    console.log("HTML keyboard hidden via fallback");
-                } else {
-                    console.error("Virtual keyboard HTML element not found");
-                }
-            }
-        }, 50);
+        if (virtualKeyboard) {
+            virtualKeyboard.isVisible = false;
+            keyboardVisible = false;
+            console.log("VR virtual keyboard hidden");
+        } else {
+            console.error("VR virtual keyboard not available");
+        }
     }
 
     // Keep panel facing camera and position keyboard relative to panel
@@ -347,7 +330,12 @@ scene.createDefaultXRExperienceAsync({
             searchPanel.linkWithMesh(null);
             searchPanel.isVertical = true;
             
-            // Note: No VR keyboard positioning needed - using HTML keyboard only
+            // Position VR keyboard below the search panel when visible
+            if (virtualKeyboard && virtualKeyboard.isVisible) {
+                virtualKeyboard.paddingBottom = "100px";
+                virtualKeyboard.isPointerBlocker = true;
+                virtualKeyboard.isHitTestVisible = true;
+            }
         }
     });
 
@@ -407,30 +395,22 @@ scene.createDefaultXRExperienceAsync({
                                     inputText.text = "";
                                     searchResultText.text = "";
                                     
-                                    // Use setTimeout to prevent blocking
-                                    setTimeout(() => {
-                                        try {
-                                            showVirtualKeyboard();
-                                            console.log("Search panel and HTML keyboard opened with X button");
-                                        } catch (error) {
-                                            console.error("Error opening keyboard:", error);
-                                        }
-                                    }, 10);
+                                    // Show VR keyboard immediately when panel opens
+                                    try {
+                                        showVirtualKeyboard();
+                                        console.log("Search panel and VR keyboard opened with X button");
+                                    } catch (error) {
+                                        console.error("Error opening VR keyboard:", error);
+                                    }
                                 } else {
-                                    // Closing panel - use setTimeout to prevent freeze
-                                    setTimeout(() => {
-                                        try {
-                                            hideSuggestions();
-                                            hideVirtualKeyboard();
-                                            // Masquer aussi le clavier HTML
-                                            if (window.toggleHTMLKeyboard && typeof window.toggleHTMLKeyboard === 'function' && window.htmlKeyboardVisible) {
-                                                window.toggleHTMLKeyboard();
-                                            }
-                                            console.log("Search panel and virtual keyboard closed with X button");
-                                        } catch (error) {
-                                            console.error("Error closing keyboard:", error);
-                                        }
-                                    }, 10);
+                                    // Closing panel - hide keyboard immediately
+                                    try {
+                                        hideSuggestions();
+                                        hideVirtualKeyboard();
+                                        console.log("Search panel and virtual keyboard closed with X button");
+                                    } catch (error) {
+                                        console.error("Error closing keyboard:", error);
+                                    }
                                 }
                             } catch (error) {
                                 console.error("Error in X button handler:", error);

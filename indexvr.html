@@ -151,7 +151,7 @@
     background: rgba(40, 40, 40, 0.95);
     border-radius: 10px;
     padding: 15px;
-    display: none;
+    display: none !important;
     z-index: 10000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
@@ -270,23 +270,51 @@
                 }
                 
                 window.htmlKeyboardVisible = !window.htmlKeyboardVisible;
-                
-                // Use requestAnimationFrame to prevent blocking
-                requestAnimationFrame(() => {
-                    try {
-                        keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
-                        console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
-                    } catch (error) {
-                        console.error('Error updating keyboard display:', error);
-                    }
-                });
+                keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
+                console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
             } catch (error) {
                 console.error('Error in toggleHTMLKeyboard:', error);
             }
         }
 
-        // Exposer la fonction globalement
+        // Fonction pour afficher le clavier HTML
+        function showHTMLKeyboard() {
+            try {
+                const keyboard = document.getElementById('virtualKeyboardHTML');
+                if (!keyboard) {
+                    console.error('Virtual keyboard HTML element not found');
+                    return;
+                }
+                
+                keyboard.style.display = 'block';
+                window.htmlKeyboardVisible = true;
+                console.log('HTML Keyboard shown');
+            } catch (error) {
+                console.error('Error in showHTMLKeyboard:', error);
+            }
+        }
+
+        // Fonction pour masquer le clavier HTML
+        function hideHTMLKeyboard() {
+            try {
+                const keyboard = document.getElementById('virtualKeyboardHTML');
+                if (!keyboard) {
+                    console.error('Virtual keyboard HTML element not found');
+                    return;
+                }
+                
+                keyboard.style.display = 'none';
+                window.htmlKeyboardVisible = false;
+                console.log('HTML Keyboard hidden');
+            } catch (error) {
+                console.error('Error in hideHTMLKeyboard:', error);
+            }
+        }
+
+        // Exposer les fonctions globalement
         window.toggleHTMLKeyboard = toggleHTMLKeyboard;
+        window.showHTMLKeyboard = showHTMLKeyboard;
+        window.hideHTMLKeyboard = hideHTMLKeyboard;
     </script>
     <script type="module" src="./indexvr.js"></script>
 	<div id="fileInputContainer">
@@ -295,10 +323,10 @@
 	       <button id="imageSelectorButton" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">🎨 Images</button>
 	   </div>
 	<div id="searchContainer">
-        <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
-        <datalist id="particlesList"></datalist>
-        <button id="searchButton">Search</button>
-    </div>
+	       <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
+	       <datalist id="particlesList"></datalist>
+	       <button id="searchButton">Search</button>
+	   </div>
 	<canvas id="renderCanvas" touch-action="none"></canvas>
 	<div id="legend"></div>
 	<div id="nearestContainer">
@@ -576,14 +604,11 @@
 	               });
 	           });
 	
-	           // Afficher le clavier HTML quand on clique sur le champ de recherche
+	           // Désactiver les événements HTML du clavier pour utiliser le clavier VR
 	           const searchInput = document.getElementById('searchInput');
 	           if (searchInput) {
-	               searchInput.addEventListener('focus', function() {
-	                   if (!window.htmlKeyboardVisible) {
-	                       toggleHTMLKeyboard();
-	                   }
-	               });
+	               // Événements désactivés - le clavier VR sera géré par Babylon.js
+	               console.log('Search input configured for VR keyboard only');
 	               
 	               // Synchroniser avec le champ VR quand l'utilisateur tape directement
 	               searchInput.addEventListener('input', function() {
