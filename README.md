@@ -1,7 +1,5 @@
 # Projet de Merge - Visualisation 3D
 
-Ce repository a été créé pour merger deux projets de visualisation de données.
-
 ## Projet Principal
 - **Application de visualisation 3D** utilisant Babylon.js
 - Visualisation de données spatiales avec des sprites interactifs
@@ -36,14 +34,7 @@ Ce repository est configuré pour faciliter le merge de deux projets similaires 
 - Structure modulaire pour faciliter l'intégration
 - Documentation des conflits potentiels
 
-## Branches
-- `main` - Branche principale avec le projet actuel
-- `project-a` - Premier projet à merger
-- `project-b` - Deuxième projet à merger
-- `merge-branch` - Branche de travail pour le merge
 
 ## Instructions de Merge
-1. Créer des branches séparées pour chaque projet
-2. Identifier les fichiers communs et les différences
-3. Résoudre les conflits de merge
-4. Tester l'intégration finale
+1. Résoudre les conflits de merge
+2. Tester l'intégration finale
