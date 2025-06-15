@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
-	   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-        <title>Whoz leoPSO</title>
-		<script src="https://cdn.babylonjs.com/babylon.js"></script>
-	    	<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-	    	<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>WhozStar VR - Fusion</title>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
         <style>
             html, body {
                 overflow: hidden;
@@ -15,110 +14,99 @@
                 height: 100%;
                 margin: 0;
                 padding: 0;
-				font-family: 'system-ui', sans-serif; /* Apply Calibri font globally */
+                font-family: 'system-ui', sans-serif;
             }
-
-            #renderCanvas {
-                width: 100%;
-                height: 100%;
-                touch-action: none;
-            }
-			
-			#searchContainer {
+            #searchContainer {
                 position: absolute;
                 top: 10px;
                 left: 10px;
+                background-color: rgba(255, 255, 255, 0.85);
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                z-index: 10;
+                display: block;
+            }
+            #searchInput {
+                padding: 5px;
+                border-radius: 3px;
+                border: 1px solid #ccc;
+                margin-right: 10px;
+                min-width: 200px;
+            }
+            #searchButton {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+            #searchButton:hover {
+                background-color: #0056b3;
+            }
+            
+            /* Add styles for the legend */
+            #legend {
+                position: absolute;
+                top: 10px;
+                right: 10px;
                 background-color: rgba(255, 255, 255, 0.8);
                 padding: 10px;
                 border-radius: 5px;
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-				display: block; /* Default to visible */
+                display: block; /* Default to visible */
             }
-            
-            #searchInput {
-                width: 200px;
-                padding: 5px;
-                border-radius: 3px;
-                border: 1px solid #ccc;
-            }
-            
-            #searchButton {
-                padding: 5px 10px;
-                border-radius: 3px;
-                border: none;
-                background-color: #007bff;
-                color: white;
+            .legend-item {
+                display: flex;
+                font-size: 12px;
+                align-items: center;
+                margin-bottom: 5px;
                 cursor: pointer;
-                margin-left: 10px;
             }
-
-            #searchButton:hover {
-                background-color: #0056b3;
+            .legend-color {
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+                border-radius: 50%;
             }
-			
-			    /* Add styles for the legend */
-    #legend {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-		display: block; /* Default to visible */
-    }
-.legend-item {
-    display: flex;
-	font-size: 12px;
-    align-items: center;
-    margin-bottom: 5px;
-    cursor: pointer;
-}
-.legend-color {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    border-radius: 50%;
-}
-	
-
-
+            
             .nearest-item {
-        margin-bottom: 5px;
-        font-size: 12px;
-        cursor: pointer;
-    }
+                margin-bottom: 5px;
+                font-size: 12px;
+                cursor: pointer;
+            }
 
-    .first-item {
-        font-weight: bold;
-        font-size: 14px; /* Légèrement plus grande */
-    }
-	
-	    #nearestContainer {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        max-height: 40%;
-        overflow-y: auto;
-        display: block; /* Default to visible */
-    }
-
-    #nearestList {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-			
-			/* Style for toggle buttons */
+            .first-item {
+                font-weight: bold;
+                font-size: 14px; /* Légèrement plus grande */
+            }
+            
+            #nearestContainer {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                max-height: 40%;
+                overflow-y: auto;
+                display: block; /* Default to visible */
+            }
+            
+            #nearestList {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            /* Style for toggle buttons */
             .toggleButton {
                 position: absolute;
                 bottom: 90px;
                 left: 10px;
-				width: 70px;
+                width: 70px;
                 background-color: #007bff;
                 color: white;
                 border: none;
@@ -131,509 +119,129 @@
             .toggleButton:hover {
                 background-color: #0056b3;
             }
-			
-		#fileInputContainer {
-    position: absolute;
-    top: 10px;
-    left: 350px;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
+            
+            #fileInputContainer {
+                position: absolute;
+                top: 10px;
+                left: 350px;
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            }
+            
+            #fileSelect {
+                padding: 5px;
+                border-radius: 3px;
+                border: 1px solid #ccc;
+                margin-right: 10px;
+                min-width: 150px;
+            }
 
-/* Styles pour le clavier virtuel HTML de fallback */
-#virtualKeyboardHTML {
-    position: fixed;
-    top: 200px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(40, 40, 40, 0.95);
-    border-radius: 10px;
-    padding: 15px;
-    display: none;
-    z-index: 9999;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s ease;
-    pointer-events: auto; /* Ensure VR pointer interaction */
-    touch-action: manipulation; /* Optimize for VR touch */
-    /* Position below search panel in VR */
-    margin-top: 20px;
-}
-
-#virtualKeyboardHTML .keyboard-title {
-    color: white;
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-#virtualKeyboardHTML .keyboard-row {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 5px;
-    gap: 3px;
-}
-
-#virtualKeyboardHTML .key {
-    background: rgba(70, 70, 70, 0.9);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px;
-    min-width: 40px;
-    height: 45px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    pointer-events: auto; /* Ensure VR pointer can interact */
-    touch-action: manipulation; /* Optimize for VR interaction */
-    user-select: none; /* Prevent text selection in VR */
-}
-
-#virtualKeyboardHTML .key:hover {
-    background: rgba(120, 120, 120, 1.0);
-    transform: scale(1.05);
-}
-
-#virtualKeyboardHTML .key:active {
-    transform: scale(0.95);
-}
-
-#virtualKeyboardHTML .key.special {
-    background: rgba(80, 80, 80, 0.9);
-}
-
-#virtualKeyboardHTML .key.backspace {
-    background: rgba(150, 0, 0, 0.9);
-    min-width: 70px;
-}
-
-#virtualKeyboardHTML .key.enter {
-    background: rgba(0, 150, 0, 0.9);
-    min-width: 80px;
-}
-
-#virtualKeyboardHTML .key.space {
-    min-width: 300px;
-}
-
-#virtualKeyboardHTML .key.shift.active {
-    background: rgba(100, 100, 150, 0.9);
-}
-
-#virtualKeyboardHTML .key.caps.active {
-    background: rgba(100, 150, 100, 0.9);
-}
-
-/* Styles pour l'interaction VR */
-#virtualKeyboardHTML .key.active {
-    transform: scale(0.95);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-#virtualKeyboardHTML .key:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.5);
-    outline-offset: 2px;
-}
-
-/* Amélioration de la visibilité pour VR */
-#virtualKeyboardHTML {
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-}
-
-#virtualKeyboardHTML .key {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#virtualKeyboardHTML .key:hover,
-#virtualKeyboardHTML .key:focus {
-    border-color: rgba(255, 255, 255, 0.3);
-}
+            /* Styles pour le clavier virtuel HTML de fallback */
+            #virtualKeyboardHTML {
+                position: fixed;
+                top: 200px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(40, 40, 40, 0.95);
+                border-radius: 10px;
+                padding: 15px;
+                display: none;
+                z-index: 9999;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                transition: all 0.3s ease;
+                pointer-events: auto; /* Ensure VR pointer interaction */
+                touch-action: manipulation; /* Optimize for VR touch */
+                /* Position below search panel in VR */
+                margin-top: 20px;
+            }
         </style>
     </head>
 <body>
+    <script type="module" src="./indexvr.js"></script>
+    <div id="fileInputContainer">
+        <div id="statusMessage" style="margin-bottom: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 5px; font-weight: bold;">
+            🔄 Application prête - Aucun fichier chargé. Veuillez sélectionner un fichier.
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="fileInput" style="display: block; font-weight: bold; margin-bottom: 5px;">
+                📁 Choisir un fichier depuis votre PC:
+            </label>
+            <input type="file" id="fileInput" style="margin-right: 10px; width: 250px;">
+            <button id="loadFileButton" style="background-color: #28a745; padding: 8px 15px;">Charger fichier</button>
+            <button id="imageSelectorButton" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">🎨 Images</button>
+        </div>
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc;">
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">
+                Ou utiliser un fichier prédéfini:
+            </label>
+            <select id="fileSelect" style="margin-right: 10px; min-width: 150px;">
+                <option value="">-- Choisir --</option>
+                <option value="test_particles.json">Test Particles</option>
+                <option value="encrypted_PSO_0.json">Encrypted PSO Data</option>
+            </select>
+            <button id="loadPresetButton" style="background-color: #007bff; padding: 8px 15px;">Charger prédéfini</button>
+        </div>
+    </div>
+    <div id="searchContainer">
+        <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
+        <datalist id="particlesList"></datalist>
+        <button id="searchButton">Search</button>
+    </div>
+    <canvas id="renderCanvas" touch-action="none"></canvas>
+    <div id="legend"></div>
+    <div id="nearestContainer">
+        <ul id="nearestList"></ul>
+    </div>
+    <button class="toggleButton" data-target="searchContainer">Search</button>
+    <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
+    <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+    <button id="demoModeButton" class="toggleButton" style="bottom: 130px; background-color: #28a745;">Mode Démo</button>
+    <div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+        <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
+            <label for="passwordInput">Enter password:</label>
+            <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
+            <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
+        </div>
+    </div>
+    <div id="virtualKeyboardHTML"></div>
     <script>
-        // Définir les variables globales et fonctions avant le chargement du module VR
-        window.htmlKeyboardVisible = false;
-        let isShiftActive = false;
-        let isCapsLockActive = false;
-
-        // Fonction pour afficher/masquer le clavier HTML
         function toggleHTMLKeyboard() {
-            try {
-                const keyboard = document.getElementById('virtualKeyboardHTML');
-                if (!keyboard) {
-                    console.error('Virtual keyboard HTML element not found');
-                    return;
-                }
-                
-                window.htmlKeyboardVisible = !window.htmlKeyboardVisible;
-                keyboard.style.display = window.htmlKeyboardVisible ? 'block' : 'none';
-                console.log('HTML Keyboard toggled:', window.htmlKeyboardVisible);
-            } catch (error) {
-                console.error('Error in toggleHTMLKeyboard:', error);
+            const keyboard = document.getElementById('virtualKeyboardHTML');
+            if (keyboard.style.display === 'none' || keyboard.style.display === '') {
+                showHTMLKeyboard();
+            } else {
+                hideHTMLKeyboard();
             }
         }
-
-        // Fonction pour afficher le clavier HTML
+        
         function showHTMLKeyboard() {
-            try {
-                const keyboard = document.getElementById('virtualKeyboardHTML');
-                if (!keyboard) {
-                    console.error('Virtual keyboard HTML element not found');
-                    return;
-                }
-                
-                keyboard.style.display = 'block';
-                window.htmlKeyboardVisible = true;
-                console.log('HTML Keyboard shown');
-            } catch (error) {
-                console.error('Error in showHTMLKeyboard:', error);
-            }
+            document.getElementById('virtualKeyboardHTML').style.display = 'block';
         }
-
-        // Fonction pour masquer le clavier HTML
+        
         function hideHTMLKeyboard() {
-            try {
-                const keyboard = document.getElementById('virtualKeyboardHTML');
-                if (!keyboard) {
-                    console.error('Virtual keyboard HTML element not found');
-                    return;
-                }
-                
-                keyboard.style.display = 'none';
-                window.htmlKeyboardVisible = false;
-                console.log('HTML Keyboard hidden');
-            } catch (error) {
-                console.error('Error in hideHTMLKeyboard:', error);
-            }
+            document.getElementById('virtualKeyboardHTML').style.display = 'none';
         }
-
+        
         // Exposer les fonctions globalement
         window.toggleHTMLKeyboard = toggleHTMLKeyboard;
         window.showHTMLKeyboard = showHTMLKeyboard;
         window.hideHTMLKeyboard = hideHTMLKeyboard;
+
+        document.querySelectorAll('.toggleButton').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.querySelector(`#${button.dataset.target}`);
+                if (target) {
+                    target.style.display = target.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+        
+        // Gestionnaire pour le bouton du sélecteur d'images
+        document.getElementById('imageSelectorButton').addEventListener('click', function() {
+            window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        });
     </script>
-    <script type="module" src="./indexvr.js"></script>
-	<div id="fileInputContainer">
-	       <input type="file" id="fileInput" accept=".json">
-	       <button id="loadFileButton">Submit</button>
-	       <button id="imageSelectorButton" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">🎨 Images</button>
-	   </div>
-	<div id="searchContainer">
-	       <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
-	       <datalist id="particlesList"></datalist>
-	       <button id="searchButton">Search</button>
-	   </div>
-	<canvas id="renderCanvas" touch-action="none"></canvas>
-	<div id="legend"></div>
-	<div id="nearestContainer">
-    <ul id="nearestList"></ul>
-    </div>
-	<button class="toggleButton" data-target="searchContainer">Search</button>
-	<button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
-	<button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
-	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
-	   <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
-	       <label for="passwordInput">Enter password:</label>
-	       <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
-	       <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
-	   </div>
-</div>
-
-<!-- Clavier virtuel HTML de fallback -->
-<div id="virtualKeyboardHTML">
-	   <div class="keyboard-title">⌨️ Clavier QWERTY Virtuel</div>
-	   
-	   <div class="keyboard-row">
-	       <button class="key" data-key="`">`</button>
-	       <button class="key" data-key="1">1</button>
-	       <button class="key" data-key="2">2</button>
-	       <button class="key" data-key="3">3</button>
-	       <button class="key" data-key="4">4</button>
-	       <button class="key" data-key="5">5</button>
-	       <button class="key" data-key="6">6</button>
-	       <button class="key" data-key="7">7</button>
-	       <button class="key" data-key="8">8</button>
-	       <button class="key" data-key="9">9</button>
-	       <button class="key" data-key="0">0</button>
-	       <button class="key" data-key="-">-</button>
-	       <button class="key" data-key="=">=</button>
-	       <button class="key backspace" data-key="Backspace">⌫</button>
-	   </div>
-	   
-	   <div class="keyboard-row">
-	       <button class="key special" data-key="Tab">⇥</button>
-	       <button class="key" data-key="q">Q</button>
-	       <button class="key" data-key="w">W</button>
-	       <button class="key" data-key="e">E</button>
-	       <button class="key" data-key="r">R</button>
-	       <button class="key" data-key="t">T</button>
-	       <button class="key" data-key="y">Y</button>
-	       <button class="key" data-key="u">U</button>
-	       <button class="key" data-key="i">I</button>
-	       <button class="key" data-key="o">O</button>
-	       <button class="key" data-key="p">P</button>
-	       <button class="key" data-key="[">[</button>
-	       <button class="key" data-key="]">]</button>
-	       <button class="key" data-key="\">\</button>
-	   </div>
-	   
-	   <div class="keyboard-row">
-	       <button class="key caps special" data-key="CapsLock">⇪</button>
-	       <button class="key" data-key="a">A</button>
-	       <button class="key" data-key="s">S</button>
-	       <button class="key" data-key="d">D</button>
-	       <button class="key" data-key="f">F</button>
-	       <button class="key" data-key="g">G</button>
-	       <button class="key" data-key="h">H</button>
-	       <button class="key" data-key="j">J</button>
-	       <button class="key" data-key="k">K</button>
-	       <button class="key" data-key="l">L</button>
-	       <button class="key" data-key=";">;</button>
-	       <button class="key" data-key="'">'</button>
-	       <button class="key enter" data-key="Enter">↵</button>
-	   </div>
-	   
-	   <div class="keyboard-row">
-	       <button class="key shift special" data-key="Shift">⇧</button>
-	       <button class="key" data-key="z">Z</button>
-	       <button class="key" data-key="x">X</button>
-	       <button class="key" data-key="c">C</button>
-	       <button class="key" data-key="v">V</button>
-	       <button class="key" data-key="b">B</button>
-	       <button class="key" data-key="n">N</button>
-	       <button class="key" data-key="m">M</button>
-	       <button class="key" data-key=",">,</button>
-	       <button class="key" data-key=".">.</button>
-	       <button class="key" data-key="/">/</button>
-	       <button class="key shift special" data-key="Shift">⇧</button>
-	   </div>
-	   
-	   <div class="keyboard-row">
-	       <button class="key space" data-key=" ">⎵</button>
-	       <button class="key enter" data-key="Search">✓</button>
-	   </div>
-</div>
-	    <script>
-	 const toggleButtons = document.querySelectorAll('.toggleButton');
-	       toggleButtons.forEach(button => {
-	           button.addEventListener('click', () => {
-	               const target = document.querySelector(`#${button.dataset.target}`);
-	               if (target) {
-	                   target.style.display = target.style.display === 'none' ? 'block' : 'none';
-	               }
-	           });
-	       });
-
-	       // Gestionnaire pour le bouton du sélecteur d'images
-	       document.getElementById('imageSelectorButton').addEventListener('click', function() {
-	           window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-	       });
-
-	       // Les variables et fonction toggleHTMLKeyboard sont maintenant définies plus haut
-
-	       // Fonction pour gérer les touches du clavier HTML
-	       function handleHTMLKeyPress(key) {
-	           try {
-	               const searchInput = document.getElementById('searchInput');
-	               if (!searchInput) {
-	                   console.error('Search input not found');
-	                   return;
-	               }
-	
-	               const currentValue = searchInput.value;
-	
-	               switch(key) {
-	                   case 'Backspace':
-	                       searchInput.value = currentValue.slice(0, -1);
-	                       break;
-	                   case 'Tab':
-	                       searchInput.value = currentValue + '\t';
-	                       break;
-	                   case 'Enter':
-	                   case 'Search':
-	                       // Déclencher la recherche avec protection
-	                       setTimeout(() => {
-	                           try {
-	                               const searchButton = document.getElementById('searchButton');
-	                               if (searchButton) searchButton.click();
-	                               toggleHTMLKeyboard();
-	                           } catch (error) {
-	                               console.error('Error triggering search:', error);
-	                           }
-	                       }, 10);
-	                       break;
-	                   case 'CapsLock':
-	                       isCapsLockActive = !isCapsLockActive;
-	                       updateKeyboardState();
-	                       break;
-	                   case 'Shift':
-	                       isShiftActive = !isShiftActive;
-	                       updateKeyboardState();
-	                       break;
-	                   case ' ':
-	                       searchInput.value = currentValue + ' ';
-	                       break;
-	                   default:
-	                       let charToAdd = key;
-	                       
-	                       // Gestion des majuscules/minuscules
-	                       if (/^[a-zA-Z]$/.test(key)) {
-	                           if (isCapsLockActive || isShiftActive) {
-	                               charToAdd = key.toUpperCase();
-	                           } else {
-	                               charToAdd = key.toLowerCase();
-	                           }
-	                       } else if (isShiftActive) {
-	                           // Symboles avec Shift
-	                           const shiftMap = {
-	                               '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
-	                               '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+',
-	                               '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
-	                               ',': '<', '.': '>', '/': '?'
-	                           };
-	                           charToAdd = shiftMap[key] || key;
-	                       }
-	                       
-	                       searchInput.value = currentValue + charToAdd;
-	                       
-	                       // Réinitialiser Shift après saisie
-	                       if (isShiftActive) {
-	                           isShiftActive = false;
-	                           updateKeyboardState();
-	                       }
-	                       break;
-	               }
-	
-	               // Synchroniser avec le champ VR
-	               if (window.scene && window.scene.inputText) {
-	                   window.scene.inputText.text = searchInput.value;
-	                   console.log("HTML keyboard - VR field synchronized:", searchInput.value);
-	               }
-	
-	               // Déclencher l'événement input pour les suggestions avec protection
-	               setTimeout(() => {
-	                   try {
-	                       searchInput.dispatchEvent(new Event('input'));
-	                   } catch (error) {
-	                       console.error('Error dispatching input event:', error);
-	                   }
-	               }, 1);
-	           } catch (error) {
-	               console.error('Error in handleHTMLKeyPress:', error);
-	           }
-	       }
-
-	       // Fonction pour mettre à jour l'état visuel du clavier
-	       function updateKeyboardState() {
-	           try {
-	               const shiftKeys = document.querySelectorAll('.key.shift');
-	               const capsKey = document.querySelector('.key.caps');
-	               
-	               // Use requestAnimationFrame to prevent blocking
-	               requestAnimationFrame(() => {
-	                   try {
-	                       shiftKeys.forEach(key => {
-	                           if (isShiftActive) {
-	                               key.classList.add('active');
-	                           } else {
-	                               key.classList.remove('active');
-	                           }
-	                       });
-	                       
-	                       if (capsKey) {
-	                           if (isCapsLockActive) {
-	                               capsKey.classList.add('active');
-	                           } else {
-	                               capsKey.classList.remove('active');
-	                           }
-	                       }
-	                   } catch (error) {
-	                       console.error('Error updating keyboard visual state:', error);
-	                   }
-	               });
-	           } catch (error) {
-	               console.error('Error in updateKeyboardState:', error);
-	           }
-	       }
-
-	       // Initialiser le clavier HTML
-	       document.addEventListener('DOMContentLoaded', function() {
-	           // Ajouter les événements aux touches du clavier HTML
-	           const keys = document.querySelectorAll('#virtualKeyboardHTML .key');
-	           keys.forEach(key => {
-	               // Améliorer l'interaction VR avec plusieurs types d'événements
-	               key.addEventListener('click', function(e) {
-	                   e.preventDefault();
-	                   e.stopPropagation();
-	                   const keyValue = this.getAttribute('data-key');
-	                   handleHTMLKeyPress(keyValue);
-	                   console.log("HTML Key clicked (VR compatible):", keyValue);
-	               });
-	               
-	               // Ajouter support pour les événements tactiles VR
-	               key.addEventListener('touchstart', function(e) {
-	                   e.preventDefault();
-	                   this.classList.add('active');
-	               });
-	               
-	               key.addEventListener('touchend', function(e) {
-	                   e.preventDefault();
-	                   this.classList.remove('active');
-	                   const keyValue = this.getAttribute('data-key');
-	                   handleHTMLKeyPress(keyValue);
-	                   console.log("HTML Key touched (VR):", keyValue);
-	               });
-	               
-	               // Ajouter support pour les événements de pointeur VR
-	               key.addEventListener('pointerdown', function(e) {
-	                   e.preventDefault();
-	                   this.classList.add('active');
-	                   console.log("HTML Key pointer down (VR):", this.getAttribute('data-key'));
-	               });
-	               
-	               key.addEventListener('pointerup', function(e) {
-	                   e.preventDefault();
-	                   this.classList.remove('active');
-	                   const keyValue = this.getAttribute('data-key');
-	                   handleHTMLKeyPress(keyValue);
-	                   console.log("HTML Key pointer up (VR):", keyValue);
-	               });
-	           });
-	
-	           // Désactiver les événements HTML du clavier pour utiliser le clavier VR
-	           const searchInput = document.getElementById('searchInput');
-	           if (searchInput) {
-	               // Événements désactivés - le clavier VR sera géré par Babylon.js
-	               console.log('Search input configured for VR keyboard only');
-	               
-	               // Synchroniser avec le champ VR quand l'utilisateur tape directement
-	               searchInput.addEventListener('input', function() {
-	                   // Synchroniser avec le champ VR si disponible
-	                   if (window.scene && window.scene.inputText) {
-	                       window.scene.inputText.text = searchInput.value;
-	                       console.log("HTML input synchronized with VR field:", searchInput.value);
-	                   }
-	               });
-	           }
-	           
-	           // S'assurer que le clavier HTML est visible aux pointeurs VR
-	           const virtualKeyboard = document.getElementById('virtualKeyboardHTML');
-	           if (virtualKeyboard) {
-	               // Forcer la détection par les pointeurs VR
-	               virtualKeyboard.style.pointerEvents = 'auto';
-	               virtualKeyboard.setAttribute('data-vr-interactive', 'true');
-	               console.log("HTML Virtual keyboard configured for VR interaction");
-	           }
-	       });
-
-	       // La fonction toggleHTMLKeyboard est déjà exposée plus haut
-	   </script>
-</body>
 </body>
 </html>
