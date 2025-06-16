@@ -822,19 +822,65 @@ function main(currentData, ratio) {
     const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
     labelSpriteManager.isPickable = true;
 
-    // Helper to create a sprite and attach actions
+    // Helper to create a sprite and attach actions - INTÉGRÉ AVEC SYSTÈME REPVAL
     function createLabelSprite(point, idx) {
         const position = new BABYLON.Vector3(point.x, point.y, point.z);
         originalPositions.push(position.clone());
+
+        // Assigner un niveau RepVal basé sur les données ou aléatoirement
+        let level = 7; // Niveau par défaut
+        
+        // Essayer d'extraire le niveau depuis les données existantes si disponible
+        if (point.level && typeof point.level === 'number') {
+            level = Math.max(1, Math.min(13, Math.round(point.level)));
+        } else {
+            // Sinon, assignation pondérée intelligente basée sur subType
+            const subType = point.subType || 'default';
+            if (subType.toLowerCase().includes('black') || subType.toLowerCase().includes('hole')) {
+                level = 1; // Trous noirs
+            } else if (subType.toLowerCase().includes('nebula') || subType.toLowerCase().includes('galaxy')) {
+                level = 2; // Nébuleuses/Galaxies
+            } else if (subType.toLowerCase().includes('star') || subType.toLowerCase().includes('sun')) {
+                level = 3; // Étoiles
+            } else if (subType.toLowerCase().includes('planet')) {
+                level = 4; // Planètes
+            } else if (subType.toLowerCase().includes('moon') || subType.toLowerCase().includes('satellite')) {
+                level = 5; // Lunes
+            } else {
+                // Distribution aléatoire pour les autres types
+                const rand = Math.random();
+                if (rand < 0.15) level = 6;      // Comètes
+                else if (rand < 0.35) level = 7; // Astéroïdes
+                else if (rand < 0.55) level = 8; // Satellites
+                else if (rand < 0.70) level = 9; // Débris
+                else if (rand < 0.80) level = 10; // Particules
+                else if (rand < 0.88) level = 11; // Poussière
+                else if (rand < 0.95) level = 12; // Gaz
+                else level = 13;                  // Énergie
+            }
+        }
+        
+        // Stocker le niveau pour ce sprite
+        spriteLevel[point.prefLabel] = level;
+        
+        // Calculer la taille selon le niveau
+        const spriteSize = getSizeForLevel(level);
+        
+        // Couleur enrichie basée sur le niveau + type existant
+        const baseColor = point.color;
+        const levelColor = getLevelColor(level, baseColor);
 
         const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
         Object.assign(sprite, {
             isPickable: true,
             position,
             originalPosition: originalPositions[idx],
-            size: spriteRatio,
-            color: new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1),
-            metadata: { subType: point.subType },
+            size: spriteSize, // Taille selon le niveau
+            color: new BABYLON.Color4(levelColor.r, levelColor.g, levelColor.b, 1),
+            metadata: {
+                subType: point.subType,
+                level: level // Stocker le niveau dans les métadonnées
+            },
             isVisible: true
         });
 
@@ -1002,6 +1048,21 @@ engine.runRenderLoop(renderLoop);
 
     createLegend(data);
     updateParticleList();
+    
+    // === INITIALISATION DU SYSTÈME REPVAL ===
+    console.log('🔄 Initialisation du système RepVal...');
+    
+    // Charger la configuration d'images
+    loadImageConfiguration();
+    
+    // Assigner des niveaux aléatoires aux sprites
+    assignRandomLevels();
+    
+    // Catégoriser les sprites (centraux vs orbitants)
+    categorizeSprites();
+    
+    console.log('✅ Système RepVal initialisé avec succès');
+    console.log(`📊 Statistiques: ${centralSprites.length} sprites centraux, ${orbitingSprites.length} sprites orbitants`);
     
     // Créer l'indicateur VR 3D après le chargement des données
     if (!scene.vrTargetIndicator) {
@@ -1251,7 +1312,7 @@ function getColor(type) {
     return randColor;
 }
 
-// Update sprite positions to add small movements - COMPATIBLE AVEC LE SCALE
+// Update sprite positions to add small movements - COMPATIBLE AVEC LE SCALE + SYSTÈME ORBITAL REPVAL
 function updateSpritePositions() {
     time += 0.004;
 	const camera = scene.activeCamera;
@@ -1260,6 +1321,9 @@ function updateSpritePositions() {
 	const cameraPosition = camera.position;
 	const cameraGetTarget = camera.getTarget();
 
+	// Mettre à jour les positions orbitales d'abord (nouvelles fonctionnalités RepVal)
+	updateOrbitalPositions();
+
 	labelSprites.forEach((sprite, idx) => {
 		const distance = BABYLON.Vector3.Distance(cameraPosition, sprite.position);
 		
@@ -1267,16 +1331,32 @@ function updateSpritePositions() {
 			const spriteDirection = sprite.position.subtract(cameraPosition).normalize();
 			const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
 			if( angle < fov) {
-				// CORRECTION: Utiliser les positions originales avec le scale appliqué
-				const originalPosition = originalPositions[idx];
-				const currentScale = scene.currentScaleValue || 1.0;
-				const scaleFactor = 1.0 / currentScale; // Même logique que updateScale
+				const spriteName = sprite.name;
+				const level = spriteLevel[spriteName] || 7; // Niveau par défaut
 				
-				// Base scalée + petite animation
-				sprite.position.x = (originalPosition.x * scaleFactor) + 0.8 * Math.sin(time + idx);
-				sprite.position.y = (originalPosition.y * scaleFactor) + 0.8 * Math.cos(time + idx);
-				sprite.position.z = (originalPosition.z * scaleFactor) + 0.8 * Math.sin(time + idx);
+				// Vérifier si ce sprite orbite (niveau 5-13)
+				const isOrbiting = orbitingSprites.some(orbiter => orbiter.sprite.name === spriteName);
+				
+				if (!isOrbiting) {
+					// Sprites non-orbitants (centraux) : utiliser l'ancienne logique
+					const originalPosition = originalPositions[idx];
+					const currentScale = scene.currentScaleValue || 1.0;
+					const scaleFactor = 1.0 / currentScale;
+					
+					// Base scalée + petite animation
+					sprite.position.x = (originalPosition.x * scaleFactor) + 0.8 * Math.sin(time + idx);
+					sprite.position.y = (originalPosition.y * scaleFactor) + 0.8 * Math.cos(time + idx);
+					sprite.position.z = (originalPosition.z * scaleFactor) + 0.8 * Math.sin(time + idx);
+				}
+				// Les sprites orbitants sont déjà mis à jour par updateOrbitalPositions()
+				
 				sprite.angle = 0.01*idx;
+				
+				// Appliquer la taille selon le niveau (RepVal)
+				const newSize = getSizeForLevel(level);
+				if (sprite.size !== newSize) {
+					sprite.size = newSize;
+				}
 			}
 		}
     });
@@ -2719,3 +2799,241 @@ function createVRLegendPanel3D(scene, data) {
 }
 
 //scene.debugLayer.show()
+
+// === NOUVELLES FONCTIONNALITÉS REPVAL INTÉGRÉES ===
+
+// Configuration des images par niveau (1-13)
+const defaultImageConfiguration = {
+    1: '1blackhole.png',
+    2: '2nebula.png',
+    3: '3star.png',
+    4: '4planet.png',
+    5: '5moon.png',
+    6: '6comet.png',
+    7: '7asteroid.png',
+    8: '8satellite.png',
+    9: '9debris.png',
+    10: '10particle.png',
+    11: '11dust.png',
+    12: '12gas.png',
+    13: '13energy.png'
+};
+
+// Variables globales pour le système RepVal
+let currentImageConfiguration = {...defaultImageConfiguration};
+let spriteLevel = {}; // Stocker le niveau de chaque sprite par son nom
+let orbitingSprites = []; // Sprites en orbite
+let centralSprites = []; // Sprites centraux (niveau élevé)
+
+// Fonction pour charger la configuration d'images depuis localStorage
+function loadImageConfiguration() {
+    try {
+        const saved = localStorage.getItem('spriteImageConfig');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            currentImageConfiguration = {...defaultImageConfiguration, ...parsed};
+            console.log('Configuration d\'images chargée depuis localStorage:', currentImageConfiguration);
+        }
+    } catch (error) {
+        console.warn('Erreur lors du chargement de la configuration d\'images:', error);
+        currentImageConfiguration = {...defaultImageConfiguration};
+    }
+}
+
+// Fonction pour sauvegarder la configuration d'images
+function saveImageConfiguration() {
+    try {
+        localStorage.setItem('spriteImageConfig', JSON.stringify(currentImageConfiguration));
+        console.log('Configuration d\'images sauvegardée');
+    } catch (error) {
+        console.warn('Erreur lors de la sauvegarde:', error);
+    }
+}
+
+// Fonction pour obtenir l'image par niveau
+function getImageForLevel(level) {
+    const clampedLevel = Math.max(1, Math.min(13, Math.round(level)));
+    return currentImageConfiguration[clampedLevel] || defaultImageConfiguration[clampedLevel] || 'etoile2.png';
+}
+
+// Fonction pour calculer la taille par niveau
+function getSizeForLevel(level) {
+    const clampedLevel = Math.max(1, Math.min(13, Math.round(level)));
+    if (clampedLevel === 1) {
+        return 12; // Taille spéciale pour niveau 1 (trou noir)
+    } else {
+        return Math.max(1, 6.5 - (clampedLevel * 0.5));
+    }
+}
+
+// Fonction pour calculer la distance d'orbite selon le niveau
+function getOrbitDistance(level) {
+    const clampedLevel = Math.max(1, Math.min(13, Math.round(level)));
+    return 15 + (clampedLevel * 3); // Distance de base + facteur par niveau
+}
+
+// Fonction pour obtenir une couleur enrichie selon le niveau
+function getLevelColor(level, baseColor) {
+    const clampedLevel = Math.max(1, Math.min(13, Math.round(level)));
+    
+    // Couleurs par niveau avec influence sur la couleur de base
+    const levelColorModifiers = {
+        1: { r: 0.1, g: 0.0, b: 0.0, intensity: 0.9 }, // Trou noir - très sombre
+        2: { r: 0.8, g: 0.2, b: 0.9, intensity: 0.8 }, // Nébuleuse - violet
+        3: { r: 1.0, g: 0.9, b: 0.2, intensity: 0.9 }, // Étoile - jaune/blanc
+        4: { r: 0.3, g: 0.5, b: 0.8, intensity: 0.7 }, // Planète - bleu
+        5: { r: 0.7, g: 0.7, b: 0.7, intensity: 0.6 }, // Lune - gris
+        6: { r: 0.9, g: 0.7, b: 0.3, intensity: 0.6 }, // Comète - orange
+        7: { r: 0.5, g: 0.4, b: 0.3, intensity: 0.5 }, // Astéroïde - brun
+        8: { r: 0.6, g: 0.6, b: 0.6, intensity: 0.5 }, // Satellite - métallique
+        9: { r: 0.4, g: 0.3, b: 0.2, intensity: 0.4 }, // Débris - sombre
+        10: { r: 0.7, g: 0.5, b: 0.4, intensity: 0.4 }, // Particule - poussière
+        11: { r: 0.6, g: 0.4, b: 0.3, intensity: 0.3 }, // Poussière - terre
+        12: { r: 0.5, g: 0.7, b: 0.9, intensity: 0.3 }, // Gaz - bleu clair
+        13: { r: 0.9, g: 0.9, b: 0.9, intensity: 0.2 }  // Énergie - blanc transparent
+    };
+    
+    const modifier = levelColorModifiers[clampedLevel] || levelColorModifiers[7];
+    const intensity = modifier.intensity;
+    
+    // Mélanger la couleur de base avec la couleur du niveau
+    return {
+        r: (baseColor.r * (1 - intensity)) + (modifier.r * intensity),
+        g: (baseColor.g * (1 - intensity)) + (modifier.g * intensity),
+        b: (baseColor.b * (1 - intensity)) + (modifier.b * intensity)
+    };
+}
+
+// Fonction pour assigner un niveau aléatoire aux sprites existants
+function assignRandomLevels() {
+    if (!scene.spriteManagers[0] || !scene.spriteManagers[0].sprites) {
+        console.log('Aucun sprite disponible pour assigner des niveaux');
+        return;
+    }
+    
+    const sprites = scene.spriteManagers[0].sprites;
+    console.log(`Assignation de niveaux aléatoires à ${sprites.length} sprites`);
+    
+    sprites.forEach(sprite => {
+        if (!spriteLevel[sprite.name]) {
+            // Assignation pondérée : plus de sprites de niveau élevé (moins importantes)
+            const rand = Math.random();
+            let level;
+            if (rand < 0.02) level = 1;      // 2% - Trous noirs (très rares)
+            else if (rand < 0.05) level = 2; // 3% - Nébuleuses
+            else if (rand < 0.10) level = 3; // 5% - Étoiles
+            else if (rand < 0.20) level = 4; // 10% - Planètes
+            else if (rand < 0.35) level = 5; // 15% - Lunes
+            else if (rand < 0.50) level = 6; // 15% - Comètes
+            else if (rand < 0.65) level = 7; // 15% - Astéroïdes
+            else if (rand < 0.75) level = 8; // 10% - Satellites
+            else if (rand < 0.85) level = 9; // 10% - Débris
+            else if (rand < 0.92) level = 10; // 7% - Particules
+            else if (rand < 0.96) level = 11; // 4% - Poussière
+            else if (rand < 0.99) level = 12; // 3% - Gaz
+            else level = 13;                  // 1% - Énergie
+            
+            spriteLevel[sprite.name] = level;
+        }
+    });
+    
+    console.log('Niveaux aléatoires assignés. Exemples:');
+    const examples = sprites.slice(0, 5);
+    examples.forEach(sprite => {
+        console.log(`  ${sprite.name}: niveau ${spriteLevel[sprite.name]}`);
+    });
+}
+
+// Fonction pour identifier les sprites centraux et orbitants
+function categorizeSprites() {
+    if (!scene.spriteManagers[0] || !scene.spriteManagers[0].sprites) {
+        return;
+    }
+    
+    const sprites = scene.spriteManagers[0].sprites;
+    centralSprites = [];
+    orbitingSprites = [];
+    
+    sprites.forEach(sprite => {
+        const level = spriteLevel[sprite.name] || 7; // Niveau par défaut
+        
+        if (level <= 4) {
+            // Niveaux 1-4 sont des objets centraux (trous noirs, nébuleuses, étoiles, planètes)
+            centralSprites.push({
+                sprite: sprite,
+                level: level,
+                orbiters: []
+            });
+        } else {
+            // Niveaux 5-13 orbitent autour des objets centraux
+            orbitingSprites.push({
+                sprite: sprite,
+                level: level,
+                centralSprite: null,
+                orbitAngle: Math.random() * Math.PI * 2,
+                orbitSpeed: 0.001 + (Math.random() * 0.002), // Vitesse variable
+                orbitDistance: getOrbitDistance(level)
+            });
+        }
+    });
+    
+    // Assigner les sprites orbitants aux centraux les plus proches
+    orbitingSprites.forEach(orbiter => {
+        let closestCentral = null;
+        let minDistance = Infinity;
+        
+        centralSprites.forEach(central => {
+            const distance = BABYLON.Vector3.Distance(
+                orbiter.sprite.originalPosition || orbiter.sprite.position,
+                central.sprite.originalPosition || central.sprite.position
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestCentral = central;
+            }
+        });
+        
+        if (closestCentral) {
+            orbiter.centralSprite = closestCentral.sprite;
+            closestCentral.orbiters.push(orbiter);
+        }
+    });
+    
+    console.log(`Catégorisation terminée: ${centralSprites.length} centraux, ${orbitingSprites.length} orbitants`);
+}
+
+// Fonction pour mettre à jour les positions orbitales (intégrée dans updateSpritePositions)
+function updateOrbitalPositions() {
+    if (orbitingSprites.length === 0) return;
+    
+    const time = performance.now() * 0.001; // Temps en secondes
+    
+    orbitingSprites.forEach(orbiter => {
+        if (orbiter.centralSprite && orbiter.sprite.isVisible) {
+            const central = orbiter.centralSprite;
+            const currentScale = scene.currentScaleValue || 1.0;
+            const scaleFactor = 1.0 / currentScale;
+            
+            // Position centrale avec scale appliqué
+            const centralPos = central.originalPosition ?
+                central.originalPosition.clone().scale(scaleFactor) :
+                central.position.clone();
+            
+            // Calculer la position orbitale
+            orbiter.orbitAngle += orbiter.orbitSpeed;
+            const orbitRadius = orbiter.orbitDistance * scaleFactor;
+            
+            const orbitX = centralPos.x + Math.cos(orbiter.orbitAngle) * orbitRadius;
+            const orbitY = centralPos.y + Math.sin(orbiter.orbitAngle * 0.7) * (orbitRadius * 0.3); // Orbite elliptique
+            const orbitZ = centralPos.z + Math.sin(orbiter.orbitAngle) * orbitRadius;
+            
+            // Appliquer la position orbitale + petite animation existante
+            orbiter.sprite.position.x = orbitX + 0.8 * Math.sin(time + orbiter.sprite.name.length);
+            orbiter.sprite.position.y = orbitY + 0.8 * Math.cos(time + orbiter.sprite.name.length);
+            orbiter.sprite.position.z = orbitZ + 0.8 * Math.sin(time + orbiter.sprite.name.length);
+        }
+    });
+}
+
+console.log('✅ Nouvelles fonctionnalités RepVal intégrées - Système orbital, niveaux et images');
