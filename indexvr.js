@@ -806,27 +806,138 @@ const imageUrl = 'etoile2.png';
 const imageSize = 640;
 const spriteRatio = 1;
 
+// Function to ensure minimum distance between sprites
+async function adjustPositionsForMinimumDistance(data, minDistance = 8) {
+    // Skip adjustment for large datasets to prevent freezes
+    if (data.length > 1000) {
+        console.log("Skipping position adjustment for large dataset to prevent freeze");
+        return data;
+    }
+    
+    const adjustedData = [...data];
+    const maxIterations = Math.min(20, Math.floor(data.length / 10)); // Adaptive max iterations
+    let iteration = 0;
+    let progressThreshold = 0.05; // Increased threshold for faster exit
+    let lastCollisionCount = Infinity;
+    
+    while (iteration < maxIterations) {
+        let hasCollisions = false;
+        let collisionCount = 0;
+        
+        // Process in smaller batches with yield to prevent UI freezing
+        const batchSize = Math.min(25, adjustedData.length); // Smaller batch size
+        
+        for (let batch = 0; batch < adjustedData.length; batch += batchSize) {
+            const endBatch = Math.min(batch + batchSize, adjustedData.length);
+            
+            // Yield control to prevent UI freeze
+            if (batch > 0 && batch % 100 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
+            
+            for (let i = batch; i < endBatch; i++) {
+                // Limit inner loop for performance
+                const maxJ = Math.min(i + 50, adjustedData.length);
+                for (let j = i + 1; j < maxJ; j++) {
+                    const sprite1 = adjustedData[i];
+                    const sprite2 = adjustedData[j];
+                    
+                    const dx = sprite1.x - sprite2.x;
+                    const dy = sprite1.y - sprite2.y;
+                    const dz = sprite1.z - sprite2.z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    
+                    if (distance < minDistance && distance > 0.001) {
+                        hasCollisions = true;
+                        collisionCount++;
+                        
+                        // Simplified movement calculation
+                        const length = distance || 0.001;
+                        const overlap = minDistance - distance;
+                        const moveDistance = Math.min(overlap * 0.2, 1); // Reduced movement
+                        
+                        const factor = moveDistance / length;
+                        sprite1.x += dx * factor;
+                        sprite1.y += dy * factor;
+                        sprite1.z += dz * factor;
+                        
+                        sprite2.x -= dx * factor;
+                        sprite2.y -= dy * factor;
+                        sprite2.z -= dz * factor;
+                    }
+                }
+            }
+        }
+        
+        // Early exit conditions
+        const progress = (lastCollisionCount - collisionCount) / Math.max(lastCollisionCount, 1);
+        if (!hasCollisions || (iteration > 5 && progress < progressThreshold)) {
+            break;
+        }
+        
+        lastCollisionCount = collisionCount;
+        iteration++;
+    }
+    
+    console.log(`Position adjustment completed after ${iteration} iterations (${lastCollisionCount} remaining collisions)`);
+    return adjustedData;
+}
 
-function main(currentData, ratio) {
+
+async function main(currentData, ratio) {
     // Prepare data with scaled positions and color
-    const data = currentData.map(d => ({
+    let data = currentData.map(d => ({
         ...d,
         x: d.x * ratio,
         y: d.y * ratio,
         z: d.z * ratio,
         color: getColor(d.subType),
-        metadata: { subType: d.subType }
+        metadata: { subType: d.subType },
+        // Utiliser l'image personnalisée si disponible, sinon utiliser l'image par défaut
+        imageFile: currentImageConfiguration[d.level] || d.imageFile || getImageForLevel(d.level)
     }));
 
-    // Sprite manager - SYSTÈME SIMPLE TEMPORAIRE POUR CORRIGER LES BUGS
-    const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
-    labelSpriteManager.isPickable = true;
+// Adjust positions to ensure minimum distance of 8 between sprites
+    data = await adjustPositionsForMinimumDistance(data, 8);
+
+    // Group data by level to create separate sprite managers for each PNG
+    const dataByLevel = {};
+    data.forEach(d => {
+        const level = d.level || 5; // Default to level 5 if no level specified
+        const imageFile = d.imageFile; // Image déjà déterminée ci-dessus
+        if (!dataByLevel[level]) {
+            dataByLevel[level] = {
+                imageFile: imageFile,
+                elements: []
+            };
+        }
+        dataByLevel[level].elements.push(d);
+    });
+
+    // Create sprite managers for each level
+    const spriteManagers = {};
+    Object.keys(dataByLevel).forEach(level => {
+        const levelData = dataByLevel[level];
+        const spriteManager = new BABYLON.SpriteManager(
+            `labelSpriteManager_level_${level}`,
+            levelData.imageFile,
+            levelData.elements.length,
+            imageSize,
+            scene
+        );
+        spriteManager.isPickable = true;
+        spriteManagers[level] = spriteManager;
+    });
     
-    // Stocker la référence pour compatibilité
-    window.labelSpriteManager = labelSpriteManager;
+    // Sprite manager - SYSTÈME SIMPLE TEMPORAIRE POUR CORRIGER LES BUGS
+    //const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
+    //labelSpriteManager.isPickable = true;
+    
+    // Stocker la référence pour compatibilité - utiliser le premier sprite manager créé
+    window.labelSpriteManager = Object.values(spriteManagers)[0];
 
     // Helper to create a sprite and attach actions - SYSTÈME REPVAL COMPLET
-    function createLabelSprite(point, idx) {
+    function createLabelSprite(point, idx, spriteManager) {
         const position = new BABYLON.Vector3(point.x, point.y, point.z);
         originalPositions.push(position.clone());
 
@@ -873,13 +984,13 @@ function main(currentData, ratio) {
         const baseColor = point.color;
         const levelColor = getLevelColor(level, baseColor);
 
-        // SYSTÈME SIMPLE - Utiliser le sprite manager unique pour corriger les bugs
-        const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+        // SYSTÈME SIMPLE - Utiliser le sprite manager passé en paramètre
+        const sprite = new BABYLON.Sprite(point.prefLabel, spriteManager);
         
         Object.assign(sprite, {
             isPickable: true,
             position,
-            originalPosition: originalPositions[idx],
+            originalPosition: position.clone(), // Use the current position as original
             size: spriteSize, // Taille selon le niveau
             color: new BABYLON.Color4(levelColor.r, levelColor.g, levelColor.b, 1),
             metadata: {
@@ -898,11 +1009,11 @@ function main(currentData, ratio) {
                 const spriteName = evt.source.name;
                 const sprites = scene.spriteManagers[0].sprites;
                 const targetSprite = sprites.find(s => s.name === spriteName);
-                const distances = sprites.filter(s => s.isVisible).map(s => ({
+                const distances = sprites.filter(s => s.isVisible && s.originalPosition && targetSprite && targetSprite.originalPosition).map(s => ({
                     name: s.name,
                     distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, s.originalPosition)
                 })).sort((a, b) => a.distance - b.distance);
-                updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+                updateNearestList(distances, spriteName, targetSprite && targetSprite.metadata ? targetSprite.metadata.subType : 'unknown');
                 searchInput.value = spriteName;
             }
         ));
@@ -920,7 +1031,11 @@ function main(currentData, ratio) {
     }
 
     scatter.addPoints(data.length, (particle) => {
-        createLabelSprite(data[particle.idx], particle.idx);
+        const point = data[particle.idx];
+        const level = point.level || 5; // Default to level 5 if no level specified
+        const spriteManager = spriteManagers[level];
+        
+        createLabelSprite(point, particle.idx, spriteManager);
         particle.position = originalPositions[particle.idx];
     });
 
@@ -1466,7 +1581,7 @@ function moveCameraToSprite(spriteName) {
 	      });
 
         // Find the nearest particles
-        let distances = sprites.filter(s => s.isVisible).map(sprite => {
+        let distances = sprites.filter(s => s.isVisible && s.originalPosition && targetSprite && targetSprite.originalPosition).map(sprite => {
             return {
                 name: sprite.name,
                 distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
@@ -1474,7 +1589,7 @@ function moveCameraToSprite(spriteName) {
         });
         distances.sort((a, b) => a.distance - b.distance);
 	
-	updateNearestList(distances, spriteName, targetSprite.metadata.subType)
+	updateNearestList(distances, spriteName, targetSprite && targetSprite.metadata ? targetSprite.metadata.subType : 'unknown')
 	
     } else {
         console.error("❌ Sprite not found:", spriteName);
