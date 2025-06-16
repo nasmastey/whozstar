@@ -1,420 +1,1541 @@
-// indexvr.js - Version fusionnée pour WhozStar VR
-
-// Variables globales et constantes
+//http-server -c-1
+//http-server -c-1 -S -C cert.pem -K key.pem
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, {
     preserveDrawingBuffer: true,
     stencil: true,
-    disableWebGL2Support: false
+    disableWebGL2Support: false,
 });
 const scene = new BABYLON.Scene(engine);
+
+// XR Setup - Simple and stable configuration
+scene.createDefaultXRExperienceAsync({
+    floorMeshes: [],
+    disableTeleportation: true,
+    inputOptions: {
+        doNotLoadControllerMeshes: false  // Enable controller meshes
+    }
+}).then(xrHelper => {
+    console.log("WebXR initialized.");
+    window.xrHelper = xrHelper; // Global reference
+    window.leftThumbstick = null;
+
+    // Simple controller setup
+    xrHelper.input.onControllerAddedObservable.add((controller) => {
+        console.log("Controller added:", controller.inputSource.handedness);
+        
+        controller.onMotionControllerInitObservable.add((motionController) => {
+            console.log("Motion controller initialized for:", motionController.handness);
+            
+            // Ensure controller mesh is visible with enhanced materials
+            if (motionController.rootMesh) {
+                motionController.rootMesh.setEnabled(true);
+                motionController.rootMesh.isVisible = true;
+                
+                // Make controller meshes glow
+                motionController.rootMesh.getChildMeshes().forEach(mesh => {
+                    mesh.setEnabled(true);
+                    mesh.isVisible = true;
+                    if (mesh.material) {
+                        mesh.material.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                        mesh.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+                    }
+                });
+            }
+        });
+    });
+
+    // Enhanced controller setup with better pointer visibility
+    xrHelper.input.onControllerAddedObservable.add((controller) => {
+        console.log("Controller added:", controller.inputSource.handedness);
+        
+        controller.onMotionControllerInitObservable.add((motionController) => {
+            console.log("Motion controller initialized for:", motionController.handness);
+            
+            // Ensure controller mesh is visible with enhanced materials
+            if (motionController.rootMesh) {
+                motionController.rootMesh.setEnabled(true);
+                motionController.rootMesh.isVisible = true;
+                
+                // Make controller meshes glow with different colors for left/right
+                const isLeft = motionController.handness === 'left';
+                const emissiveColor = isLeft ? new BABYLON.Color3(0, 0.8, 0) : new BABYLON.Color3(0.8, 0, 0);
+                
+                motionController.rootMesh.getChildMeshes().forEach(mesh => {
+                    mesh.setEnabled(true);
+                    mesh.isVisible = true;
+                    if (mesh.material) {
+                        mesh.material.emissiveColor = emissiveColor;
+                        mesh.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+                    }
+                });
+            }
+            
+            // Force pointer ray creation for this controller
+            setTimeout(() => {
+                createControllerPointer(controller, motionController);
+            }, 100);
+        });
+    });
+
+    // Function to create/enhance controller pointers
+    function createControllerPointer(controller, motionController) {
+        console.log("Creating pointer for controller:", motionController.handness);
+        
+        // Create a custom pointer ray if none exists
+        if (!controller.pointer || !controller.pointer.isVisible) {
+            const isLeft = motionController.handness === 'left';
+            const rayColor = isLeft ? new BABYLON.Color3(0, 0.3, 0) : new BABYLON.Color3(0.3, 0, 0);
+            
+            // Create ray mesh - invisible but functional
+            const ray = BABYLON.MeshBuilder.CreateCylinder("controllerRay_" + motionController.handness, {
+                height: 10,
+                diameterTop: 0.002,
+                diameterBottom: 0.008,
+                tessellation: 6
+            }, scene);
+            
+            // Create transparent material
+            const rayMaterial = new BABYLON.StandardMaterial("rayMat_" + motionController.handness, scene);
+            rayMaterial.emissiveColor = rayColor;
+            rayMaterial.disableLighting = true;
+            rayMaterial.alpha = 0.0; // Completely transparent
+            ray.material = rayMaterial;
+            
+            // Position ray relative to controller
+            if (motionController.rootMesh) {
+                ray.parent = motionController.rootMesh;
+                ray.position = new BABYLON.Vector3(0, 0, 5);
+                ray.rotation.x = Math.PI / 2;
+                
+                console.log("Custom pointer ray created for", motionController.handness, "controller");
+            }
+        }
+    }
+
+    // XR legend panel setup (hidden by default)
+
+    // XR scale panel 3D setup (hidden by default)
+    scene.vrScalePanel3D = null; // Sera initialisé plus tard
+    scene.vrTargetIndicator = null; // Sera initialisé plus tard
+    scene.currentScaleValue = 1.0; // Valeur de scale actuelle
+    
+    // XR: Toggle scale panel with right A button
+    xrHelper.input.onControllerAddedObservable.add(ctrl => {
+        ctrl.onMotionControllerInitObservable.add(motionController => {
+            if (motionController.handness === 'right') {
+                const aButton = motionController.getComponent("a-button");
+                if (aButton) {
+                    aButton.onButtonStateChangedObservable.add(() => {
+                        if (aButton.pressed) {
+                            if (scene.vrScalePanel3D) {
+                                scene.vrScalePanel3D.toggle();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    });
+    if (typeof BABYLON.GUI !== "undefined") {
+        if (scene.xrLegendPanel) {
+            scene.xrLegendPanel.dispose();
+        }
+        const xrLegendPanel = new BABYLON.GUI.StackPanel();
+        xrLegendPanel.width = "400px";
+        xrLegendPanel.height = "600px";
+        xrLegendPanel.background = "rgba(0,0,0,0.7)";
+        xrLegendPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        xrLegendPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        xrLegendPanel.isVisible = false; // Hidden by default
+        xrLegendPanel.paddingTop = "20px";
+        xrLegendPanel.paddingLeft = "20px";
+        xrLegendPanel.zIndex = 1000;
+        scene.xrLegendPanel = xrLegendPanel;
+
+        // Attach to fullscreen UI
+        if (!scene.xrLegendTexture) {
+            scene.xrLegendTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("XRLegendUI");
+        }
+        scene.xrLegendTexture.addControl(xrLegendPanel);
+
+        // Toggle legend with right B button - USE NEW GUI 3D LEGEND
+        xrHelper.input.onControllerAddedObservable.add(ctrl => {
+            ctrl.onMotionControllerInitObservable.add(motionController => {
+                if (motionController.handness === 'right') {
+                    const bButton = motionController.getComponent("b-button");
+                    if (bButton) {
+                        bButton.onButtonStateChangedObservable.add(() => {
+                            if (bButton.pressed) {
+                                // Toggle new GUI 3D legend panel
+                                if (scene.vrLegendPanel3D) {
+                                    scene.vrLegendPanel3D.toggle();
+                                } else {
+                                    // Fallback to old 2D panel if 3D not available
+                                    xrLegendPanel.isVisible = !xrLegendPanel.isVisible;
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    // Enable only MOVEMENT feature
+    xrHelper.baseExperience.featuresManager.enableFeature(
+        BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
+            xrInput: xrHelper.input,
+            movementSpeed: 0.4,
+            rotationSpeed: 0.1,
+            movementOrientationFollowsViewerPose: true
+    });
+
+    // UI Setup
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("SearchUI");
+    const searchPanel = new BABYLON.GUI.StackPanel();
+    Object.assign(searchPanel, {
+        width: "400px",
+        paddingTop: "20px",
+        background: "rgba(255,255,255,0.7)",
+        isVisible: false
+    });
+    advancedTexture.addControl(searchPanel);
+
+    // Header
+    const header = new BABYLON.GUI.TextBlock();
+    Object.assign(header, {
+        text: "Recherche de particule",
+        height: "40px",
+        color: "black",
+        fontSize: 20
+    });
+    searchPanel.addControl(header);
+
+    // Input
+    const inputText = new BABYLON.GUI.InputText();
+    Object.assign(inputText, {
+        width: 0.8,
+        maxWidth: 0.8,
+        height: "40px",
+        color: "black",
+        background: "white",
+        placeholderText: "Nom de particule..."
+    });
+    searchPanel.addControl(inputText);
+
+    // Search Button
+    const searchBtn = BABYLON.GUI.Button.CreateSimpleButton("searchBtn", "Rechercher");
+    Object.assign(searchBtn, {
+        width: 0.5,
+        height: "40px",
+        color: "white",
+        background: "#007bff",
+        cornerRadius: 5,
+        thickness: 0,
+        paddingTop: "10px"
+    });
+    searchPanel.addControl(searchBtn);
+
+    // Search Result
+    const searchResultText = new BABYLON.GUI.TextBlock();
+    Object.assign(searchResultText, {
+        height: "30px",
+        color: "black",
+        text: ""
+    });
+    searchPanel.addControl(searchResultText);
+
+    // Keep panel facing camera
+    scene.onBeforeRenderObservable.add(() => {
+        if (searchPanel.isVisible) {
+            const cam = scene.activeCamera;
+            advancedTexture.layer.layerMask = cam.layerMask;
+            searchPanel.linkWithMesh(null);
+            searchPanel.isVertical = true;
+        }
+    });
+
+    // Search action
+    searchBtn.onPointerUpObservable.add(() => {
+        const query = inputText.text.trim();
+        if (query) {
+            moveCameraToSprite(query);
+            searchResultText.text = "Recherche : " + query;
+        } else {
+            searchResultText.text = "Entrer un nom valide.";
+        }
+    });
+
+    // Toggle panel with X button (Quest 3) and handle trigger interactions
+    xrHelper.input.onControllerAddedObservable.add(ctrl => {
+        ctrl.onMotionControllerInitObservable.add(motionController => {
+            if (motionController.handness === 'left') {
+                // Debug: log all available components for this controller
+                console.log("Left controller components:", Object.keys(motionController.components));
+                const xButtonComponent = motionController.getComponent("x-button");
+                if (xButtonComponent) {
+                    xButtonComponent.onButtonStateChangedObservable.add(() => {
+                        if (xButtonComponent.pressed) {
+                            searchPanel.isVisible = !searchPanel.isVisible;
+                            if (searchPanel.isVisible) {
+                                inputText.text = "";
+                                searchResultText.text = "";
+                            }
+                        }
+                    });
+                }
+                
+                // Mode démo avec bouton Y (contrôleur gauche)
+                const yButtonComponent = motionController.getComponent("y-button");
+                if (yButtonComponent) {
+                    yButtonComponent.onButtonStateChangedObservable.add(() => {
+                        if (yButtonComponent.pressed) {
+                            toggleDemoModeVR();
+                        }
+                    });
+                    console.log("Y button configured for demo mode on left controller");
+                }
+                
+                // Trigger interaction pour navigation vers les étoiles (contrôleur gauche)
+                const leftTrigger = motionController.getComponent("xr-standard-trigger");
+                if (leftTrigger) {
+                    leftTrigger.onButtonStateChangedObservable.add(() => {
+                        if (leftTrigger.pressed) {
+                            handleVRTriggerInteractionNew(ctrl, 'left', true); // true = pressed
+                        } else {
+                            handleVRTriggerInteractionNew(ctrl, 'left', false); // false = released
+                        }
+                    });
+                    console.log("Left trigger configured for star navigation and scale interaction");
+                }
+            }
+            
+            // Contrôleur droit
+            if (motionController.handness === 'right') {
+                // Trigger interaction pour navigation vers les étoiles (contrôleur droit)
+                const rightTrigger = motionController.getComponent("xr-standard-trigger");
+                if (rightTrigger) {
+                    rightTrigger.onButtonStateChangedObservable.add(() => {
+                        if (rightTrigger.pressed) {
+                            handleVRTriggerInteractionNew(ctrl, 'right', true); // true = pressed
+                        } else {
+                            handleVRTriggerInteractionNew(ctrl, 'right', false); // false = released
+                        }
+                    });
+                    console.log("Right trigger configured for star navigation and scale interaction");
+                }
+                
+                // Joystick droit pour contrôle du scale
+                const rightThumbstick = motionController.getComponent("xr-standard-thumbstick");
+                if (rightThumbstick) {
+                    window.rightThumbstick = rightThumbstick;
+                    console.log("Right thumbstick configured for scale control");
+                }
+            }
+            
+            // Add left joystick up/down to z translation
+            const thumbstick = motionController.getComponent("xr-standard-thumbstick");
+            if (thumbstick) {
+                window.leftThumbstick = thumbstick;
+            }
+        });
+    });
+
+    // Enable POINTER_SELECTION for controller pointer ray selection
+    try {
+        const pointerFeature = xrHelper.baseExperience.featuresManager.enableFeature(
+            BABYLON.WebXRFeatureName.POINTER_SELECTION, 'latest', {
+                xrInput: xrHelper.input,
+                enablePointerSelectionOnAllControllers: true
+            }
+        );
+        
+        console.log("Pointer selection feature enabled");
+        
+        // Store reference to the pointer feature for accessing selection data
+        window.vrPointerFeature = pointerFeature;
+        
+        // Enhance existing pointer rays when they become available
+        setTimeout(() => {
+            xrHelper.input.controllers.forEach(controller => {
+                if (controller.pointer) {
+                    console.log("Enhancing pointer for controller:", controller.inputSource.handedness);
+                    
+                    // Make pointer ray more visible
+                    if (controller.pointer.material) {
+                        const isLeft = controller.inputSource.handedness === 'left';
+                        controller.pointer.material.emissiveColor = isLeft ?
+                            new BABYLON.Color3(0, 0.8, 0) : new BABYLON.Color3(0.8, 0, 0);
+                        controller.pointer.material.alpha = 0.8; // Semi-transparent
+                        controller.pointer.material.disableLighting = true;
+                    }
+                    
+                    // Ensure pointer is visible
+                    controller.pointer.setEnabled(true);
+                    controller.pointer.isVisible = true;
+                }
+            });
+        }, 2000);
+        
+    } catch (error) {
+        console.log("Pointer selection feature not available:", error);
+    }
+});
+
+
 scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
-// Caméra et lumière pour VR
-let camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
+// Enhanced movement: left joystick controls Y (up/down) - SIMPLIFIED VERSION
+let debugLogCount = 0;
+const MAX_DEBUG_LOGS = 10; // Limit debug logs to avoid console spam
+
+// Variable globale pour stocker la particule actuellement visée
+let currentTargetedSprite = null;
+
+// Variables pour la gestion du trigger maintenu sur le slider
+let triggerHeldControllers = new Map(); // Stocke l'état des triggers maintenus par contrôleur
+let sliderInteractionActive = false;
+
+// Fonction ultra-simple pour scale les particules
+function applyScaleToParticles(scaleValue) {
+    try {
+        if (labelSprites && labelSprites.length > 0) {
+            // Facteur d'espacement inverse : scale élevé = particules serrées
+            const factor = 1.0 / scaleValue;
+            
+            console.log(`Applying scale ${scaleValue.toFixed(2)} with factor ${factor.toFixed(3)} to ${labelSprites.length} sprites`);
+            
+            // Appliquer directement aux sprites
+            for (let i = 0; i < labelSprites.length; i++) {
+                const sprite = labelSprites[i];
+                const originalPos = originalPositions[i];
+                
+                if (sprite && originalPos) {
+                    sprite.position.x = originalPos.x * factor;
+                    sprite.position.y = originalPos.y * factor;
+                    sprite.position.z = originalPos.z * factor;
+                }
+            }
+            
+            console.log(`✅ Scale applied successfully`);
+        } else {
+            console.log(`❌ No labelSprites available (${labelSprites ? labelSprites.length : 'undefined'})`);
+        }
+    } catch (error) {
+        console.error(`❌ Error applying scale:`, error);
+    }
+}
+
+// Rendre la fonction accessible globalement
+window.applyScaleToParticles = applyScaleToParticles;
+
+scene.onBeforeRenderObservable.add(() => {
+    // Détecter la particule visée en continu (fonction définie plus bas)
+    if (typeof detectTargetedSprite === 'function') {
+        detectTargetedSprite();
+    }
+    
+    // Check if we're in VR mode and have controllers
+    if (window.xrHelper && window.xrHelper.input && window.xrHelper.input.controllers.length > 0) {
+        
+        debugLogCount++;
+        if (debugLogCount <= MAX_DEBUG_LOGS) {
+            console.log("XR Controllers found:", window.xrHelper.input.controllers.length);
+        }
+        
+        // Find left controller
+        const leftController = window.xrHelper.input.controllers.find(c =>
+            c.inputSource && c.inputSource.handedness === "left"
+        );
+        
+        if (leftController) {
+            if (debugLogCount <= MAX_DEBUG_LOGS) {
+                console.log("Left controller found, checking for motion controller...");
+            }
+            
+            // Method 1: Try motion controller components
+            if (leftController.motionController) {
+                const componentNames = ["xr-standard-thumbstick", "thumbstick", "trackpad"];
+                
+                for (const name of componentNames) {
+                    const component = leftController.motionController.getComponent(name);
+                    if (component && component.axes && component.axes.length >= 2) {
+                        const xAxis = component.axes[0]; // X axis (left/right rotation)
+                        const yAxis = component.axes[1]; // Y axis (up/down)
+                        
+                        // Rotation horizontale (gauche/droite) avec sensibilité élevée et zone morte réduite
+                        if (Math.abs(xAxis) > 0.05) { // Zone morte réduite de 0.1 à 0.05
+                            const rotationSpeed = 0.12; // Sensibilité encore plus élevée pour la rotation
+                            scene.activeCamera.rotation.y += xAxis * rotationSpeed;
+                            
+                            console.log(`VR HORIZONTAL ROTATION - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
+                        }
+                        
+                        // Mouvement vertical (haut/bas) avec zone morte réduite
+                        if (Math.abs(yAxis) > 0.05) { // Zone morte réduite de 0.1 à 0.05
+                            const movementSpeed = 0.15;
+                            const yDelta = -yAxis * movementSpeed; // Inverted for intuitive control
+                            scene.activeCamera.position.y += yDelta;
+                            
+                            console.log(`VR VERTICAL MOVEMENT - Component: ${name}, Y-axis: ${yAxis.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                        }
+                        break; // Found working component, stop searching
+                    }
+                }
+                
+                // Debug: Log available components (limited times)
+                if (debugLogCount <= 3) {
+                    const components = Object.keys(leftController.motionController.components);
+                    console.log("Available motion controller components:", components);
+                }
+            }
+            
+            // Method 2: Direct gamepad access
+            if (leftController.inputSource.gamepad) {
+                const gamepad = leftController.inputSource.gamepad;
+                if (gamepad.axes && gamepad.axes.length >= 4) {
+                    const leftStickX = gamepad.axes[2]; // Standard left stick X (rotation)
+                    const leftStickY = gamepad.axes[3]; // Standard left stick Y (mouvement vertical)
+                    
+                    // Rotation horizontale (gauche/droite) avec sensibilité élevée et zone morte réduite
+                    if (Math.abs(leftStickX) > 0.05) {
+                        const rotationSpeed = 0.12; // Sensibilité encore plus élevée pour la rotation
+                        scene.activeCamera.rotation.y += leftStickX * rotationSpeed;
+                        
+                        console.log(`VR HORIZONTAL ROTATION - Gamepad X: ${leftStickX.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
+                    }
+                    
+                    // Mouvement vertical (haut/bas) avec zone morte réduite
+                    if (Math.abs(leftStickY) > 0.05) {
+                        const movementSpeed = 0.15;
+                        const yDelta = -leftStickY * movementSpeed;
+                        scene.activeCamera.position.y += yDelta;
+                        
+                        console.log(`VR VERTICAL MOVEMENT - Gamepad Y: ${leftStickY.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                    }
+                }
+                
+                // Debug: Log gamepad info (limited times)
+                if (debugLogCount <= 3) {
+                    console.log("Gamepad axes count:", gamepad.axes ? gamepad.axes.length : 0);
+                    console.log("Gamepad buttons count:", gamepad.buttons ? gamepad.buttons.length : 0);
+                }
+            }
+        } else if (debugLogCount <= MAX_DEBUG_LOGS) {
+            console.log("No left controller found");
+        }
+        
+        // Find right controller pour contrôle du scale
+        const rightController = window.xrHelper.input.controllers.find(c =>
+            c.inputSource && c.inputSource.handedness === "right"
+        );
+        
+        if (rightController && scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible) {
+            // Gérer le joystick droit pour le contrôle du scale
+            if (rightController.motionController) {
+                const componentNames = ["xr-standard-thumbstick", "thumbstick", "trackpad"];
+                
+                for (const name of componentNames) {
+                    const component = rightController.motionController.getComponent(name);
+                    if (component && component.axes && component.axes.length >= 2) {
+                        const xAxis = component.axes[0]; // X axis pour contrôle du scale
+                        
+                        if (Math.abs(xAxis) > 0.05) { // Zone morte simple
+                            const scaleSpeed = 0.02; // Vitesse normale
+                            const currentValue = scene.vrScalePanel3D.currentSliderValue || 0;
+                            const newValue = Math.max(-1, Math.min(1, currentValue + xAxis * scaleSpeed));
+                            
+                            scene.vrScalePanel3D.updateScale(newValue);
+                            scene.vrScalePanel3D.currentSliderValue = newValue;
+                            
+                            console.log(`VR SCALE JOYSTICK - X-axis: ${xAxis.toFixed(2)}, Scale: ${scene.currentScaleValue.toFixed(2)}x`);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // Method 2: Direct gamepad access pour le joystick droit
+            if (rightController.inputSource.gamepad) {
+                const gamepad = rightController.inputSource.gamepad;
+                if (gamepad.axes && gamepad.axes.length >= 4) {
+                    const rightStickX = gamepad.axes[0]; // Standard right stick X
+                    
+                    if (Math.abs(rightStickX) > 0.05) {
+                        const scaleSpeed = 0.02;
+                        const currentValue = scene.vrScalePanel3D.currentSliderValue || 0;
+                        const newValue = Math.max(-1, Math.min(1, currentValue + rightStickX * scaleSpeed));
+                        
+                        scene.vrScalePanel3D.updateScale(newValue);
+                        scene.vrScalePanel3D.currentSliderValue = newValue;
+                        
+                        console.log(`VR SCALE GAMEPAD - X: ${rightStickX.toFixed(2)}, Scale: ${scene.currentScaleValue.toFixed(2)}x`);
+                    }
+                }
+            }
+        }
+        
+        // Gérer l'interaction continue avec le slider - VERSION SIMPLIFIÉE
+        if (sliderInteractionActive && triggerHeldControllers.size > 0) {
+            for (const [handness, heldController] of triggerHeldControllers) {
+                if (scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible && heldController.pointer) {
+                    const rayOrigin = heldController.pointer.absolutePosition || heldController.pointer.position;
+                    const rayDirection = heldController.pointer.getDirection ?
+                        heldController.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                        new BABYLON.Vector3(0, 0, 1);
+                    
+                    // Créer un ray pour tester l'intersection continue avec le panneau de scale
+                    const ray = new BABYLON.Ray(rayOrigin, rayDirection);
+                    const hit = ray.intersectsMesh(scene.vrScalePanel3D.plane);
+                    
+                    if (hit.hit) {
+                        // Calculer la position relative sur le slider - COHÉRENT AVEC LA CORRECTION
+                        const worldHitPoint = hit.pickedPoint;
+                        const panelPosition = scene.vrScalePanel3D.plane.absolutePosition || scene.vrScalePanel3D.plane.position;
+                        const localHitPoint = worldHitPoint.subtract(panelPosition);
+                        
+                        // Même logique corrigée que pour le clic initial
+                        const panelWidth = 1.2;
+                        let sliderValue = localHitPoint.x / (panelWidth * 0.35); // Facteur de correction empirique
+                        sliderValue = Math.max(-1, Math.min(1, sliderValue)); // Forcer les limites
+                        
+                        // Mettre à jour directement
+                        scene.vrScalePanel3D.updateScale(sliderValue);
+                        scene.vrScalePanel3D.currentSliderValue = sliderValue;
+                        
+                        // Log pour debug
+                        if (debugLogCount % 60 === 0) {
+                            console.log(`🔄 VR Scale Drag: ${handness} - Local X: ${localHitPoint.x.toFixed(3)}, Slider: ${sliderValue.toFixed(3)}, Scale: ${scene.currentScaleValue.toFixed(2)}x`);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Not in VR mode - show this message only a few times
+        if (debugLogCount <= 3) {
+            console.log("Not in VR mode or no controllers available");
+        }
+        debugLogCount++;
+    }
+    
+    // Alternative: Keyboard controls for testing on desktop
+    if (!window.xrHelper || window.xrHelper.input.controllers.length === 0) {
+        // Add keyboard controls for testing vertical movement
+        if (scene.actionManager) {
+            // This will be handled by keyboard events if we add them
+        }
+    }
+});
+
+// Add keyboard controls for testing vertical movement on desktop
+document.addEventListener('keydown', (event) => {
+    if (!window.xrHelper || window.xrHelper.input.controllers.length === 0) {
+        const movementSpeed = 0.1;
+        
+        switch(event.key.toLowerCase()) {
+            case 'q': // Q key for up
+                scene.activeCamera.position.y += movementSpeed;
+                console.log("KEYBOARD UP - Camera Y:", scene.activeCamera.position.y.toFixed(2));
+                break;
+            case 'e': // E key for down
+                scene.activeCamera.position.y -= movementSpeed;
+                console.log("KEYBOARD DOWN - Camera Y:", scene.activeCamera.position.y.toFixed(2));
+                break;
+        }
+    }
+});
+
+var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 1, 0), scene);
 camera.minZ = 0.0001;
 camera.attachControl(canvas, true);
 camera.speed = 0.9;
-camera.angularSensibility = 1000;
-camera.inertia = 0.5;
 camera.angularSpeed = 0.05;
-const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+camera.angle = Math.PI / 2;
+camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
-// Configuration du mode VR
-const xrHelper = scene.createDefaultXRExperienceAsync({
-    floorMeshes: []
-}).then((xrExperience) => {
-    const xr = xrExperience.baseExperience;
+// Create simulated VR controllers for desktop viewing
+function createSimulatedControllers() {
+    console.log("Creating simulated VR controllers for desktop viewing");
     
-    // Configuration supplémentaire XR
-    xr.onStateChangedObservable.add((state) => {
-        if (state === BABYLON.WebXRState.IN_XR) {
-            console.log("Entered VR mode");
-            // Additional setup when entering VR
-        } else if (state === BABYLON.WebXRState.NOT_IN_XR) {
-            console.log("Exited VR mode");
-            // Cleanup when exiting VR
-        }
-    });
-    
-    return xrExperience;
+    try {
+        // Left controller - green sphere
+        const leftController = BABYLON.MeshBuilder.CreateSphere("leftController", {diameter: 0.2}, scene);
+        leftController.position = new BABYLON.Vector3(-1.5, 1.2, 2);
+        
+        const leftMat = new BABYLON.StandardMaterial("leftControllerMat", scene);
+        leftMat.diffuseColor = new BABYLON.Color3(0, 0.8, 0); // Green
+        leftMat.emissiveColor = new BABYLON.Color3(0, 0.5, 0); // Bright glow
+        leftMat.alpha = 0.0; // Completely transparent
+        leftController.material = leftMat;
+        
+        // Right controller - red sphere
+        const rightController = BABYLON.MeshBuilder.CreateSphere("rightController", {diameter: 0.2}, scene);
+        rightController.position = new BABYLON.Vector3(1.5, 1.2, 2);
+        
+        const rightMat = new BABYLON.StandardMaterial("rightControllerMat", scene);
+        rightMat.diffuseColor = new BABYLON.Color3(0.8, 0, 0); // Red
+        rightMat.emissiveColor = new BABYLON.Color3(0.5, 0, 0); // Bright glow
+        rightMat.alpha = 0.0; // Completely transparent
+        rightController.material = rightMat;
+        
+        // Create static pointer rays using boxes (more stable than lines)
+        const leftRay = BABYLON.MeshBuilder.CreateBox("leftRay", {
+            width: 0.02,
+            height: 0.02,
+            depth: 8
+        }, scene);
+        leftRay.position = leftController.position.add(new BABYLON.Vector3(0, 0, 4));
+        
+        const leftRayMat = new BABYLON.StandardMaterial("leftRayMat", scene);
+        leftRayMat.emissiveColor = new BABYLON.Color3(0, 0.3, 0); // Dimmed green
+        leftRayMat.disableLighting = true;
+        leftRayMat.alpha = 0.0; // Completely transparent
+        leftRay.material = leftRayMat;
+        
+        const rightRay = BABYLON.MeshBuilder.CreateBox("rightRay", {
+            width: 0.02,
+            height: 0.02,
+            depth: 8
+        }, scene);
+        rightRay.position = rightController.position.add(new BABYLON.Vector3(0, 0, 4));
+        
+        const rightRayMat = new BABYLON.StandardMaterial("rightRayMat", scene);
+        rightRayMat.emissiveColor = new BABYLON.Color3(0.3, 0, 0); // Dimmed red
+        rightRayMat.disableLighting = true;
+        rightRayMat.alpha = 0.0; // Completely transparent
+        rightRay.material = rightRayMat;
+        
+        // Parent rays to controllers for synchronized movement
+        leftRay.parent = leftController;
+        leftRay.position = new BABYLON.Vector3(0, 0, 4);
+        
+        rightRay.parent = rightController;
+        rightRay.position = new BABYLON.Vector3(0, 0, 4);
+        
+        // Store references
+        window.simulatedControllers = {
+            left: leftController,
+            right: rightController,
+            leftRay: leftRay,
+            rightRay: rightRay
+        };
+        
+        // Simple floating animation - only move controllers, rays follow automatically
+        let animTime = 0;
+        const leftBasePos = leftController.position.clone();
+        const rightBasePos = rightController.position.clone();
+        
+        scene.onBeforeRenderObservable.add(() => {
+            if (window.simulatedControllers) {
+                animTime += 0.02;
+                
+                // Gentle floating motion
+                leftController.position.y = leftBasePos.y + Math.sin(animTime) * 0.15;
+                rightController.position.y = rightBasePos.y + Math.sin(animTime + Math.PI) * 0.15;
+                
+                // Gentle rotation for visibility
+                leftController.rotation.y = Math.sin(animTime * 0.5) * 0.3;
+                rightController.rotation.y = Math.sin(animTime * 0.5 + Math.PI) * 0.3;
+                
+                // Keep transparent - no pulsing effect
+                leftRayMat.alpha = 0.0;
+                rightRayMat.alpha = 0.0;
+            }
+        });
+        
+        console.log("Simulated controllers created successfully with stable rays");
+    } catch (error) {
+        console.error("Error creating simulated controllers:", error);
+    }
+}
+
+// Create simulated controllers for desktop viewing
+createSimulatedControllers();
+
+
+scene.onPointerObservable.add((pointerInfo) => {
+  switch (pointerInfo.type) {
+    case BABYLON.PointerEventTypes.POINTERPICK:
+      if (pointerInfo.pickInfo && pointerInfo.pickInfo.pickedSprite) {
+        // Select the picked sprite (particle)
+        const pickedName = pointerInfo.pickInfo.pickedSprite.name;
+        searchInput.value = pickedName;
+        moveCameraToSprite(pickedName);
+      }
+      break;
+	 }
 });
 
-// Variables pour la gestion des sprites et affichage
+
+//const cameraDirection = camera.getForwardRay().direction.normalize();
+//const fov = camera.fov; // Champs de vision de la caméra
+//const cameraPosition = camera.position;
+//const cameraGetTarget = camera.getTarget();
+
+const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+light.intensity = 1;
+
 let time = 0;
 let blinkCount = 0;
-let frameCounter = 0;
-const frameThreshold = 20;
-const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
-const labelSprites = [];
-const originalPositions = [];
-const defaultImageSize = 640;
-const spriteRatio = 2;
 
-// Mode démo
+// Initialise le compteur et le seuil
+let frameCounter = 0;
+const frameThreshold = 20; // Ajustez ce nombre pour changer la fréquence
+
+// Variables pour le mode démo VR
 let demoModeActive = false;
 let demoInterval = null;
 let currentDemoGroupIndex = 0;
 let demoGroups = [];
-const demoPauseDuration = 3000;
+const demoPauseDuration = 3000; // 3 secondes de pause à chaque groupe
 
-// Fonction pour charger la configuration des images personnalisées
-function loadImageConfiguration() {
-    try {
-        const saved = localStorage.getItem('imageConfiguration');
-        if (saved) {
-            return JSON.parse(saved);
-        }
-    } catch (e) {
-        console.error('Erreur lors du chargement de la configuration des images:', e);
-    }
-    
-    // Configuration par défaut si aucune sauvegarde
-    return getDefaultImageConfiguration();
-}
+//var font = "Calibri 20px monospace";
 
-// Configuration par défaut des images
-function getDefaultImageConfiguration() {
-    return {
-        1: "1blackhole.png",
-        2: "2blackhole.png",
-        3: "3whitehole.png",
-        4: "4nebuleuse.png",
-        5: "5etoile.png",
-        6: "6etoile.png",
-        7: "7neutronstar.png",
-        8: "8planet.png",
-        9: "9planet.png",
-        10: "10protoplanet.png",
-        11: "11moon.png",
-        12: "12asteroid.png",
-        13: "13asteroid.png"
-    };
-}
+const scatter = new BABYLON.PointsCloudSystem("scatter", 0, scene);
 
-// Fonction pour obtenir l'image par défaut pour un niveau
-function getDefaultImageForLevel(level) {
-    const defaultConfig = getDefaultImageConfiguration();
-    return defaultConfig[level] || '5etoile.png';
-}
+const labelSprites = [];
+const originalPositions = [];
 
-// Fonction principale pour traiter et afficher les données
-async function main(currentData, ratio) {
-    // Charger la configuration des images personnalisées
-    const imageConfiguration = loadImageConfiguration();
-    
+// Create scatter mesh and label sprites
+//const imageUrl = 'bubble12.png';
+//const imageSize = 5000;
+
+const imageUrl = 'etoile2.png';
+const imageSize = 640;
+const spriteRatio = 1;
+
+
+function main(currentData, ratio) {
     // Prepare data with scaled positions and color
-    let data = currentData.map(d => ({
+    const data = currentData.map(d => ({
         ...d,
         x: d.x * ratio,
         y: d.y * ratio,
         z: d.z * ratio,
         color: getColor(d.subType),
-        metadata: { 
-            subType: d.subType,
-            level: d.level
-        },
-        // Utiliser l'image personnalisée si disponible, sinon utiliser l'image par défaut
-        imageFile: imageConfiguration[d.level] || d.imageFile || getDefaultImageForLevel(d.level)
+        metadata: { subType: d.subType }
     }));
-    
-    // Adjust positions to ensure minimum distance of 8 between sprites
-    data = await adjustPositionsForMinimumDistance(data, 8);
 
-    // Group data by level to create separate sprite managers for each PNG
-    const dataByLevel = {};
-    data.forEach(d => {
-        const level = d.level || 5; // Default to level 5 if no level specified
-        const imageFile = d.imageFile; // Image déjà déterminée ci-dessus
-        if (!dataByLevel[level]) {
-            dataByLevel[level] = {
-                imageFile: imageFile,
-                elements: []
-            };
-        }
-        dataByLevel[level].elements.push(d);
-    });
-    
-    clearScene();
-    
-    // Pour chaque niveau, créer un sprite manager avec l'image appropriée
-    Object.entries(dataByLevel).forEach(([level, { imageFile, elements }]) => {
-        createSpritesForLevel(level, imageFile, elements);
-    });
-    
-    // Update de la liste des particules pour la recherche
-    updateParticlesList();
-    
-    // Création de la légende
-    createLegend();
-    
-    // Group particles by subType for demo mode
-    demoGroups = groupParticlesBySubType(data);
-    
-    // Start animation loop
-    scene.registerBeforeRender(function() {
-        animateSprites();
-    });
-    
-    // Add VR GUI elements if needed
-    setupVRUserInterface();
-}
+    // Sprite manager
+    const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
+    labelSpriteManager.isPickable = true;
 
-// Configuration de l'interface utilisateur VR
-function setupVRUserInterface() {
-    // Create a manager for the VR GUI
-    const guiManager = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-    
-    // Setup VR specific UI elements
-    // Add panels, buttons, etc. for VR
-}
+    // Helper to create a sprite and attach actions
+    function createLabelSprite(point, idx) {
+        const position = new BABYLON.Vector3(point.x, point.y, point.z);
+        originalPositions.push(position.clone());
 
-// Fonction pour réinitialiser la scène
-function clearScene() {
-    // Supprimer tous les sprites
-    if (scene.spriteManagers) {
-        scene.spriteManagers.forEach(manager => {
-            manager.dispose();
+        const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+        Object.assign(sprite, {
+            isPickable: true,
+            position,
+            originalPosition: originalPositions[idx],
+            size: spriteRatio,
+            color: new BABYLON.Color4(point.color.r, point.color.g, point.color.b, 1),
+            metadata: { subType: point.subType },
+            isVisible: true
         });
-    }
-    
-    // Vider les tableaux
-    labelSprites.length = 0;
-    originalPositions.length = 0;
-    
-    // Supprimer les meshes de texte VR
-    scene.meshes.filter(mesh => mesh.name.endsWith('_whoz_mesh')).forEach(mesh => {
-        if (mesh.material) {
-            if (mesh.material.emissiveTexture) {
-                mesh.material.emissiveTexture.dispose();
-            }
-            mesh.material.dispose();
-        }
-        scene.removeMesh(mesh);
-        mesh.dispose();
-    });
-}
 
-// Fonction pour créer les sprites pour un niveau donné
-function createSpritesForLevel(level, imageFile, elements) {
-    const manager = new BABYLON.SpriteManager(`manager_level_${level}`, imageFile, elements.length, { width: defaultImageSize, height: defaultImageSize }, scene);
-    
-    elements.forEach(element => {
-        const sprite = new BABYLON.Sprite(element.prefLabel, manager);
-        sprite.position = new BABYLON.Vector3(element.x, element.y, element.z);
-        sprite.size = 20; // Default size
-        sprite.isPickable = true;
-        sprite.name = element.prefLabel;
-        sprite.metadata = { 
-            subType: element.subType,
-            level: level 
-        };
-        sprite.color = element.color ? new BABYLON.Color4(
-            element.color.r, 
-            element.color.g, 
-            element.color.b, 
-            1
-        ) : new BABYLON.Color4(1, 1, 1, 1);
-        
-        // Adjust size based on level
-        const sizeMultiplier = getSizeMultiplierForLevel(level);
-        sprite.size *= sizeMultiplier;
-        
-        // Store original position for animation
-        originalPositions.push({
-            sprite: sprite,
-            position: new BABYLON.Vector3(element.x, element.y, element.z),
-            amplitude: Math.random() * 0.02 + 0.01, // Random amplitude for oscillation
-            frequency: Math.random() * 0.5 + 0.5, // Random frequency
-            phase: Math.random() * Math.PI * 2 // Random phase
-        });
-        
-        // Add hover event to show label
         sprite.actionManager = new BABYLON.ActionManager(scene);
-        sprite.actionManager.registerAction(
-            new BABYLON.ExecuteCodeAction(
-                BABYLON.ActionManager.OnPointerOverTrigger,
-                function() {
-                    showSpriteLabel(sprite);
-                }
-            )
-        );
-        sprite.actionManager.registerAction(
-            new BABYLON.ExecuteCodeAction(
-                BABYLON.ActionManager.OnPointerOutTrigger,
-                function() {
-                    hideSpriteLabel();
-                }
-            )
-        );
-        sprite.actionManager.registerAction(
-            new BABYLON.ExecuteCodeAction(
-                BABYLON.ActionManager.OnPickTrigger,
-                function() {
-                    centerOnSprite(sprite);
-                    showNearestParticles(sprite);
-                }
-            )
-        );
+
+        // Mouse over: update nearest list and search input
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOverTrigger,
+            evt => {
+                const spriteName = evt.source.name;
+                const sprites = scene.spriteManagers[0].sprites;
+                const targetSprite = sprites.find(s => s.name === spriteName);
+                const distances = sprites.filter(s => s.isVisible).map(s => ({
+                    name: s.name,
+                    distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, s.originalPosition)
+                })).sort((a, b) => a.distance - b.distance);
+                updateNearestList(distances, spriteName, targetSprite.metadata.subType);
+                searchInput.value = spriteName;
+            }
+        ));
+
+        // Click: move camera to sprite
+        sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPickUpTrigger,
+            evt => {
+                searchInput.value = evt.source.name;
+                moveCameraToSprite(evt.source.name);
+            }
+        ));
+
+        labelSprites.push(sprite);
+    }
+
+    scatter.addPoints(data.length, (particle) => {
+        createLabelSprite(data[particle.idx], particle.idx);
+        particle.position = originalPositions[particle.idx];
     });
-}
 
-// Fonction pour obtenir le facteur de taille en fonction du niveau
-function getSizeMultiplierForLevel(level) {
-    const sizeMap = {
-        1: 2.5,   // Black holes - largest
-        2: 2.2,   // Large black holes
-        3: 2.0,   // White holes
-        4: 1.8,   // Nebulae
-        5: 1.5,   // Stars
-        6: 1.3,   // Stars
-        7: 1.2,   // Neutron stars
-        8: 1.0,   // Planets
-        9: 0.8,   // Planets
-        10: 0.7,  // Proto planets
-        11: 0.6,  // Moons
-        12: 0.5,  // Asteroids
-        13: 0.4   // Small asteroids - smallest
-    };
-    
-    return sizeMap[level] || 1.0;
-}
-
-// Fonction pour animer les sprites
-function animateSprites() {
-    time += 0.01;
-    frameCounter++;
-    
-    // Only update position every few frames for performance
+scene.onBeforeRenderObservable.add(() => {
+	
+	updateSpritePositions();
+	
+	frameCounter++;
     if (frameCounter > frameThreshold) {
-        frameCounter = 0;
-        
-        originalPositions.forEach(item => {
-            const offset = item.amplitude * Math.sin(time * item.frequency + item.phase);
-            item.sprite.position.y = item.position.y + offset;
+        frameCounter = 0;  // Réinitialise le compteur
+		
+    var names = [];
+
+    // CETTE ligne-ci est critique :
+    const camera = scene.activeCamera; 
+	
+		const cameraDirection = camera.getForwardRay().direction.normalize();
+		const fov = camera.fov; // Champs de vision de la caméra
+		const cameraPosition = camera.position;
+	
+    scene.spriteManagers[0].sprites.map(s => {
+        var width = engine.getRenderWidth();
+        var height = engine.getRenderHeight();
+        var identityMatrix = BABYLON.Matrix.Identity();
+        var getTransformMatrix = scene.getTransformMatrix();
+        var toGlobal = camera.viewport.toGlobal(width, height);
+        const projectedPosition = BABYLON.Vector3.Project(
+            s.position,
+            identityMatrix,
+            getTransformMatrix,
+            toGlobal
+        );
+		
+		const spriteDirection = s.position.subtract(cameraPosition).normalize();
+		const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
+		
+        const distance = BABYLON.Vector3.Distance(camera.position, s.position);
+		
+        if (distance > 2 && distance < 12 && angle < fov && s.isVisible) {
+            names.push({
+                "name": s.name + '_layer',
+                "meshName": s.name + '_whoz_mesh',
+                "matName": s.name + '_whoz_mat',
+                "textureName": s.name,
+				"color": s.color,
+                "position": s.position
+            });
+        }
+    });
+
+    // Dispose of unused meshes
+    scene.meshes
+        .filter(mesh => mesh.name.endsWith('_whoz_mesh') && !names.some(n => n.meshName === mesh.name))
+        .forEach(mesh => {
+            if (mesh.material) {
+                if (mesh.material.emissiveTexture) {
+                    mesh.material.emissiveTexture.dispose(); // Dispose the emissive texture
+                }
+                mesh.material.dispose(); // Dispose the material
+            }
+            scene.removeMesh(mesh);
+            mesh.dispose(); // Dispose the mesh
+        });
+
+    // Dispose of unused materials
+    scene.materials
+        .filter(material => material.name.endsWith('_whoz_mat') && !names.some(n => n.matName === material.name))
+        .forEach(material => {
+            if (material.emissiveTexture) {
+                material.emissiveTexture.dispose(); // Dispose the emissive texture
+            }
+            scene.removeMaterial(material);
+            material.dispose(); // Dispose the material
+        });
+
+    names.forEach(n => {
+        if (!scene.meshes.some(l => l.name === n.meshName)) {
+            const font_size = 12
+            const planeTexture = new BABYLON.DynamicTexture("dynamic texture", font_size*100, scene, true, BABYLON.DynamicTexture.TRILINEAR_SAMPLINGMODE);
+			
+			var textureContext = planeTexture.getContext();
+			
+			//Draw on canvas
+			textureContext.lineWidth = 2;
+			textureContext.beginPath();
+			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5, Math.PI/5);
+			textureContext.strokeStyle = "rgba("+255*n.color.r+", "+255*n.color.g+", "+255*n.color.b+", 0.7)";
+			textureContext.stroke();
+			
+			textureContext.beginPath();
+			textureContext.arc(font_size*50, font_size*50, 30, -Math.PI/5 + Math.PI, Math.PI/5 + Math.PI);
+			textureContext.stroke();
+			
+			planeTexture.update();
+			
+			
+            planeTexture.drawText(n.textureName, null, (font_size*53), "" + font_size + "px system-ui", "white", "transparent", true, true);
+            var material = new BABYLON.StandardMaterial(n.textureName + '_whoz_mat', scene);
+            material.emissiveTexture = planeTexture;
+            material.opacityTexture = planeTexture;
+            material.backFaceCulling = true;
+            material.disableLighting = true;
+            material.freeze();
+
+			var outputplane = BABYLON.Mesh.CreatePlane(n.textureName + '_whoz_mesh', font_size, scene, false);
+            outputplane.billboardMode = BABYLON.AbstractMesh.BILLBOARDMODE_ALL;
+            outputplane.isVisible = true;
+            outputplane.position = n.position;
+            outputplane.material = material;
+        }
+    });
+	}
+});
+
+scatter.buildMeshAsync().then(mesh => {
+    mesh.material = new BABYLON.StandardMaterial('scatterMaterial', scene);
+    mesh.material.pointSize = 10;
+    mesh.material.usePointSizing = true;
+    mesh.material.disableLighting = true;
+    mesh.material.pointColor = new BABYLON.Color3(1, 1, 1);
+});
+
+engine.runRenderLoop(renderLoop);
+
+// Resize the engine on window resize
+    window.addEventListener('resize', function () {
+        engine.resize();
+    });
+
+
+    createLegend(data);
+    updateParticleList();
+    
+    // Créer l'indicateur VR 3D après le chargement des données
+    if (!scene.vrTargetIndicator) {
+      scene.vrTargetIndicator = createVRTargetIndicator(scene);
+    }
+    
+    // Créer le panneau de scale VR 3D
+    if (!scene.vrScalePanel3D) {
+      scene.vrScalePanel3D = createVRScalePanel3D(scene);
+    }
+    
+    // Créer le panneau de légende VR 3D avec délai pour s'assurer que tout est prêt
+    setTimeout(() => {
+      try {
+        if (!scene.vrLegendPanel3D) {
+          console.log("🕒 Creating VR Legend Panel 3D after delay...");
+          scene.vrLegendPanel3D = createVRLegendPanel3D(scene, data);
+          if (scene.vrLegendPanel3D) {
+            console.log("✅ VR Legend Panel 3D created successfully with delay");
+          } else {
+            console.error("❌ VR Legend Panel 3D creation failed");
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error creating VR Legend Panel 3D with delay:", error);
+      }
+    }, 500); // Délai de 500ms pour s'assurer que le GUI 3D Manager est prêt
+ 
+}
+
+const showPasswordModal = () => {
+    return new Promise((resolve) => {
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitPasswordButton = document.getElementById('submitPasswordButton');
+
+        passwordModal.style.display = 'block'; 
+        passwordInput.value = ''; 
+        passwordInput.focus(); 
+
+        const submitHandler = () => {
+            const password = passwordInput.value;
+            passwordModal.style.display = 'none';
+            submitPasswordButton.removeEventListener('click', submitHandler);
+            resolve(password);
+        };
+
+        submitPasswordButton.addEventListener('click', submitHandler);
+    });
+};
+
+const loadFileButton = document.getElementById('loadFileButton');
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    //createLegend(data);
+	//updateParticleList();
+
+    const searchButton = document.getElementById('searchButton');
+    if (searchButton) {
+        searchButton.addEventListener('click', function(event) {
+            event.preventDefault();
+			 const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
         });
     }
-}
 
-// Fonction pour afficher une étiquette sur un sprite
-function showSpriteLabel(sprite) {
-    hideSpriteLabel(); // Hide any existing label
-    
-    // Create text mesh for label
-    const text = sprite.name;
-    const textColor = "white";
-    const bgColor = sprite.metadata && sprite.metadata.subType ? 
-                    getColorHexForSubType(sprite.metadata.subType) : "#444444";
-    
-    const textTexture = new BABYLON.DynamicTexture("textTexture", {width: 512, height: 128}, scene);
-    const textContext = textTexture.getContext();
-    
-    // Setup background
-    textContext.fillStyle = bgColor;
-    textContext.fillRect(0, 0, 512, 128);
-    
-    // Setup text
-    textContext.font = "bold 40px Arial";
-    textContext.textAlign = "center";
-    textContext.fillStyle = textColor;
-    textContext.fillText(text, 256, 80);
-    
-    textTexture.update();
-    
-    // Create plane for label
-    const plane = BABYLON.MeshBuilder.CreatePlane("label_plane_" + text + "_whoz_mesh", { width: 5, height: 1.25 }, scene);
-    plane.position = new BABYLON.Vector3(sprite.position.x, sprite.position.y + 15, sprite.position.z);
-    plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
-    
-    // Create material
-    const material = new BABYLON.StandardMaterial("label_material_" + text, scene);
-    material.emissiveTexture = textTexture;
-    material.disableLighting = true;
-    material.emissiveColor = new BABYLON.Color3(1, 1, 1);
-    material.backFaceCulling = false;
-    
-    plane.material = material;
-    
-    // Save reference to label
-    labelSprites.push(plane);
-    
-    // Always face camera
-    plane.lookAt(camera.position);
-}
-
-// Fonction pour masquer toutes les étiquettes
-function hideSpriteLabel() {
-    labelSprites.forEach(mesh => {
-        if (mesh.material && mesh.material.emissiveTexture) {
-            mesh.material.emissiveTexture.dispose();
-        }
-        if (mesh.material) {
-            mesh.material.dispose();
-        }
-        scene.removeMesh(mesh);
-        mesh.dispose();
-    });
-    
-    labelSprites.length = 0;
-}
-
-// Fonction pour centrer la caméra sur un sprite
-function centerOnSprite(sprite) {
-    const targetPosition = sprite.position.clone();
-    const direction = targetPosition.subtract(camera.position).normalize();
-    
-    // Calculate new camera position, keeping some distance
-    const distance = 50;
-    const newPosition = targetPosition.subtract(direction.scale(distance));
-    
-    // Animate camera movement
-    BABYLON.Animation.CreateAndStartAnimation(
-        "cameraMove",
-        camera,
-        "position",
-        30,
-        60,
-        camera.position,
-        newPosition,
-        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-    );
-    
-    // Set camera target
-    camera.setTarget(targetPosition);
-}
-
-// Fonction pour déplacer la caméra vers un sprite par son nom
-function moveCameraToSprite(name) {
-    const sprites = getAllSprites();
-    const sprite = sprites.find(s => s.name === name);
-    
-    if (sprite) {
-        centerOnSprite(sprite);
-        showNearestParticles(sprite);
-    } else {
-        console.log("Sprite not found: " + name);
-    }
-}
-
-// Fonction pour obtenir tous les sprites de tous les managers
-function getAllSprites() {
-    const allSprites = [];
-    if (scene && scene.spriteManagers) {
-        scene.spriteManagers.forEach(manager => {
-            if (manager.sprites) {
-                allSprites.push(...manager.sprites);
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // This prevents any default form submitting
+    const spriteName = document.getElementById('searchInput').value;
+    searchInput.blur();
+                moveCameraToSprite(spriteName);
             }
         });
+  
+  searchInput.addEventListener('focus', function(event) {
+            searchInput.value = '';
+        });
+
+        searchInput.addEventListener('change', function(event) {
+   const spriteName = document.getElementById('searchInput').value;
+            moveCameraToSprite(spriteName);
+        });
     }
-    return allSprites;
+
+});
+
+// Fonction pour mettre à jour le message de statut
+function updateStatusMessage(message, type = 'info') {
+    const statusElement = document.getElementById('statusMessage');
+    if (statusElement) {
+        const colors = {
+            'info': '#e3f2fd',
+            'success': '#e8f5e8',
+            'error': '#ffebee',
+            'warning': '#fff3e0'
+        };
+        statusElement.style.backgroundColor = colors[type] || colors.info;
+        statusElement.innerHTML = message;
+        console.log('Status:', message);
+    }
 }
 
-// Fonction pour mettre à jour la liste des particules pour la recherche
-function updateParticlesList() {
-    const dataList = document.getElementById('particlesList');
-    dataList.innerHTML = '';
+// Gestionnaire pour charger un fichier depuis le PC
+loadFileButton.addEventListener('click', async () => {
+    const fileInput = document.getElementById('fileInput');
     
-    const particleNames = getAllSprites()
+    updateStatusMessage('🔄 Vérification du fichier sélectionné...', 'info');
+    
+    if (fileInput.files && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        console.log('🔍 USER SELECTED FILE:', file.name, 'Size:', file.size, 'Type:', file.type);
+        updateStatusMessage(`📂 Chargement de "${file.name}" (${Math.round(file.size/1024)}KB)...`, 'info');
+        
+        try {
+            const fileContent = await file.text();
+            console.log('✅ File content loaded, length:', fileContent.length);
+            
+            // Check if it's an encrypted file
+            if (file.name.toLowerCase().includes('encrypted') ||
+                file.name.toLowerCase().includes('crypto') ||
+                fileContent.startsWith('U2FsdGVk') ||
+                fileContent.includes('Salted__')) {
+                
+                console.log('🔐 Detected encrypted file, asking for password');
+                updateStatusMessage('🔐 Fichier crypté détecté - Saisie du mot de passe...', 'warning');
+                const password = await showPasswordModal();
+                const decryptedData = decryptData(fileContent, password);
+                
+                if (decryptedData) {
+                    console.log('✅ File decrypted successfully, particles:', decryptedData.length);
+                    updateStatusMessage(`✅ Fichier "${file.name}" chargé avec succès (${decryptedData.length} particules)`, 'success');
+                    main(decryptedData, 20);
+                    document.getElementById('fileInputContainer').style.display = 'none';
+                } else {
+                    updateStatusMessage('❌ Échec du décryptage - Mot de passe incorrect', 'error');
+                    alert('❌ Impossible de décrypter le fichier. Vérifiez le mot de passe.');
+                }
+            } else {
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(fileContent);
+                    console.log('✅ JSON parsed successfully, particles:', data.length);
+                    updateStatusMessage(`✅ Fichier "${file.name}" chargé avec succès (${data.length} particules)`, 'success');
+                    main(data, 20);
+                    document.getElementById('fileInputContainer').style.display = 'none';
+                } catch (parseError) {
+                    console.error('❌ JSON parse error:', parseError);
+                    updateStatusMessage('❌ Erreur: Fichier JSON invalide', 'error');
+                    alert('❌ Le fichier sélectionné n\'est pas un fichier JSON valide.\n\nErreur: ' + parseError.message);
+                }
+            }
+        } catch (error) {
+            console.error('❌ File reading error:', error);
+            updateStatusMessage('❌ Erreur lors de la lecture du fichier', 'error');
+            alert('❌ Erreur lors de la lecture du fichier: ' + error.message);
+        }
+    } else {
+        updateStatusMessage('⚠️ Aucun fichier sélectionné', 'warning');
+        alert('⚠️ Veuillez sélectionner un fichier avant de cliquer sur "Charger fichier"');
+    }
+});
+
+// Gestionnaire pour charger un fichier prédéfini
+const loadPresetButton = document.getElementById('loadPresetButton');
+if (loadPresetButton) {
+    loadPresetButton.addEventListener('click', async () => {
+        const fileSelect = document.getElementById('fileSelect');
+        const selectedFile = fileSelect.value;
+        
+        if (selectedFile) {
+            console.log('Loading predefined file:', selectedFile);
+            
+            try {
+                if (selectedFile === 'encrypted_PSO_0.json') {
+                    const password = await showPasswordModal();
+                    const response = await fetch('./' + selectedFile);
+                    const encryptedData = await response.text();
+                    const decryptedData = decryptData(encryptedData, password);
+                    
+                    if (decryptedData) {
+                        main(decryptedData, 20);
+                        document.getElementById('fileInputContainer').style.display = 'none';
+                    } else {
+                        alert('❌ Mot de passe incorrect ou fichier corrompu.');
+                    }
+                } else {
+                    const response = await fetch('./' + selectedFile);
+                    const data = await response.json();
+                    main(data, 20);
+                    document.getElementById('fileInputContainer').style.display = 'none';
+                }
+            } catch (error) {
+                alert('❌ Erreur lors du chargement du fichier prédéfini: ' + error.message);
+                console.error(error);
+            }
+        } else {
+            alert('⚠️ Veuillez sélectionner un fichier prédéfini dans la liste déroulante');
+        }
+    });
+}
+
+// Debug: Traquer tous les appels à la fonction main()
+const originalMain = main;
+window.main = function(data, ratio) {
+    console.log('🚨 MAIN() CALLED with', data?.length || 'unknown', 'particles, ratio:', ratio);
+    console.trace('Call stack trace:');
+    updateStatusMessage(`🔄 Chargement en cours (${data?.length || 'unknown'} particules)...`, 'info');
+    return originalMain(data, ratio);
+};
+
+// Debug: Vérifier si d'autres scripts sont chargés
+console.log('🔍 Scripts loaded:', document.scripts.length);
+for(let i = 0; i < document.scripts.length; i++) {
+    console.log(`  Script ${i}:`, document.scripts[i].src || 'inline');
+}
+
+// Debug: Vérifier les event listeners sur loadFileButton
+console.log('🔍 Checking loadFileButton listeners...');
+const button = document.getElementById('loadFileButton');
+if (button) {
+    console.log('✅ loadFileButton found');
+} else {
+    console.log('❌ loadFileButton NOT found');
+}
+
+console.log('✅ IndexVR.js loaded - NO automatic file loading. Waiting for user selection.');
+updateStatusMessage('🔄 Application prête - Aucun fichier chargé automatiquement. Sélectionnez votre fichier.', 'info');
+
+const generatedColors = {};
+function getColor(type) {
+    // No hardcoded colors, all subTypes get random colors
+
+    if (generatedColors[type]) {
+        return generatedColors[type];
+    }
+    // Generate and store a random color for this subType
+    const randColor = {
+        r: Math.random(),
+        g: Math.random(),
+        b: Math.random()
+    };
+    generatedColors[type] = randColor;
+    return randColor;
+}
+
+// Update sprite positions to add small movements - COMPATIBLE AVEC LE SCALE
+function updateSpritePositions() {
+    time += 0.004;
+	const camera = scene.activeCamera;
+	const cameraDirection = camera.getForwardRay().direction.normalize();
+	const fov = camera.fov; // Champs de vision de la caméra
+	const cameraPosition = camera.position;
+	const cameraGetTarget = camera.getTarget();
+
+	labelSprites.forEach((sprite, idx) => {
+		const distance = BABYLON.Vector3.Distance(cameraPosition, sprite.position);
+		
+		if (distance < 150) {
+			const spriteDirection = sprite.position.subtract(cameraPosition).normalize();
+			const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
+			if( angle < fov) {
+				// CORRECTION: Utiliser les positions originales avec le scale appliqué
+				const originalPosition = originalPositions[idx];
+				const currentScale = scene.currentScaleValue || 1.0;
+				const scaleFactor = 1.0 / currentScale; // Même logique que updateScale
+				
+				// Base scalée + petite animation
+				sprite.position.x = (originalPosition.x * scaleFactor) + 0.8 * Math.sin(time + idx);
+				sprite.position.y = (originalPosition.y * scaleFactor) + 0.8 * Math.cos(time + idx);
+				sprite.position.z = (originalPosition.z * scaleFactor) + 0.8 * Math.sin(time + idx);
+				sprite.angle = 0.01*idx;
+			}
+		}
+    });
+}
+
+// Start rendering the scene on each animation frame
+function renderLoop() {
+    scene.render();
+}
+
+function blinkSprite(sprite) {
+    let isDefaultColor = true; // État du sprite, vrai si la couleur par défaut est affichée
+    const defaultColor = sprite.color
+    const highlightColor = new BABYLON.Color4(1, 1, 1, 1);
+	const mediumMediumlightColor = new BABYLON.Color4((sprite.color.r+1)/2, (sprite.color.g+1)/2, (sprite.color.b+1)/2, (sprite.color.a+1)/2);
+	const mediumLowlightColor = new BABYLON.Color4((3*sprite.color.r+1)/4, (3*sprite.color.g+1)/4, (3*sprite.color.b+1)/4, (3*sprite.color.a+1)/4);
+	const mediumHighlightColor = new BABYLON.Color4((sprite.color.r+3)/4, (sprite.color.g+3)/4, (sprite.color.b+3)/4, (sprite.color.a+3)/4);
+
+    // Configure l'intervalle de clignotement
+    setInterval(() => {
+		blinkCount+=1
+		
+		var moduloBlink = blinkCount % 8;
+		
+        if (moduloBlink == 0) {
+            sprite.color = defaultColor;
+            isDefaultColor = true;
+        } else if (moduloBlink == 1 || moduloBlink == 7) {
+            sprite.color = mediumLowlightColor;
+            isDefaultColor = false;
+        } else if (moduloBlink == 2 || moduloBlink == 6) {
+            sprite.color = mediumMediumlightColor;
+            isDefaultColor = false;
+        } else if (moduloBlink == 3 || moduloBlink == 5) {
+            sprite.color = mediumHighlightColor;
+            isDefaultColor = false;
+        } else {
+            sprite.color = highlightColor;
+            isDefaultColor = false;
+        }
+    }, 200); // Durée du clignotement en millisecondes
+}
+
+function moveCameraToSprite(spriteName) {
+	console.log('🎯 MOVE TO SPRITE:', spriteName);
+
+    const camera = scene.activeCamera;
+
+    if (!scene.spriteManagers || !scene.spriteManagers[0] || !scene.spriteManagers[0].sprites) {
+        console.error('❌ No sprite managers or sprites available');
+        return;
+    }
+
+    const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
+    let targetSprite = sprites.find(s => s.name === spriteName);
+
+    if (targetSprite) {
+        console.log(`✅ Target sprite found: ${spriteName}, position:`, targetSprite.position);
+        
+        const targetPosition = new BABYLON.Vector3(targetSprite.position.x, targetSprite.position.y, targetSprite.position.z);
+        const cameraStartPosition = camera.position.clone();
+        const cameraStartTarget = camera.getTarget().clone();
+
+        const bufferDistance = 9; // Adjust the distance from sprite
+        const directionVector = targetPosition.subtract(camera.position).normalize();
+        const adjustedTargetPosition = targetPosition.subtract(directionVector.scale(bufferDistance));
+
+        console.log(`🎬 Starting camera animation from ${cameraStartPosition.toString()} to ${adjustedTargetPosition.toString()}`);
+
+	const moveDistance = BABYLON.Vector3.Distance(cameraStartPosition, adjustedTargetPosition);
+	const numberOfFrames = Math.min(300,Math.max(60,Math.round(moveDistance * 4)));
+	
+	console.log(`📽️ Animation details: distance=${moveDistance.toFixed(2)}, frames=${numberOfFrames}`);
+	
+	// Create animation for camera position (ralenti pour VR)
+	      const animCamPosition = new BABYLON.Animation("animCamPosition", "position", 15, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+	      animCamPosition.setKeys([{frame: 0, value: cameraStartPosition},{frame: numberOfFrames, value: adjustedTargetPosition}]);
+
+	      // Create animation for camera target (ralenti pour VR)
+	      const animCamTarget = new BABYLON.Animation("animCamTarget", "target", 15, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+	      animCamTarget.setKeys([{frame: 0, value: cameraStartTarget},{  frame: numberOfFrames, value: targetPosition}]);
+
+	      // Démarrer l'animation et attendre qu'elle se termine avant la pause
+	      console.log(`🚀 Starting camera animation to ${spriteName}`);
+	      const animationGroup = scene.beginDirectAnimation(camera, [animCamPosition, animCamTarget], 0, numberOfFrames, false);
+
+	      blinkSprite(targetSprite);
+	      
+	      // Retourner la promesse d'animation pour pouvoir attendre sa fin
+	      return new Promise((resolve) => {
+	          animationGroup.onAnimationEndObservable.addOnce(() => {
+	              console.log(`✅ Camera animation completed for ${spriteName}`);
+	              resolve();
+	          });
+	      });
+
+        // Find the nearest particles
+        let distances = sprites.filter(s => s.isVisible).map(sprite => {
+            return {
+                name: sprite.name,
+                distance: BABYLON.Vector3.Distance(targetSprite.originalPosition, sprite.originalPosition)
+            };
+        });
+        distances.sort((a, b) => a.distance - b.distance);
+	
+	updateNearestList(distances, spriteName, targetSprite.metadata.subType)
+	
+    } else {
+        console.error("❌ Sprite not found:", spriteName);
+        console.log("Available sprites:", sprites.length, "sprites total");
+        console.log("First few sprite names:", sprites.slice(0, 5).map(s => s.name));
+    }
+}
+
+function updateNearestList(distances, spriteName, subType) {
+		// Get top 100 nearest particles
+        let nearestParticles = distances.slice(1, 101);
+
+        // Update the nearest list
+		const nearestList = document.getElementById('nearestList');
+			nearestList.innerHTML = '';
+			let i=0
+			
+			
+		let listItem = document.createElement('li');
+			listItem.className = 'nearest-item first-item';
+			listItem.textContent = `${spriteName} (${subType})`;
+		
+		nearestList.appendChild(listItem);
+		
+		nearestParticles.forEach(particle => {
+			i=i+1;
+			let listItem = document.createElement('li');
+				listItem.className = 'nearest-item';
+				listItem.textContent = `${i} : ${particle.name} (${particle.distance.toFixed(2)})`;
+
+				// Ajouter un écouteur d'événements click à chaque élément de la liste
+				listItem.addEventListener('click', function() {
+					searchInput.value = particle.name;
+					moveCameraToSprite(particle.name);
+				});
+
+			nearestList.appendChild(listItem);
+		});
+}
+
+function createLegend(data) {
+    const uniqueTypes = [...new Set(data.map(item => item.subType))];
+    const legendContainer = document.getElementById('legend');
+    legendContainer.innerHTML = '';
+
+    // Fill XR legend panel if it exists
+    if (scene.xrLegendPanel) {
+        scene.xrLegendPanel.clearControls();
+        uniqueTypes.sort().forEach(type => {
+            const color = getColor(type);
+            const legendItem = new BABYLON.GUI.StackPanel();
+            legendItem.isVertical = false;
+            legendItem.height = "30px";
+            legendItem.paddingBottom = "5px";
+
+            const colorBox = new BABYLON.GUI.Rectangle();
+            colorBox.width = "30px";
+            colorBox.height = "30px";
+            colorBox.color = "white";
+            colorBox.thickness = 1;
+            // Set initial opacity based on state
+            if (!window.xrLegendActiveTypes) window.xrLegendActiveTypes = {};
+            const isActive = window.xrLegendActiveTypes[type] !== false;
+            colorBox.background = `rgba(${Math.round(color.r*255)},${Math.round(color.g*255)},${Math.round(color.b*255)},${isActive ? 1 : 0.3})`;
+
+            const label = new BABYLON.GUI.TextBlock();
+            label.text = type;
+            label.color = "white";
+            label.height = "30px";
+            label.width = "320px";
+            label.paddingLeft = "20px";
+            label.fontSize = 22;
+            label.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            label.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            label.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+
+            legendItem.addControl(colorBox);
+            legendItem.addControl(label);
+            scene.xrLegendPanel.addControl(legendItem);
+
+            // XR: Click to filter by subType using existing function
+            legendItem.onPointerClickObservable.add(() => {
+                filterByType(type);
+                // Toggle state and update colorBox opacity
+                window.xrLegendActiveTypes[type] = !window.xrLegendActiveTypes[type];
+                const active = window.xrLegendActiveTypes[type] !== false;
+                colorBox.background = `rgba(${Math.round(color.r*255)},${Math.round(color.g*255)},${Math.round(color.b*255)},${active ? 0.3 : 1})`;
+            });
+        });
+    }
+
+	//const totalLinesElement = document.createElement('div');
+	//totalLinesElement.className = 'legend-total';
+    //totalLinesElement.textContent = `Count: ${data.length}`;
+    //legendContainer.appendChild(totalLinesElement);
+	
+	console.log('count:', data.length);
+	
+    uniqueTypes.sort().forEach(type => {
+        const color = `rgb(${getColor(type).r * 255}, ${getColor(type).g * 255}, ${getColor(type).b * 255})`;
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.dataset.type = type;
+        legendItem.dataset.active = 'true'; // By default, all items are active
+
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = color;
+
+        const label = document.createElement('span');
+        label.textContent = type;
+
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendContainer.appendChild(legendItem);
+
+        // Add event listener for click
+        legendItem.addEventListener('click', function() {
+            filterByType(type);
+            toggleLegendItemColor(legendItem);
+        });
+    });
+}
+
+// Function to filter sprites by type
+function filterByType(type) {
+    scene.spriteManagers[0].sprites.forEach(sprite => {
+		if (sprite.metadata && sprite.metadata.subType === type) {
+            sprite.isVisible = !sprite.isVisible;
+        }
+    });
+	
+	updateParticleList();
+}
+
+// Function to toggle the legend item color
+function toggleLegendItemColor(legendItem) {
+    const isActive = legendItem.dataset.active === 'true';
+    if (isActive) {
+        legendItem.style.opacity = 0.5; // Make the color lighter
+    } else {
+        legendItem.style.opacity = 1.0; // Restore the original color
+    }
+    legendItem.dataset.active = (!isActive).toString();
+}
+
+// Function to update the datalist options based on particle visibility
+function updateParticleList() {
+	
+    const dataList = document.getElementById('particlesList');
+    dataList.innerHTML = ''; // Clear existing items
+
+    const particleNames = scene.spriteManagers[0].sprites
         .filter(sprite => sprite.isVisible)
         .map(sprite => sprite.name);
     
@@ -425,287 +1546,6 @@ function updateParticlesList() {
     });
 }
 
-// Fonction pour créer la légende
-function createLegend() {
-    const legendDiv = document.getElementById('legend');
-    if (!legendDiv) return;
-    
-    legendDiv.innerHTML = '<h3 style="margin-top: 0; margin-bottom: 10px;">Legend</h3>';
-    
-    const subTypes = {};
-    
-    // Collect all subTypes
-    getAllSprites().forEach(sprite => {
-        if (sprite.metadata && sprite.metadata.subType) {
-            subTypes[sprite.metadata.subType] = true;
-        }
-    });
-    
-    // Create legend items
-    Object.keys(subTypes).sort().forEach(subType => {
-        const color = getColorHexForSubType(subType);
-        
-        const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
-        legendItem.innerHTML = `
-            <div class="legend-color" style="background-color: ${color};"></div>
-            <div>${subType}</div>
-        `;
-        
-        // Add click event to filter by subType
-        legendItem.addEventListener('click', () => {
-            filterSpritesBySubType(subType);
-        });
-        
-        legendDiv.appendChild(legendItem);
-    });
-    
-    // Add a "Show All" option
-    const showAllItem = document.createElement('div');
-    showAllItem.className = 'legend-item';
-    showAllItem.innerHTML = `
-        <div class="legend-color" style="background-color: #fff; border: 1px solid #ccc;"></div>
-        <div><strong>Show All</strong></div>
-    `;
-    
-    showAllItem.addEventListener('click', () => {
-        getAllSprites().forEach(sprite => {
-            sprite.isVisible = true;
-        });
-    });
-    
-    legendDiv.appendChild(showAllItem);
-}
-
-// Fonction pour filtrer les sprites par sous-type
-function filterSpritesBySubType(subType) {
-    getAllSprites().forEach(sprite => {
-        sprite.isVisible = sprite.metadata && sprite.metadata.subType === subType;
-    });
-}
-
-// Fonction pour obtenir la couleur en fonction du sous-type
-function getColor(subType) {
-    const colors = {
-        "Default": { r: 1, g: 1, b: 1 },
-        "Art": { r: 1, g: 0, b: 0 },
-        "Games": { r: 0, g: 1, b: 0 },
-        "Video": { r: 0, g: 0, b: 1 },
-        "Music": { r: 1, g: 1, b: 0 },
-        "Food": { r: 1, g: 0, b: 1 },
-        "Culture": { r: 0, g: 1, b: 1 },
-        "News": { r: 0.5, g: 0.5, b: 1 },
-        "Entertainment": { r: 1, g: 0.5, b: 0.5 },
-        "Education": { r: 0.5, g: 1, b: 0.5 },
-        "Web": { r: 0.7, g: 0.7, b: 0.7 },
-        "Social": { r: 0.9, g: 0.7, b: 0.3 },
-        "Utility": { r: 0.3, g: 0.9, b: 0.7 },
-        "Search": { r: 0.7, g: 0.3, b: 0.9 },
-        "Shopping": { r: 0.5, g: 0.2, b: 0.2 }
-    };
-    
-    return colors[subType] || colors["Default"];
-}
-
-// Fonction pour obtenir la couleur hexadécimale en fonction du sous-type
-function getColorHexForSubType(subType) {
-    const color = getColor(subType);
-    return rgbToHex(Math.floor(color.r * 255), Math.floor(color.g * 255), Math.floor(color.b * 255));
-}
-
-// Fonction pour convertir RGB en hexadécimal
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
-// Fonction pour grouper les particules par sous-type pour le mode démo
-function groupParticlesBySubType(data) {
-    const groups = {};
-    
-    data.forEach(item => {
-        const subType = item.subType || "Default";
-        if (!groups[subType]) {
-            groups[subType] = [];
-        }
-        groups[subType].push(item);
-    });
-    
-    return Object.values(groups);
-}
-
-// Fonction pour activer/désactiver le mode démo en VR
-function toggleDemoModeVR() {
-    demoModeActive = !demoModeActive;
-    
-    const button = document.getElementById('demoModeButton');
-    if (demoModeActive) {
-        button.textContent = "Stop Demo";
-        button.style.backgroundColor = "#dc3545";
-        startDemoMode();
-    } else {
-        button.textContent = "Mode Démo";
-        button.style.backgroundColor = "#28a745";
-        stopDemoMode();
-    }
-}
-
-// Fonction pour démarrer le mode démo
-function startDemoMode() {
-    if (demoGroups.length === 0) {
-        console.log("No demo groups available");
-        return;
-    }
-    
-    currentDemoGroupIndex = 0;
-    showDemoGroup(currentDemoGroupIndex);
-    
-    demoInterval = setInterval(() => {
-        currentDemoGroupIndex = (currentDemoGroupIndex + 1) % demoGroups.length;
-        showDemoGroup(currentDemoGroupIndex);
-    }, demoPauseDuration);
-}
-
-// Fonction pour arrêter le mode démo
-function stopDemoMode() {
-    if (demoInterval) {
-        clearInterval(demoInterval);
-        demoInterval = null;
-    }
-    
-    // Reset visibility of all sprites
-    getAllSprites().forEach(sprite => {
-        sprite.isVisible = true;
-    });
-}
-
-// Fonction pour afficher un groupe de démo
-function showDemoGroup(groupIndex) {
-    if (!demoGroups[groupIndex]) return;
-    
-    const group = demoGroups[groupIndex];
-    const sprites = getAllSprites();
-    
-    // Hide all sprites first
-    sprites.forEach(sprite => {
-        sprite.isVisible = false;
-    });
-    
-    // Show only sprites in the current group
-    const groupSubTypes = new Set(group.map(item => item.subType));
-    sprites.forEach(sprite => {
-        if (sprite.metadata && groupSubTypes.has(sprite.metadata.subType)) {
-            sprite.isVisible = true;
-        }
-    });
-    
-    // Focus on a random sprite in the group
-    if (group.length > 0) {
-        const randomIndex = Math.floor(Math.random() * group.length);
-        const randomItem = group[randomIndex];
-        const sprite = sprites.find(s => s.name === randomItem.prefLabel);
-        
-        if (sprite) {
-            centerOnSprite(sprite);
-        }
-    }
-}
-
-// Fonction pour ajuster les positions pour assurer une distance minimale entre les sprites
-async function adjustPositionsForMinimumDistance(data, minDistance) {
-    const adjustedData = [...data];
-    const minDistSquared = minDistance * minDistance;
-    
-    // Simple adjustment algorithm
-    for (let i = 0; i < adjustedData.length; i++) {
-        const current = adjustedData[i];
-        
-        for (let j = 0; j < i; j++) {
-            const other = adjustedData[j];
-            
-            const dx = current.x - other.x;
-            const dy = current.y - other.y;
-            const dz = current.z - other.z;
-            
-            const distSquared = dx * dx + dy * dy + dz * dz;
-            
-            if (distSquared < minDistSquared) {
-                const dist = Math.sqrt(distSquared);
-                const moveRatio = (minDistance - dist) / (2 * dist);
-                
-                // Move both points away from each other
-                const moveX = dx * moveRatio;
-                const moveY = dy * moveRatio;
-                const moveZ = dz * moveRatio;
-                
-                current.x += moveX;
-                current.y += moveY;
-                current.z += moveZ;
-                
-                other.x -= moveX;
-                other.y -= moveY;
-                other.z -= moveZ;
-            }
-        }
-    }
-    
-    return adjustedData;
-}
-
-// Fonction pour montrer les particules les plus proches d'un sprite
-function showNearestParticles(sprite) {
-    const nearestList = document.getElementById('nearestList');
-    if (!nearestList) return;
-    
-    nearestList.innerHTML = '';
-    
-    const allSprites = getAllSprites();
-    const distances = [];
-    
-    // Calculate distances to all other sprites
-    allSprites.forEach(other => {
-        if (other !== sprite) {
-            const dx = other.position.x - sprite.position.x;
-            const dy = other.position.y - sprite.position.y;
-            const dz = other.position.z - sprite.position.z;
-            
-            const distSquared = dx * dx + dy * dy + dz * dz;
-            const dist = Math.sqrt(distSquared);
-            
-            distances.push({
-                sprite: other,
-                distance: dist
-            });
-        }
-    });
-    
-    // Sort by distance
-    distances.sort((a, b) => a.distance - b.distance);
-    
-    // Show current sprite as header
-    const currentItem = document.createElement('li');
-    currentItem.className = 'nearest-item first-item';
-    currentItem.textContent = `${sprite.name}`;
-    currentItem.style.color = getColorHexForSubType(sprite.metadata?.subType || "Default");
-    nearestList.appendChild(currentItem);
-    
-    // Show top 10 nearest
-    const topNearest = distances.slice(0, 10);
-    topNearest.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'nearest-item';
-        li.textContent = `${item.sprite.name} (${item.distance.toFixed(2)})`;
-        li.style.color = getColorHexForSubType(item.sprite.metadata?.subType || "Default");
-        
-        li.addEventListener('click', () => {
-            centerOnSprite(item.sprite);
-            showNearestParticles(item.sprite);
-        });
-        
-        nearestList.appendChild(li);
-    });
-}
-
-// Fonction pour décrypter les données
 function decryptData(encryptedData, password) {
     try {
         const bytes = CryptoJS.AES.decrypt(encryptedData, password);
@@ -718,380 +1558,1164 @@ function decryptData(encryptedData, password) {
     }
 }
 
-// Fonction pour afficher la modal de mot de passe
-function showPasswordModal() {
-    return new Promise((resolve, reject) => {
-        const modal = document.getElementById('passwordModal');
-        const submitButton = document.getElementById('submitPasswordButton');
-        const passwordInput = document.getElementById('passwordInput');
+// Fonctions pour le mode démo VR
+function toggleDemoModeVR() {
+    if (demoModeActive) {
+        stopDemoModeVR();
+    } else {
+        startDemoModeVR();
+    }
+}
+
+function startDemoModeVR() {
+    if (!scene.spriteManagers[0] || !scene.spriteManagers[0].sprites.length) {
+        console.log('Aucune étoile disponible pour le mode démo VR');
+        return;
+    }
+
+    demoModeActive = true;
+    console.log('Mode démo VR démarré - Contrôle: Bouton Y pour arrêter');
+
+    createDemoGroupsVR();
+    currentDemoGroupIndex = 0;
+    nextDemoGroupVR();
+}
+
+function stopDemoModeVR() {
+    demoModeActive = false;
+    console.log('Mode démo VR arrêté');
+
+    if (demoInterval) {
+        clearTimeout(demoInterval);
+        demoInterval = null;
+    }
+    
+    currentDemoGroupIndex = 0;
+}
+
+function createDemoGroupsVR() {
+    // Créer des groupes d'étoiles basés sur les types (subType)
+    const sprites = scene.spriteManagers[0].sprites.filter(s => s.isVisible);
+    const groupsByType = {};
+    
+    sprites.forEach(sprite => {
+        const subType = sprite.metadata ? sprite.metadata.subType : 'DEFAULT';
+        if (!groupsByType[subType]) {
+            groupsByType[subType] = [];
+        }
+        groupsByType[subType].push(sprite);
+    });
+
+    // Convertir en tableau de groupes et prendre quelques étoiles représentatives de chaque type
+    demoGroups = [];
+    Object.keys(groupsByType).forEach(subType => {
+        const spritesOfType = groupsByType[subType];
+        // Prendre jusqu'à 3 étoiles par type pour éviter trop de longueur
+        const selectedSprites = spritesOfType.slice(0, Math.min(3, spritesOfType.length));
         
-        modal.style.display = 'block';
+        selectedSprites.forEach(sprite => {
+            demoGroups.push({
+                sprite: sprite,
+                groupName: subType
+            });
+        });
+    });
+
+    console.log(`Mode démo VR créé avec ${demoGroups.length} étoiles dans ${Object.keys(groupsByType).length} groupes`);
+}
+
+async function nextDemoGroupVR() {
+    if (!demoModeActive || currentDemoGroupIndex >= demoGroups.length) {
+        stopDemoModeVR();
+        return;
+    }
+
+    const currentGroup = demoGroups[currentDemoGroupIndex];
+    const spriteName = currentGroup.sprite.name;
+    const groupName = currentGroup.groupName;
+    
+    console.log(`Mode démo VR: Navigation vers ${spriteName} (groupe: ${groupName}) - ${currentDemoGroupIndex + 1}/${demoGroups.length}`);
+    
+    // Déplacer la caméra vers l'étoile et attendre que l'animation soit terminée
+    await moveCameraToSprite(spriteName);
+    
+    currentDemoGroupIndex++;
+    
+    // Attendre la pause de 3 secondes APRÈS que l'animation soit terminée
+    demoInterval = setTimeout(() => {
+        if (demoModeActive) {
+            nextDemoGroupVR();
+        }
+    }, demoPauseDuration);
+}
+
+// Fonction pour gérer l'interaction trigger en VR (équivalent du clic souris)
+function handleVRTriggerInteraction(controller, handness) {
+    console.log(`VR Trigger pressed on ${handness} controller`);
+    
+    try {
+        // Méthode 1: Utiliser le système de pointer selection de Babylon.js
+        if (controller.pointer && controller.pointer.isVisible) {
+            // Obtenir la direction du pointer ray
+            const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+            const rayDirection = controller.pointer.getDirection(BABYLON.Vector3.Forward());
+            
+            console.log(`VR Debug: Ray origin: ${rayOrigin.toString()}, direction: ${rayDirection.toString()}`);
+            
+            // Créer un ray précis depuis le pointer
+            const ray = new BABYLON.Ray(rayOrigin, rayDirection, 1000);
+            
+            // Variables pour trouver la particule la plus proche
+            let closestSprite = null;
+            let closestDistance = Infinity;
+            
+            // Vérifier toutes les particules visibles
+            if (scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+                scene.spriteManagers[0].sprites.forEach(sprite => {
+                    if (sprite.isVisible) {
+                        // Utiliser la méthode intersectsMesh pour la détection précise
+                        const spritePosition = sprite.position;
+                        
+                        // Calculer la distance minimale entre le ray et la position de l'étoile
+                        const rayToSprite = spritePosition.subtract(rayOrigin);
+                        const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+                        
+                        if (projectionLength > 0) { // L'étoile est devant le ray
+                            const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                            const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
+                            
+                            // Seuil de sélection plus serré pour plus de précision
+                            const selectionRadius = 1.5;
+                            
+                            if (distanceToRay < selectionRadius && projectionLength < closestDistance) {
+                                closestSprite = sprite;
+                                closestDistance = projectionLength;
+                                console.log(`VR Debug: Candidat trouvé: ${sprite.name}, distance: ${distanceToRay.toFixed(2)}, projection: ${projectionLength.toFixed(2)}`);
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Si une particule a été trouvée, naviguer vers elle
+            if (closestSprite) {
+                console.log(`VR: ✅ Particule précise trouvée: ${closestSprite.name}`);
+                moveCameraToSprite(closestSprite.name);
+                return;
+            }
+        }
         
-        const handleSubmit = () => {
-            const password = passwordInput.value;
-            modal.style.display = 'none';
-            passwordInput.value = '';
-            resolve(password);
+        // Méthode 2: Fallback - utiliser la position du contrôleur directement
+        let controllerPosition, controllerForward;
+        
+        // Essayer d'obtenir la position du contrôleur par différentes méthodes
+        if (controller.grip && controller.grip.position) {
+            controllerPosition = controller.grip.position;
+            controllerForward = controller.grip.getDirection ?
+                controller.grip.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else if (controller.motionController && controller.motionController.rootMesh) {
+            controllerPosition = controller.motionController.rootMesh.position;
+            controllerForward = controller.motionController.rootMesh.getDirection ?
+                controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else {
+            console.log("VR: Impossible d'obtenir la position du contrôleur");
+            return;
+        }
+        
+        console.log(`VR Debug Fallback: Position: ${controllerPosition.toString()}, Direction: ${controllerForward.toString()}`);
+        
+        // Variables pour la sélection
+        let closestSprite = null;
+        let closestScreenDistance = Infinity;
+        
+        // Méthode alternative: trouver l'étoile la plus proche visuellement
+        if (scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+            const camera = scene.activeCamera;
+            scene.spriteManagers[0].sprites.forEach(sprite => {
+                if (sprite.isVisible) {
+                    // Calculer la distance 3D au contrôleur
+                    const distance3D = BABYLON.Vector3.Distance(controllerPosition, sprite.position);
+                    
+                    // Vérifier si l'étoile est dans une zone raisonnable
+                    if (distance3D < 50) { // Dans un rayon de 50 unités
+                        // Calculer l'angle entre la direction du contrôleur et l'étoile
+                        const toSprite = sprite.position.subtract(controllerPosition).normalize();
+                        const angle = Math.acos(BABYLON.Vector3.Dot(controllerForward, toSprite));
+                        
+                        // Seuil d'angle (plus petit = plus précis)
+                        const maxAngle = Math.PI / 12; // 15 degrés
+                        
+                        if (angle < maxAngle && distance3D < closestScreenDistance) {
+                            closestSprite = sprite;
+                            closestScreenDistance = distance3D;
+                            console.log(`VR Debug Fallback: Candidat ${sprite.name}, angle: ${(angle * 180 / Math.PI).toFixed(1)}°, distance: ${distance3D.toFixed(2)}`);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Naviguer vers la particule trouvée
+        if (closestSprite) {
+            console.log(`VR: ✅ Particule trouvée (fallback): ${closestSprite.name}`);
+            moveCameraToSprite(closestSprite.name);
+        } else {
+            console.log(`VR: ❌ Aucune particule trouvée dans la direction du ${handness} contrôleur`);
+        }
+        
+    } catch (error) {
+        console.error("Erreur dans handleVRTriggerInteraction:", error);
+    }
+}
+
+// Cette fonction a été supprimée car dupliquée - voir la version corrigée plus bas
+
+// Fonction optimisée pour détecter la particule visée en continu (indicateur visuel)
+let detectionFrameCount = 0;
+const DETECTION_SKIP_FRAMES = 3; // Ne faire la détection qu'une fois toutes les 3 frames
+
+function detectTargetedSprite() {
+    try {
+        // Optimisation: Réduire la fréquence de détection pour de meilleures performances
+        detectionFrameCount++;
+        if (detectionFrameCount < DETECTION_SKIP_FRAMES) {
+            return;
+        }
+        detectionFrameCount = 0;
+        
+        // Reset previous target
+        if (currentTargetedSprite) {
+            if (currentTargetedSprite.originalColor) {
+                currentTargetedSprite.color = currentTargetedSprite.originalColor;
+            }
+            currentTargetedSprite = null;
+        }
+        
+        let targetedSprite = null;
+        
+        // Méthode optimisée pour VR avec cache
+        if (window.xrHelper && window.xrHelper.input && window.xrHelper.input.controllers.length > 0) {
+            for (const controller of window.xrHelper.input.controllers) {
+                if (controller.pointer) {
+                    const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+                    const rayDirection = controller.pointer.getDirection ?
+                        controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                        new BABYLON.Vector3(0, 0, 1);
+                    
+                    // Utiliser le cache optimisé pour la détection continue ULTRA-PRÉCISE
+                    const cachedParticles = updateVRParticleCache();
+                    
+                    let closestSprite = null;
+                    let bestPrecision = 0;
+                    let testedCount = 0;
+                    
+                    // DÉTECTION CONTINUE ULTRA-PRÉCISE (version allégée du trigger)
+                    for (const cachedParticle of cachedParticles) {
+                        const spritePosition = cachedParticle.position;
+                        const rayToSprite = spritePosition.subtract(rayOrigin);
+                        const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+                        
+                        if (projectionLength > 0.1) { // Distance quasi-infinie aussi pour l'indicateur
+                            const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                            const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
+                            
+                            // Même algorithme de précision que le trigger (mais plus tolérant pour l'indicateur)
+                            const angleFromRay = Math.atan2(distanceToRay, projectionLength);
+                            const precision = 1.0 / (1.0 + angleFromRay * 500); // Plus tolérant que le trigger (500 vs 1000)
+                            
+                            // Seuil plus large pour l'indicateur visuel (5 degrés vs 1.15° pour le trigger)
+                            const maxAngleIndicator = 0.087; // ~5 degrés
+                            
+                            if (angleFromRay < maxAngleIndicator && precision > bestPrecision) {
+                                closestSprite = cachedParticle.sprite;
+                                bestPrecision = precision;
+                            }
+                        }
+                        
+                        testedCount++;
+                        // Limite réduite pour la détection continue (performance)
+                        if (testedCount > 200) {
+                            break;
+                        }
+                    }
+                    
+                    if (closestSprite) {
+                        targetedSprite = closestSprite;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Fallback optimisé pour desktop - seulement si pas en VR
+        if (!targetedSprite && (!window.xrHelper || window.xrHelper.input.controllers.length === 0) && scene.activeCamera) {
+            const camera = scene.activeCamera;
+            const width = engine.getRenderWidth();
+            const height = engine.getRenderHeight();
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            let closestSprite = null;
+            let smallestDistance = Infinity;
+            let testedCount = 0;
+            
+            // Utiliser aussi le cache pour desktop, mais avec recherche au centre
+            const cachedParticles = updateVRParticleCache();
+            
+            for (const cachedParticle of cachedParticles) {
+                const sprite = cachedParticle.sprite;
+                const identityMatrix = BABYLON.Matrix.Identity();
+                const transformMatrix = scene.getTransformMatrix();
+                const viewport = camera.viewport.toGlobal(width, height);
+                
+                const projectedPosition = BABYLON.Vector3.Project(
+                    sprite.position,
+                    identityMatrix,
+                    transformMatrix,
+                    viewport
+                );
+                
+                const screenDistance = Math.sqrt(
+                    Math.pow(projectedPosition.x - centerX, 2) +
+                    Math.pow(projectedPosition.y - centerY, 2)
+                );
+                
+                if (projectedPosition.x >= 0 && projectedPosition.x <= width &&
+                    projectedPosition.y >= 0 && projectedPosition.y <= height &&
+                    projectedPosition.z > 0 && projectedPosition.z < 1 &&
+                    screenDistance < 80) { // Seuil réduit pour plus de précision
+                    
+                    if (screenDistance < smallestDistance) {
+                        closestSprite = sprite;
+                        smallestDistance = screenDistance;
+                    }
+                }
+                
+                testedCount++;
+                if (testedCount > 30) { // Limite pour desktop aussi
+                    break;
+                }
+            }
+            
+            targetedSprite = closestSprite;
+        }
+        
+        // Mettre à jour l'affichage seulement si nouvelle cible
+        if (targetedSprite && targetedSprite !== currentTargetedSprite) {
+            // Sauvegarder la couleur originale
+            if (!targetedSprite.originalColor) {
+                targetedSprite.originalColor = targetedSprite.color.clone();
+            }
+            
+            // Indicateur visuel plus subtil
+            targetedSprite.color = new BABYLON.Color4(1, 1, 0.3, 1); // Jaune plus doux
+            
+            currentTargetedSprite = targetedSprite;
+            
+            // Mettre à jour l'indicateur VR
+            if (scene.vrTargetIndicator && scene.vrTargetIndicator.show) {
+                scene.vrTargetIndicator.show(targetedSprite.name);
+            }
+        } else if (!targetedSprite) {
+            // Aucune cible
+            currentTargetedSprite = null;
+            if (scene.vrTargetIndicator && scene.vrTargetIndicator.hide) {
+                scene.vrTargetIndicator.hide();
+            }
+        }
+        
+    } catch (error) {
+        // Erreur silencieuse pour éviter le spam
+    }
+}
+
+// Cache pour optimiser les performances avec de gros datasets
+let vrParticleCache = null;
+let vrCacheLastUpdate = 0;
+const VR_CACHE_DURATION = 100; // Mise à jour du cache toutes les 100ms
+
+// Cache simple mais efficace pour les particules
+function updateVRParticleCache() {
+    const now = Date.now();
+    if (vrParticleCache && (now - vrCacheLastUpdate) < VR_CACHE_DURATION) {
+        return vrParticleCache;
+    }
+    
+    const camera = scene.activeCamera;
+    if (!camera || !scene.spriteManagers[0]) {
+        return [];
+    }
+    
+    const cameraPosition = camera.position;
+    const cameraDirection = camera.getForwardRay().direction.normalize();
+    const fov = camera.fov;
+    
+    // Cache simple avec distance étendue
+    vrParticleCache = [];
+    scene.spriteManagers[0].sprites.forEach(sprite => {
+        if (sprite.isVisible) {
+            const spritePosition = sprite.position;
+            const distance = BABYLON.Vector3.Distance(cameraPosition, spritePosition);
+            
+            // Distance étendue mais raisonnable
+            if (distance > 0.5 && distance < 500) {
+                const spriteDirection = spritePosition.subtract(cameraPosition).normalize();
+                const angle = Math.acos(Math.max(-1, Math.min(1, BABYLON.Vector3.Dot(cameraDirection, spriteDirection))));
+                
+                // FOV élargi
+                if (angle < fov * 1.8) {
+                    vrParticleCache.push({
+                        sprite: sprite,
+                        position: spritePosition,
+                        distance: distance,
+                        angle: angle
+                    });
+                }
+            }
+        }
+    });
+    
+    // Tri par distance pour optimiser
+    vrParticleCache.sort((a, b) => a.distance - b.distance);
+    vrCacheLastUpdate = now;
+    
+    console.log(`🔄 VR Cache: ${vrParticleCache.length} particles within range 500`);
+    return vrParticleCache;
+}
+
+// Version ultra-optimisée de la fonction trigger pour gros datasets
+function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
+    const action = isPressed ? "pressed" : "released";
+    console.log(`🎯 VR Trigger OPTIMIZED ${action} on ${handness} controller`);
+    
+    try {
+        // Gérer l'état du trigger maintenu
+        if (isPressed) {
+            triggerHeldControllers.set(handness, controller);
+        } else {
+            triggerHeldControllers.delete(handness);
+            sliderInteractionActive = false;
+        }
+        
+        // Vérifications UI d'abord (scale panel, legend)
+        if (isPressed && scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible) {
+            let rayOrigin, rayDirection;
+            
+            if (controller.pointer) {
+                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+                rayDirection = controller.pointer.getDirection ?
+                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else if (controller.motionController && controller.motionController.rootMesh) {
+                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
+                rayDirection = controller.motionController.rootMesh.getDirection ?
+                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else {
+                rayOrigin = new BABYLON.Vector3(0, 0, 0);
+                rayDirection = new BABYLON.Vector3(0, 0, 1);
+            }
+            
+            const ray = new BABYLON.Ray(rayOrigin, rayDirection);
+            const hit = ray.intersectsMesh(scene.vrScalePanel3D.plane);
+            
+            if (hit.hit) {
+                console.log(`🎯 VR ${handness}: SCALE PANEL HIT`);
+                sliderInteractionActive = true;
+                
+                const worldHitPoint = hit.pickedPoint;
+                const panelPosition = scene.vrScalePanel3D.plane.absolutePosition || scene.vrScalePanel3D.plane.position;
+                const localHitPoint = worldHitPoint.subtract(panelPosition);
+                
+                const panelWidth = 1.2;
+                let sliderValue = localHitPoint.x / (panelWidth * 0.35);
+                sliderValue = Math.max(-1, Math.min(1, sliderValue));
+                
+                scene.vrScalePanel3D.updateScale(sliderValue);
+                scene.vrScalePanel3D.currentSliderValue = sliderValue;
+                return;
+            }
+        }
+        
+        // Vérification légende 3D
+        if (isPressed && scene.vrLegendPanel3D && scene.vrLegendPanel3D.plane.isVisible) {
+            let rayOrigin, rayDirection;
+            
+            if (controller.pointer) {
+                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+                rayDirection = controller.pointer.getDirection ?
+                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else if (controller.motionController && controller.motionController.rootMesh) {
+                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
+                rayDirection = controller.motionController.rootMesh.getDirection ?
+                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else {
+                rayOrigin = new BABYLON.Vector3(0, 0, 0);
+                rayDirection = new BABYLON.Vector3(0, 0, 1);
+            }
+            
+            const ray = new BABYLON.Ray(rayOrigin, rayDirection);
+            const hit = ray.intersectsMesh(scene.vrLegendPanel3D.plane);
+            
+            if (hit.hit) {
+                console.log(`🎯 VR ${handness}: LEGEND HIT`);
+                
+                const worldHitPoint = hit.pickedPoint;
+                const planePosition = scene.vrLegendPanel3D.plane.absolutePosition || scene.vrLegendPanel3D.plane.position;
+                const localHitPoint = worldHitPoint.subtract(planePosition);
+                
+                const planeWidth = 2.0;
+                const planeHeight = Math.max(2.0, scene.vrLegendPanel3D.clickableAreas.length * 0.15 + 0.5);
+                
+                const clickedType = scene.vrLegendPanel3D.getClickedType(localHitPoint.x, localHitPoint.y, planeWidth, planeHeight);
+                
+                if (clickedType) {
+                    console.log(`🎯 VR ${handness}: LEGEND TYPE - ${clickedType}`);
+                    window.xrLegendActiveTypes[clickedType] = !window.xrLegendActiveTypes[clickedType];
+                    const active = window.xrLegendActiveTypes[clickedType] !== false;
+                    
+                    if (scene.vrLegendPanel3D.updateDisplay) {
+                        scene.vrLegendPanel3D.updateDisplay();
+                    }
+                    filterByType(clickedType);
+                    return;
+                }
+            }
+        }
+        
+        // Si trigger relâché, arrêter ici
+        if (!isPressed) {
+            return;
+        }
+        
+        // === DÉTECTION DE PARTICULES OPTIMISÉE ===
+        let targetedSprite = null;
+        
+        if (controller.pointer) {
+            const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+            const rayDirection = controller.pointer.getDirection ?
+                controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+            
+            console.log(`🔍 VR ${handness}: Optimized particle search starting...`);
+            const searchStart = performance.now();
+            
+            // Utiliser le cache optimisé au lieu de toutes les particules
+            const cachedParticles = updateVRParticleCache();
+            
+            // RETOUR À L'ALGORITHME ORIGINAL SIMPLE QUI MARCHAIT
+            let closestSprite = null;
+            let closestDistance = Infinity;
+            let testedCount = 0;
+            
+            // Tester les particules du cache (simple et efficace)
+            for (const cachedParticle of cachedParticles) {
+                testedCount++;
+                const spritePosition = cachedParticle.position;
+                const rayToSprite = spritePosition.subtract(rayOrigin);
+                const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+                
+                // Distance très étendue comme vous le voulez
+                if (projectionLength > 0.5 && projectionLength < 2000) {
+                    const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                    const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
+                    
+                    // Seuil adaptatif mais plus strict que l'original
+                    const precisionThreshold = Math.min(2.0, 0.3 + (projectionLength * 0.015));
+                    
+                    if (distanceToRay < precisionThreshold && projectionLength < closestDistance) {
+                        closestSprite = cachedParticle.sprite;
+                        closestDistance = projectionLength;
+                        
+                        console.log(`🎯 VR ${handness}: Found target: ${closestSprite.name}, ray distance: ${distanceToRay.toFixed(3)}, distance: ${projectionLength.toFixed(1)}`);
+                    }
+                }
+                
+                // Limite pour les performances
+                if (testedCount > 300) {
+                    console.log(`⏱️ VR ${handness}: Stopping search at 300 tests`);
+                    break;
+                }
+            }
+            
+            const searchTime = performance.now() - searchStart;
+            console.log(`🔍 VR ${handness}: Search completed in ${searchTime.toFixed(2)}ms, tested ${testedCount}/${cachedParticles.length} particles`);
+            
+            targetedSprite = closestSprite;
+        }
+        
+        // NAVIGATION VERS LA PARTICULE TROUVÉE - CORRECTION CRITIQUE
+        if (targetedSprite) {
+            console.log(`✅ VR ${handness}: PRECISE hit on ${targetedSprite.name} - NAVIGATING NOW`);
+            
+            // S'assurer que la navigation fonctionne en passant le nom exact
+            const spriteName = targetedSprite.name;
+            console.log(`🚀 VR ${handness}: Calling moveCameraToSprite("${spriteName}")`);
+            
+            // Appeler la fonction de navigation
+            moveCameraToSprite(spriteName);
+            
+            // Vérification que la fonction a bien été appelée
+            console.log(`✅ VR ${handness}: moveCameraToSprite() called successfully for ${spriteName}`);
+            
+        } else {
+            console.log(`❌ VR ${handness}: No precise target found`);
+            
+            // Indication visuelle d'échec
+            if (scene.vrTargetIndicator && scene.vrTargetIndicator.show) {
+                scene.vrTargetIndicator.show(`❌ Aucune cible précise ${handness}`);
+                setTimeout(() => {
+                    if (scene.vrTargetIndicator && scene.vrTargetIndicator.hide) {
+                        scene.vrTargetIndicator.hide();
+                    }
+                }, 1500);
+            }
+        }
+        
+    } catch (error) {
+        console.error(`❌ VR trigger error ${handness}:`, error);
+    }
+}
+
+// Fonction pour créer un indicateur textuel accroché à la caméra VR
+function createVRTargetIndicator(scene) {
+    const indicatorSystem = {};
+    
+    // Créer un panneau 3D pour afficher l'indicateur de particule visée
+    const targetInfoPlane = BABYLON.MeshBuilder.CreatePlane("vrTargetInfoPlane", {width: 0.83, height: 0.4}, scene);
+    
+    // Position relative à la caméra (HUD style) - plus bas
+    targetInfoPlane.position = new BABYLON.Vector3(0, -1.0, 3); // Plus bas dans le champ de vision
+    targetInfoPlane.isVisible = false;
+    
+    // Créer une texture dynamique pour le texte
+    let infoTexture = new BABYLON.DynamicTexture("vrTargetInfoTexture", {width: 600, height: 300}, scene);
+    const infoMaterial = new BABYLON.StandardMaterial("vrTargetInfoMat", scene);
+    infoMaterial.diffuseTexture = infoTexture;
+    infoMaterial.emissiveTexture = infoTexture;
+    infoMaterial.disableLighting = true;
+    infoMaterial.hasAlpha = true;
+    targetInfoPlane.material = infoMaterial;
+    
+    // Fonction pour dessiner l'affichage sur la texture
+    function updateInfoTexture(particleName) {
+        infoTexture.clear();
+        const context = infoTexture.getContext();
+        
+        // Fond complètement transparent - pas de fond
+        // context.fillStyle = "rgba(0, 0, 0, 0.3)";
+        // context.fillRect(0, 0, 600, 300);
+        
+        // Pas de bordure pour un fond transparent
+        // context.strokeStyle = "white";
+        // context.lineWidth = 2;
+        // context.strokeRect(30, 30, 540, 240);
+        
+        // Titre "Particule visée" - texte plus grand
+        context.font = "bold 38px Arial";
+        context.fillStyle = "yellow";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("Particule visée", 300, 100);
+        
+        // Pas de ligne de séparation avec fond transparent
+        // context.strokeStyle = "yellow";
+        // context.lineWidth = 2;
+        // context.beginPath();
+        // context.moveTo(80, 140);
+        // context.lineTo(520, 140);
+        // context.stroke();
+        
+        // Nom de la particule - texte plus grand
+        context.font = "bold 44px Arial";
+        context.fillStyle = "white";
+        context.strokeStyle = "black";
+        context.lineWidth = 2;
+        
+        // Contour du nom
+        context.strokeText(particleName, 300, 200);
+        // Texte principal du nom
+        context.fillText(particleName, 300, 200);
+        
+        infoTexture.update();
+    }
+    
+    // Fonction pour attacher le panneau à la caméra
+    function attachToCamera() {
+        const camera = scene.activeCamera;
+        if (camera) {
+            // Attacher le panneau à la caméra comme enfant
+            targetInfoPlane.parent = camera;
+            console.log("VR: Panneau attaché à la caméra");
+        }
+    }
+    
+    // Fonction pour mettre à jour la position du panneau relativement à la caméra
+    function updatePanelPosition() {
+        const camera = scene.activeCamera;
+        if (camera && targetInfoPlane.isVisible) {
+            // Si pas encore attaché, l'attacher
+            if (!targetInfoPlane.parent) {
+                attachToCamera();
+            }
+        }
+    }
+    
+    // Ajouter l'observateur pour maintenir la position
+    scene.onBeforeRenderObservable.add(() => {
+        if (targetInfoPlane.isVisible) {
+            updatePanelPosition();
+        }
+    });
+    
+    // Stocker les références
+    indicatorSystem.infoPane = targetInfoPlane;
+    indicatorSystem.infoTexture = infoTexture;
+    indicatorSystem.infoMaterial = infoMaterial;
+    
+    // Fonctions
+    indicatorSystem.show = function(particleName) {
+        console.log("VR: Showing particle target info for", particleName);
+        targetInfoPlane.isVisible = true;
+        updateInfoTexture(particleName);
+        attachToCamera(); // S'assurer que c'est attaché
+    };
+    
+    indicatorSystem.hide = function() {
+        console.log("VR: Hiding particle target info");
+        targetInfoPlane.isVisible = false;
+    };
+    
+    indicatorSystem.dispose = function() {
+        if (infoTexture) infoTexture.dispose();
+        if (infoMaterial) infoMaterial.dispose();
+        if (targetInfoPlane) targetInfoPlane.dispose();
+    };
+    
+    console.log("Camera-attached VR text indicator created");
+    return indicatorSystem;
+}
+
+// Fonction pour créer un panneau de scale 3D flottant
+function createVRScalePanel3D(scene) {
+    const scalePanelSystem = {};
+    
+    // Créer un panneau 3D pour le contrôle de scale
+    const scaleInfoPlane = BABYLON.MeshBuilder.CreatePlane("vrScalePanelPlane", {width: 1.2, height: 0.8}, scene);
+    
+    // Position relative à la caméra (côté droit)
+    scaleInfoPlane.position = new BABYLON.Vector3(1.5, 0, 3);
+    scaleInfoPlane.isVisible = false;
+    
+    // Créer une texture dynamique pour l'interface de scale
+    let scaleTexture = new BABYLON.DynamicTexture("vrScalePanelTexture", {width: 800, height: 500}, scene);
+    const scaleMaterial = new BABYLON.StandardMaterial("vrScalePanelMat", scene);
+    scaleMaterial.diffuseTexture = scaleTexture;
+    scaleMaterial.emissiveTexture = scaleTexture;
+    scaleMaterial.disableLighting = true;
+    scaleMaterial.hasAlpha = true;
+    scaleInfoPlane.material = scaleMaterial;
+    
+    // Variables de scale
+    let currentSliderValue = 0; // -1 à 1
+    let currentScale = 1.0;
+    const scaleRange = 10; // Facteur de scale max
+    
+    // Fonction pour dessiner l'interface de scale
+    function updateScaleTexture() {
+        scaleTexture.clear();
+        const context = scaleTexture.getContext();
+        
+        // Fond semi-transparent
+        context.fillStyle = "rgba(0, 0, 0, 0.8)";
+        context.fillRect(0, 0, 800, 500);
+        
+        // Bordure
+        context.strokeStyle = "white";
+        context.lineWidth = 3;
+        context.strokeRect(20, 20, 760, 460);
+        
+        // Titre "Scale Control"
+        context.font = "bold 36px Arial";
+        context.fillStyle = "yellow";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("Scale Control", 400, 80);
+        
+        // Valeur actuelle
+        context.font = "bold 42px Arial";
+        context.fillStyle = "white";
+        context.fillText(`Scale: ${currentScale.toFixed(2)}x`, 400, 150);
+        
+        // Barre de slider
+        const sliderX = 100;
+        const sliderY = 250;
+        const sliderWidth = 600;
+        const sliderHeight = 20;
+        
+        // Fond du slider
+        context.fillStyle = "#333";
+        context.fillRect(sliderX, sliderY, sliderWidth, sliderHeight);
+        
+        // Bordure du slider
+        context.strokeStyle = "#00ff00";
+        context.lineWidth = 2;
+        context.strokeRect(sliderX, sliderY, sliderWidth, sliderHeight);
+        
+        // Position du curseur - DIRECTEMENT basée sur currentSliderValue (-1 à +1)
+        // C'est la valeur RAW du slider, pas le scale calculé !
+        const cursorPos = sliderX + (currentSliderValue + 1) * sliderWidth / 2;
+        
+        // Debug DÉTAILLÉ pour comprendre le décalage
+        console.log(`🎯 CURSOR DEBUG DÉTAILLÉ:`);
+        console.log(`  → currentSliderValue: ${currentSliderValue.toFixed(3)}`);
+        console.log(`  → sliderX (début): ${sliderX}`);
+        console.log(`  → sliderWidth: ${sliderWidth}`);
+        console.log(`  → (currentSliderValue + 1): ${(currentSliderValue + 1).toFixed(3)}`);
+        console.log(`  → (currentSliderValue + 1) * sliderWidth / 2: ${((currentSliderValue + 1) * sliderWidth / 2).toFixed(1)}`);
+        console.log(`  → cursorPos final: ${cursorPos.toFixed(1)}`);
+        console.log(`  → Expected: -1=${sliderX}, 0=${sliderX + sliderWidth/2}, +1=${sliderX + sliderWidth}`);
+        
+        // Curseur
+        context.fillStyle = "#00ff00";
+        context.fillRect(cursorPos - 10, sliderY - 10, 20, sliderHeight + 20);
+        
+        // Indicateurs de valeurs - POSITIONNÉS EXACTEMENT selon la logique VR
+        context.font = "20px Arial";
+        context.fillStyle = "white";
+        
+        // 0.1x est à la position relative -1 (tout à gauche)
+        const pos01x = sliderX + (-1 + 1) * sliderWidth / 2; // = sliderX + 0 = début du slider
+        context.textAlign = "center";
+        context.fillText("0.1x", pos01x, sliderY + 50);
+        
+        // 1.0x est à la position relative 0 (centre)
+        const pos10x = sliderX + (0 + 1) * sliderWidth / 2; // = sliderX + sliderWidth/2 = centre
+        context.fillText("1.0x", pos10x, sliderY + 50);
+        
+        // 10x est à la position relative +1 (tout à droite)
+        const pos10xMax = sliderX + (1 + 1) * sliderWidth / 2; // = sliderX + sliderWidth = fin du slider
+        context.fillText("10x", pos10xMax, sliderY + 50);
+        
+        // Debug: Afficher les positions des indicateurs
+        console.log(`📍 Indicators: 0.1x@${pos01x.toFixed(1)}, 1.0x@${pos10x.toFixed(1)}, 10x@${pos10xMax.toFixed(1)}`);
+        
+        // Instructions
+        context.font = "24px Arial";
+        context.fillStyle = "cyan";
+        context.textAlign = "center";
+        context.fillText("Joystick droit: Ajuster scale", 400, 350);
+        context.fillText("Bouton A: Fermer", 400, 390);
+        
+        scaleTexture.update();
+    }
+    
+    // Fonction pour attacher le panneau à la caméra
+    function attachToCamera() {
+        const camera = scene.activeCamera;
+        if (camera) {
+            scaleInfoPlane.parent = camera;
+            console.log("VR: Panneau de scale attaché à la caméra");
+        }
+    }
+    
+    // Fonction pour mettre à jour la valeur de scale - VERSION CORRIGÉE
+    function updateScale(sliderValue) {
+        // Assurer que sliderValue est un nombre valide
+        if (typeof sliderValue !== 'number' || isNaN(sliderValue)) {
+            console.warn(`Invalid sliderValue: ${sliderValue}, using 0 as default`);
+            sliderValue = 0;
+        }
+        
+        currentSliderValue = Math.max(-1, Math.min(1, sliderValue));
+        
+        // Mapping linéaire simple du slider (-1 à 1) vers scale (0.1x à 10x)
+        // -1 = 0.1x, 0 = 1.0x, +1 = 10.0x
+        if (currentSliderValue < 0) {
+            // De -1 à 0: de 0.1x à 1.0x
+            // Formule: 0.1 + (sliderValue + 1) * 0.9
+            currentScale = 0.1 + (currentSliderValue + 1) * 0.9;
+        } else if (currentSliderValue > 0) {
+            // De 0 à +1: de 1.0x à 10.0x
+            // Formule: 1.0 + sliderValue * 9.0
+            currentScale = 1.0 + currentSliderValue * 9.0;
+        } else {
+            // Exactement 0 = 1.0x
+            currentScale = 1.0;
+        }
+        
+        // Validation finale du scale
+        currentScale = Math.max(0.1, Math.min(10.0, currentScale));
+        scene.currentScaleValue = currentScale;
+        
+        console.log(`🎯 Scale Update: SliderValue=${currentSliderValue.toFixed(3)}, Scale=${currentScale.toFixed(2)}x`);
+        
+        // Appliquer directement aux particules avec espacement inverse simple
+        try {
+            if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+                const sprites = scene.spriteManagers[0].sprites;
+                
+                // Facteur d'espacement simple : plus le scale est élevé, plus les particules sont serrées
+                const spacingFactor = 1.0 / currentScale;
+                
+                console.log(`Applying scale ${currentScale.toFixed(2)}x with spacing factor ${spacingFactor.toFixed(3)} to ${sprites.length} sprites`);
+                
+                sprites.forEach(sprite => {
+                    if (sprite.originalPosition) {
+                        sprite.position.x = sprite.originalPosition.x * spacingFactor;
+                        sprite.position.y = sprite.originalPosition.y * spacingFactor;
+                        sprite.position.z = sprite.originalPosition.z * spacingFactor;
+                    }
+                });
+                
+                console.log(`✅ Scale applied successfully - Spacing: ${spacingFactor.toFixed(3)}x`);
+            } else {
+                console.log(`❌ No sprite managers or sprites available`);
+            }
+        } catch (error) {
+            console.error(`❌ Error applying scale:`, error);
+        }
+        
+        updateScaleTexture();
+    }
+    
+    
+    // Stocker les références
+    scalePanelSystem.plane = scaleInfoPlane;
+    scalePanelSystem.texture = scaleTexture;
+    scalePanelSystem.material = scaleMaterial;
+    
+    // Fonctions
+    scalePanelSystem.show = function() {
+        console.log("VR: Showing scale panel");
+        scaleInfoPlane.isVisible = true;
+        updateScaleTexture();
+        attachToCamera();
+    };
+    
+    scalePanelSystem.hide = function() {
+        console.log("VR: Hiding scale panel");
+        scaleInfoPlane.isVisible = false;
+    };
+    
+    scalePanelSystem.toggle = function() {
+        if (scaleInfoPlane.isVisible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    };
+    
+    scalePanelSystem.updateScale = updateScale;
+    
+    scalePanelSystem.dispose = function() {
+        if (scaleTexture) scaleTexture.dispose();
+        if (scaleMaterial) scaleMaterial.dispose();
+        if (scaleInfoPlane) scaleInfoPlane.dispose();
+    };
+    
+    // Initialiser avec la valeur par défaut
+    updateScale(0);
+    
+    console.log("Camera-attached VR scale panel 3D created");
+    return scalePanelSystem;
+}
+
+// Fonction pour créer un panneau de légende 3D avec plan et texture dynamique (comme scale panel)
+function createVRLegendPanel3D(scene, data) {
+    const legendPanelSystem = {};
+    
+    console.log("🏗️ Creating VR Legend Panel 3D (plane + dynamic texture)...");
+    
+    try {
+        // Obtenir les types uniques (TOUS les types comme dans la version 2D)
+        const uniqueTypes = [...new Set(data.map(item => item.subType))].sort();
+        console.log(`📋 Found ${uniqueTypes.length} unique types:`, uniqueTypes);
+        
+        // Créer un plan 3D pour la légende (comme le scale panel)
+        const legendPlane = BABYLON.MeshBuilder.CreatePlane("vrLegendPlane", {
+            width: 2.0,
+            height: Math.max(2.0, uniqueTypes.length * 0.15 + 0.5) // Hauteur dynamique selon le nombre de types
+        }, scene);
+        
+        // Position plus en haut à gauche
+        legendPlane.position = new BABYLON.Vector3(-1.5, 1, 3);
+        legendPlane.isVisible = false;
+        
+        // Créer une texture dynamique pour dessiner la légende
+        const textureHeight = Math.max(400, uniqueTypes.length * 40 + 100);
+        let legendTexture = new BABYLON.DynamicTexture("vrLegendTexture", {width: 600, height: textureHeight}, scene);
+        const legendMaterial = new BABYLON.StandardMaterial("vrLegendMat", scene);
+        legendMaterial.diffuseTexture = legendTexture;
+        legendMaterial.emissiveTexture = legendTexture;
+        legendMaterial.disableLighting = true;
+        legendMaterial.hasAlpha = true;
+        legendPlane.material = legendMaterial;
+        
+        // État des types (comme dans la légende 2D) - Réinitialiser pour éviter les conflits
+        window.xrLegendActiveTypes = {};
+        
+        // Initialiser TOUS les types à true (particules visibles par défaut)
+        uniqueTypes.forEach(type => {
+            window.xrLegendActiveTypes[type] = true;
+        });
+        
+        // Stocker les zones cliquables pour la détection de trigger
+        const clickableAreas = [];
+        
+        // Fonction pour dessiner la légende sur la texture (même design que l'original)
+        function updateLegendTexture() {
+            legendTexture.clear();
+            const context = legendTexture.getContext();
+            
+            // Fond semi-transparent comme la légende 2D originale
+            context.fillStyle = "rgba(0, 0, 0, 0.7)";
+            context.fillRect(0, 0, 600, textureHeight);
+            
+            // Bordure blanche
+            context.strokeStyle = "white";
+            context.lineWidth = 2;
+            context.strokeRect(10, 10, 580, textureHeight - 20);
+            
+            // Réinitialiser les zones cliquables
+            clickableAreas.length = 0;
+            
+            // Dessiner chaque élément de légende
+            uniqueTypes.forEach((type, index) => {
+                const y = 50 + index * 40; // Position Y de chaque ligne
+                const isActive = window.xrLegendActiveTypes[type] !== false;
+                const color = getColor(type);
+                
+                // Boîte colorée (comme dans la légende 2D originale)
+                const colorBoxX = 30;
+                const colorBoxY = y - 15;
+                const colorBoxSize = 30;
+                
+                context.fillStyle = `rgba(${Math.round(color.r*255)}, ${Math.round(color.g*255)}, ${Math.round(color.b*255)}, ${isActive ? 1.0 : 0.3})`;
+                context.fillRect(colorBoxX, colorBoxY, colorBoxSize, colorBoxSize);
+                
+                // Bordure de la boîte colorée
+                context.strokeStyle = "white";
+                context.lineWidth = 1;
+                context.strokeRect(colorBoxX, colorBoxY, colorBoxSize, colorBoxSize);
+                
+                // Label de texte (comme dans la légende 2D originale)
+                context.font = "20px Arial";
+                context.fillStyle = isActive ? "white" : "rgba(255, 255, 255, 0.5)";
+                context.textAlign = "left";
+                context.textBaseline = "middle";
+                context.fillText(type, colorBoxX + colorBoxSize + 15, y);
+                
+                // Stocker la zone cliquable (toute la ligne)
+                clickableAreas.push({
+                    type: type,
+                    x1: colorBoxX,
+                    y1: colorBoxY,
+                    x2: 580,
+                    y2: colorBoxY + colorBoxSize,
+                    color: color,
+                    isActive: isActive
+                });
+                
+                console.log(`🎨 Drew legend item: ${type} at Y=${y}, active=${isActive}`);
+            });
+            
+            legendTexture.update();
+            console.log(`✅ Legend texture updated with ${uniqueTypes.length} items, ${clickableAreas.length} clickable areas`);
+        }
+        
+        // Fonction pour attacher le panneau à la caméra (comme scale panel)
+        function attachToCamera() {
+            const camera = scene.activeCamera;
+            if (camera) {
+                legendPlane.parent = camera;
+                console.log("📷 VR Legend Panel 3D attached to camera");
+            }
+        }
+        
+        // Fonction pour tester si un point 2D est dans une zone cliquable
+        function getClickedType(localX, localY, planeWidth, planeHeight) {
+            // Les coordonnées locales du plan vont de -planeWidth/2 à +planeWidth/2 et -planeHeight/2 à +planeHeight/2
+            // Normaliser d'abord entre 0 et 1
+            const normalizedX = (localX + planeWidth/2) / planeWidth;
+            const normalizedY = (localY + planeHeight/2) / planeHeight;
+            
+            // Puis convertir en coordonnées texture (0-600, 0-textureHeight)
+            const textureX = normalizedX * 600;
+            const textureY = (1.0 - normalizedY) * textureHeight; // Inverser Y car les textures ont Y=0 en haut
+            
+            console.log(`🔍 Click test: local(${localX.toFixed(3)}, ${localY.toFixed(3)}) → normalized(${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)}) → texture(${textureX.toFixed(1)}, ${textureY.toFixed(1)})`);
+            
+            // Tester chaque zone cliquable
+            for (const area of clickableAreas) {
+                if (textureX >= area.x1 && textureX <= area.x2 &&
+                    textureY >= area.y1 && textureY <= area.y2) {
+                    console.log(`🎯 Hit detected on type: ${area.type} (area: ${area.x1}-${area.x2}, ${area.y1}-${area.y2})`);
+                    return area.type;
+                }
+            }
+            
+            console.log(`❌ No hit detected in clickable areas. Tested ${clickableAreas.length} areas`);
+            clickableAreas.forEach((area, i) => {
+                console.log(`  Area ${i}: ${area.type} (${area.x1}-${area.x2}, ${area.y1}-${area.y2})`);
+            });
+            return null;
+        }
+        
+        // Stocker les références
+        legendPanelSystem.plane = legendPlane;
+        legendPanelSystem.texture = legendTexture;
+        legendPanelSystem.material = legendMaterial;
+        legendPanelSystem.clickableAreas = clickableAreas;
+        legendPanelSystem.getClickedType = getClickedType;
+        
+        // Fonctions
+        legendPanelSystem.show = function() {
+            console.log("👁️ VR: Showing legend panel 3D (plane + texture)");
+            legendPlane.isVisible = true;
+            updateLegendTexture();
+            attachToCamera();
         };
         
-        submitButton.addEventListener('click', handleSubmit, { once: true });
+        legendPanelSystem.hide = function() {
+            console.log("🙈 VR: Hiding legend panel 3D (plane + texture)");
+            legendPlane.isVisible = false;
+        };
         
-        passwordInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleSubmit();
+        legendPanelSystem.toggle = function() {
+            if (legendPlane.isVisible) {
+                this.hide();
+            } else {
+                this.show();
             }
-        }, { once: true });
-    });
-}
-
-// Fonction pour initialiser et mettre à jour le clavier virtuel HTML
-function setupVirtualKeyboard() {
-    const keyboardContainer = document.getElementById('virtualKeyboardHTML');
-    if (!keyboardContainer) return;
-    
-    keyboardContainer.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:5px;">
-            <div style="display:flex; gap:3px;">
-                <button class="vk-key" data-key="1">1</button>
-                <button class="vk-key" data-key="2">2</button>
-                <button class="vk-key" data-key="3">3</button>
-                <button class="vk-key" data-key="4">4</button>
-                <button class="vk-key" data-key="5">5</button>
-                <button class="vk-key" data-key="6">6</button>
-                <button class="vk-key" data-key="7">7</button>
-                <button class="vk-key" data-key="8">8</button>
-                <button class="vk-key" data-key="9">9</button>
-                <button class="vk-key" data-key="0">0</button>
-            </div>
-            <div style="display:flex; gap:3px;">
-                <button class="vk-key" data-key="q">Q</button>
-                <button class="vk-key" data-key="w">W</button>
-                <button class="vk-key" data-key="e">E</button>
-                <button class="vk-key" data-key="r">R</button>
-                <button class="vk-key" data-key="t">T</button>
-                <button class="vk-key" data-key="y">Y</button>
-                <button class="vk-key" data-key="u">U</button>
-                <button class="vk-key" data-key="i">I</button>
-                <button class="vk-key" data-key="o">O</button>
-                <button class="vk-key" data-key="p">P</button>
-            </div>
-            <div style="display:flex; gap:3px;">
-                <button class="vk-key" data-key="a">A</button>
-                <button class="vk-key" data-key="s">S</button>
-                <button class="vk-key" data-key="d">D</button>
-                <button class="vk-key" data-key="f">F</button>
-                <button class="vk-key" data-key="g">G</button>
-                <button class="vk-key" data-key="h">H</button>
-                <button class="vk-key" data-key="j">J</button>
-                <button class="vk-key" data-key="k">K</button>
-                <button class="vk-key" data-key="l">L</button>
-            </div>
-            <div style="display:flex; gap:3px;">
-                <button class="vk-key" data-key="z">Z</button>
-                <button class="vk-key" data-key="x">X</button>
-                <button class="vk-key" data-key="c">C</button>
-                <button class="vk-key" data-key="v">V</button>
-                <button class="vk-key" data-key="b">B</button>
-                <button class="vk-key" data-key="n">N</button>
-                <button class="vk-key" data-key="m">M</button>
-                <button class="vk-key" data-key="backspace" style="width:60px;">⌫</button>
-            </div>
-            <div style="display:flex; gap:3px;">
-                <button class="vk-key" data-key="space" style="width:150px;">Space</button>
-                <button class="vk-key" data-key="enter" style="width:80px;">Enter</button>
-                <button class="vk-key" data-key="close" style="width:80px;">Close</button>
-            </div>
-        </div>
-    `;
-    
-    // Style the keyboard keys
-    const keys = keyboardContainer.querySelectorAll('.vk-key');
-    keys.forEach(key => {
-        key.style.backgroundColor = '#444';
-        key.style.color = 'white';
-        key.style.border = 'none';
-        key.style.borderRadius = '5px';
-        key.style.padding = '10px';
-        key.style.minWidth = '30px';
-        key.style.cursor = 'pointer';
-        key.style.fontSize = '16px';
+        };
         
-        key.addEventListener('mouseenter', () => {
-            key.style.backgroundColor = '#666';
-        });
+        legendPanelSystem.updateDisplay = function() {
+            updateLegendTexture();
+        };
         
-        key.addEventListener('mouseleave', () => {
-            key.style.backgroundColor = '#444';
-        });
+        legendPanelSystem.dispose = function() {
+            if (legendTexture) legendTexture.dispose();
+            if (legendMaterial) legendMaterial.dispose();
+            if (legendPlane) legendPlane.dispose();
+        };
         
-        key.addEventListener('click', () => {
-            const keyValue = key.getAttribute('data-key');
-            handleVirtualKeyPress(keyValue);
-        });
-    });
-}
-
-// Handle virtual keyboard key presses
-function handleVirtualKeyPress(key) {
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
-    
-    searchInput.focus();
-    
-    if (key === 'enter') {
-        // Trigger search
-        const searchButton = document.getElementById('searchButton');
-        if (searchButton) searchButton.click();
-        hideHTMLKeyboard();
-    } else if (key === 'backspace') {
-        // Remove last character
-        searchInput.value = searchInput.value.slice(0, -1);
-    } else if (key === 'space') {
-        // Add space
-        searchInput.value += ' ';
-    } else if (key === 'close') {
-        // Close keyboard
-        hideHTMLKeyboard();
-    } else {
-        // Add character
-        searchInput.value += key;
+        // Initialiser la texture
+        updateLegendTexture();
+        
+        console.log("✅ VR Legend Panel 3D (plane + texture) created successfully");
+        return legendPanelSystem;
+        
+    } catch (error) {
+        console.error("❌ Error creating VR Legend Panel 3D:", error);
+        console.error("Error details:", error.message);
+        console.error("Stack trace:", error.stack);
+        return null;
     }
 }
 
-// Fonction pour recharger les données avec la nouvelle configuration d'images
-async function reloadWithNewImageConfiguration() {
-    // Récupérer les données actuelles
-    const currentData = getAllSprites().map(sprite => ({
-        prefLabel: sprite.name,
-        subType: sprite.metadata?.subType,
-        x: sprite.position.x / 20, // Diviser par le ratio utilisé
-        y: sprite.position.y / 20,
-        z: sprite.position.z / 20,
-        level: sprite.metadata?.level
-    }));
-    
-    if (currentData.length > 0) {
-        // Nettoyer la scène actuelle
-        clearScene();
-        
-        // Recharger avec la nouvelle configuration
-        await main(currentData, 20);
-        
-        console.log('Données rechargées avec la nouvelle configuration d\'images');
-    }
-}
-
-// Écouter les changements de configuration depuis le sélecteur d'images
-window.addEventListener('storage', function(e) {
-    if (e.key === 'imageConfiguration' || e.key === 'imageConfigurationUpdate') {
-        console.log('Configuration d\'images VR mise à jour, rechargement...');
-        setTimeout(async () => {
-            await reloadWithNewImageConfiguration();
-        }, 100);
-    }
-});
-
-// Fonction pour mettre à jour le message de statut (pour VR)
-function updateStatusMessage(message, type = 'info') {
-    const statusElement = document.getElementById('statusMessage');
-    if (!statusElement) return;
-    
-    statusElement.textContent = message;
-    
-    // Reset classes
-    statusElement.classList.remove('error', 'success', 'warning', 'info');
-    
-    // Add appropriate class
-    switch (type) {
-        case 'error':
-            statusElement.style.backgroundColor = '#ffebee';
-            statusElement.style.color = '#d32f2f';
-            break;
-        case 'success':
-            statusElement.style.backgroundColor = '#e8f5e9';
-            statusElement.style.color = '#388e3c';
-            break;
-        case 'warning':
-            statusElement.style.backgroundColor = '#fff8e1';
-            statusElement.style.color = '#f57c00';
-            break;
-        default:
-            statusElement.style.backgroundColor = '#e3f2fd';
-            statusElement.style.color = '#1976d2';
-    }
-}
-
-// Exposer la fonction de rechargement pour le sélecteur d'images
-window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
-
-// Initialisation du clavier virtuel
-setupVirtualKeyboard();
-
-// Écouteurs d'événements DOM
-document.addEventListener("DOMContentLoaded", function() {
-    const searchButton = document.getElementById('searchButton');
-    if (searchButton) {
-        searchButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            const spriteName = document.getElementById('searchInput').value;
-            moveCameraToSprite(spriteName);
-        });
-    }
-    
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const spriteName = document.getElementById('searchInput').value;
-                searchInput.blur();
-                moveCameraToSprite(spriteName);
-            }
-        });
-        
-        searchInput.addEventListener('focus', function(event) {
-            searchInput.value = '';
-            // Show virtual keyboard in VR mode
-            if (scene.activeCamera.inputSource?.xr) {
-                showHTMLKeyboard();
-            }
-        });
-        
-        searchInput.addEventListener('blur', function(event) {
-            // Hide virtual keyboard
-            if (!event.relatedTarget || !event.relatedTarget.classList.contains('vk-key')) {
-                hideHTMLKeyboard();
-            }
-        });
-        
-        searchInput.addEventListener('change', function(event) {
-            const spriteName = document.getElementById('searchInput').value;
-            moveCameraToSprite(spriteName);
-        });
-    }
-    
-    const demoModeButton = document.getElementById('demoModeButton');
-    if (demoModeButton) {
-        demoModeButton.addEventListener('click', function() {
-            toggleDemoModeVR();
-        });
-    }
-});
-
-// Écouteur pour le chargement de fichiers
-const loadFileButton = document.getElementById('loadFileButton');
-if (loadFileButton) {
-    loadFileButton.addEventListener('click', async () => {
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
-        
-        if (file) {
-            try {
-                updateStatusMessage('⏳ Chargement du fichier en cours...', 'info');
-                
-                const reader = new FileReader();
-                reader.onload = async function(event) {
-                    const fileContent = event.target.result;
-                    
-                    // Check if it might be encrypted
-                    if (fileContent.startsWith('U2F') || fileContent.includes('"ct"') || fileContent.includes('"iv"')) {
-                        try {
-                            updateStatusMessage('🔑 Fichier chiffré détecté, saisie du mot de passe requise...', 'info');
-                            const password = await showPasswordModal();
-                            const decryptedData = decryptData(fileContent, password);
-                            
-                            if (decryptedData) {
-                                updateStatusMessage(`✅ Fichier "${file.name}" chargé avec succès (${decryptedData.length} particules)`, 'success');
-                                main(decryptedData, 20);
-                                document.getElementById('fileInputContainer').style.display = 'none';
-                            } else {
-                                updateStatusMessage('❌ Échec du décryptage - Mot de passe incorrect', 'error');
-                                alert('❌ Impossible de décrypter le fichier. Vérifiez le mot de passe.');
-                            }
-                        } catch (error) {
-                            updateStatusMessage('❌ Erreur lors du traitement du fichier chiffré', 'error');
-                            console.error(error);
-                        }
-                    } else {
-                        // Try to parse as JSON
-                        try {
-                            const data = JSON.parse(fileContent);
-                            updateStatusMessage(`✅ Fichier "${file.name}" chargé avec succès (${data.length} particules)`, 'success');
-                            main(data, 20);
-                            document.getElementById('fileInputContainer').style.display = 'none';
-                        } catch (parseError) {
-                            updateStatusMessage('❌ Erreur: Fichier JSON invalide', 'error');
-                            alert('❌ Le fichier sélectionné n\'est pas un fichier JSON valide.\n\nErreur: ' + parseError.message);
-                        }
-                    }
-                };
-                
-                reader.onerror = function() {
-                    updateStatusMessage('❌ Erreur de lecture du fichier', 'error');
-                };
-                
-                reader.readAsText(file);
-            } catch (error) {
-                updateStatusMessage('❌ Erreur lors du chargement du fichier', 'error');
-                console.error(error);
-            }
-        } else {
-            updateStatusMessage('⚠️ Aucun fichier sélectionné', 'warning');
-            alert('Veuillez sélectionner un fichier.');
-        }
-    });
-}
-
-// Écouteur pour charger un fichier prédéfini
-const loadPresetButton = document.getElementById('loadPresetButton');
-if (loadPresetButton) {
-    loadPresetButton.addEventListener('click', async () => {
-        const fileSelect = document.getElementById('fileSelect');
-        const selectedFile = fileSelect.value;
-        
-        if (selectedFile) {
-            try {
-                updateStatusMessage(`⏳ Chargement du fichier prédéfini "${selectedFile}"...`, 'info');
-                
-                const response = await fetch(`./${selectedFile}`);
-                const fileContent = await response.text();
-                
-                // Check if it might be encrypted
-                if (selectedFile.includes('encrypted') || fileContent.startsWith('U2F') || fileContent.includes('"ct"')) {
-                    const password = await showPasswordModal();
-                    const decryptedData = decryptData(fileContent, password);
-                    
-                    if (decryptedData) {
-                        updateStatusMessage(`✅ Fichier prédéfini "${selectedFile}" chargé avec succès (${decryptedData.length} particules)`, 'success');
-                        main(decryptedData, 20);
-                        document.getElementById('fileInputContainer').style.display = 'none';
-                    } else {
-                        updateStatusMessage('❌ Échec du décryptage - Mot de passe incorrect', 'error');
-                    }
-                } else {
-                    // Parse as JSON
-                    const data = JSON.parse(fileContent);
-                    updateStatusMessage(`✅ Fichier prédéfini "${selectedFile}" chargé avec succès (${data.length} particules)`, 'success');
-                    main(data, 20);
-                    document.getElementById('fileInputContainer').style.display = 'none';
-                }
-            } catch (error) {
-                updateStatusMessage('❌ Erreur lors du chargement du fichier prédéfini', 'error');
-                console.error(error);
-            }
-        } else {
-            updateStatusMessage('⚠️ Aucun fichier prédéfini sélectionné', 'warning');
-            alert('⚠️ Veuillez sélectionner un fichier prédéfini dans la liste déroulante');
-        }
-    });
-}
-
-// Redimensionnement de la fenêtre
-window.addEventListener('resize', function() {
-    engine.resize();
-});
-
-// Boucle de rendu
-engine.runRenderLoop(function() {
-    scene.render();
-});
+//scene.debugLayer.show()

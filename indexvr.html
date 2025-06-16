@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>WhozStar VR - Fusion</title>
-        <script src="https://cdn.babylonjs.com/babylon.js"></script>
-        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+	   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>WhozStar VR</title>
+		<script src="https://cdn.babylonjs.com/babylon.js"></script>
+	    	<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+	    	<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
         <style>
             html, body {
                 overflow: hidden;
@@ -14,99 +15,110 @@
                 height: 100%;
                 margin: 0;
                 padding: 0;
-                font-family: 'system-ui', sans-serif;
+				font-family: 'system-ui', sans-serif; /* Apply Calibri font globally */
             }
-            #searchContainer {
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+			
+			#searchContainer {
                 position: absolute;
                 top: 10px;
                 left: 10px;
-                background-color: rgba(255, 255, 255, 0.85);
+                background-color: rgba(255, 255, 255, 0.8);
                 padding: 10px;
                 border-radius: 5px;
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-                z-index: 10;
-                display: block;
+				display: block; /* Default to visible */
             }
+            
             #searchInput {
+                width: 200px;
                 padding: 5px;
                 border-radius: 3px;
                 border: 1px solid #ccc;
-                margin-right: 10px;
-                min-width: 200px;
             }
+            
             #searchButton {
+                padding: 5px 10px;
+                border-radius: 3px;
+                border: none;
                 background-color: #007bff;
                 color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
                 cursor: pointer;
+                margin-left: 10px;
             }
+
             #searchButton:hover {
                 background-color: #0056b3;
             }
-            
-            /* Add styles for the legend */
-            #legend {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background-color: rgba(255, 255, 255, 0.8);
-                padding: 10px;
-                border-radius: 5px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-                display: block; /* Default to visible */
-            }
-            .legend-item {
-                display: flex;
-                font-size: 12px;
-                align-items: center;
-                margin-bottom: 5px;
-                cursor: pointer;
-            }
-            .legend-color {
-                width: 20px;
-                height: 20px;
-                margin-right: 10px;
-                border-radius: 50%;
-            }
-            
-            .nearest-item {
-                margin-bottom: 5px;
-                font-size: 12px;
-                cursor: pointer;
-            }
+			
+			    /* Add styles for the legend */
+    #legend {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+		display: block; /* Default to visible */
+    }
+.legend-item {
+    display: flex;
+	font-size: 12px;
+    align-items: center;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+.legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+	
 
-            .first-item {
-                font-weight: bold;
-                font-size: 14px; /* Légèrement plus grande */
-            }
-            
-            #nearestContainer {
-                position: absolute;
-                bottom: 10px;
-                right: 10px;
-                background-color: rgba(255, 255, 255, 0.8);
-                padding: 10px;
-                border-radius: 5px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-                max-height: 40%;
-                overflow-y: auto;
-                display: block; /* Default to visible */
-            }
-            
-            #nearestList {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-            
-            /* Style for toggle buttons */
+
+            .nearest-item {
+        margin-bottom: 5px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .first-item {
+        font-weight: bold;
+        font-size: 14px; /* Légèrement plus grande */
+    }
+	
+	    #nearestContainer {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        max-height: 40%;
+        overflow-y: auto;
+        display: block; /* Default to visible */
+    }
+
+    #nearestList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+			
+			/* Style for toggle buttons */
             .toggleButton {
                 position: absolute;
                 bottom: 90px;
                 left: 10px;
-                width: 70px;
+				width: 70px;
                 background-color: #007bff;
                 color: white;
                 border: none;
@@ -119,117 +131,74 @@
             .toggleButton:hover {
                 background-color: #0056b3;
             }
-            
-            #fileInputContainer {
-                position: absolute;
-                top: 10px;
-                left: 350px;
-                background-color: rgba(255, 255, 255, 0.9);
-                padding: 10px;
-                border-radius: 5px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            }
-            
-            #fileSelect {
-                padding: 5px;
-                border-radius: 3px;
-                border: 1px solid #ccc;
-                margin-right: 10px;
-                min-width: 150px;
-            }
+			
+		#fileInputContainer {
+		  position: absolute;
+		  top: 10px;
+		  left: 350px;
+		  background-color: rgba(255, 255, 255, 0.8);
+		  padding: 10px;
+		  border-radius: 5px;
+		  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
 
-            /* Styles pour le clavier virtuel HTML de fallback */
-            #virtualKeyboardHTML {
-                position: fixed;
-                top: 200px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(40, 40, 40, 0.95);
-                border-radius: 10px;
-                padding: 15px;
-                display: none;
-                z-index: 9999;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-                transition: all 0.3s ease;
-                pointer-events: auto; /* Ensure VR pointer interaction */
-                touch-action: manipulation; /* Optimize for VR touch */
-                /* Position below search panel in VR */
-                margin-top: 20px;
-            }
+#fileSelect {
+		  padding: 5px;
+		  border-radius: 3px;
+		  border: 1px solid #ccc;
+		  margin-right: 10px;
+		  min-width: 150px;
+}
         </style>
     </head>
 <body>
-    <script type="module" src="./indexvr.js"></script>
-    <div id="fileInputContainer">
-        <div id="statusMessage" style="margin-bottom: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 5px; font-weight: bold;">
-            🔄 Application prête - Aucun fichier chargé. Veuillez sélectionner un fichier.
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label for="fileInput" style="display: block; font-weight: bold; margin-bottom: 5px;">
-                📁 Choisir un fichier depuis votre PC:
-            </label>
-            <input type="file" id="fileInput" style="margin-right: 10px; width: 250px;">
-            <button id="loadFileButton" style="background-color: #28a745; padding: 8px 15px;">Charger fichier</button>
-            <button id="imageSelectorButton" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">🎨 Images</button>
-        </div>
-        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc;">
-            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">
-                Ou utiliser un fichier prédéfini:
-            </label>
-            <select id="fileSelect" style="margin-right: 10px; min-width: 150px;">
-                <option value="">-- Choisir --</option>
-                <option value="test_particles.json">Test Particles</option>
-                <option value="encrypted_PSO_0.json">Encrypted PSO Data</option>
-            </select>
-            <button id="loadPresetButton" style="background-color: #007bff; padding: 8px 15px;">Charger prédéfini</button>
-        </div>
-    </div>
-    <div id="searchContainer">
+    <script type="module" src="./indexvr.js?v=2025061302"></script>
+	<div id="fileInputContainer" style="background-color: rgba(255, 255, 255, 0.9);">
+	       <div id="statusMessage" style="margin-bottom: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 5px; font-weight: bold;">
+	           🔄 Application prête - Aucun fichier chargé. Veuillez sélectionner un fichier.
+	       </div>
+	       <div style="margin-bottom: 10px;">
+	           <label for="fileInput" style="display: block; font-weight: bold; margin-bottom: 5px;">
+	               📁 Choisir un fichier depuis votre PC:
+	           </label>
+	           <input type="file" id="fileInput" style="margin-right: 10px; width: 250px;">
+	           <button id="loadFileButton" style="background-color: #28a745; padding: 8px 15px;">Charger fichier</button>
+	       </div>
+	       <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc;">
+	           <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">
+	               Ou utiliser un fichier prédéfini:
+	           </label>
+	           <select id="fileSelect" style="margin-right: 10px; min-width: 150px;">
+	               <option value="">-- Choisir --</option>
+	               <option value="test_particles.json">Test Particles</option>
+	               <option value="encrypted_PSO_0.json">Encrypted PSO Data</option>
+	           </select>
+	           <button id="loadPresetButton" style="background-color: #007bff; padding: 8px 15px;">Charger prédéfini</button>
+	       </div>
+	   </div>
+	<div id="searchContainer">
         <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
         <datalist id="particlesList"></datalist>
         <button id="searchButton">Search</button>
     </div>
-    <canvas id="renderCanvas" touch-action="none"></canvas>
-    <div id="legend"></div>
-    <div id="nearestContainer">
-        <ul id="nearestList"></ul>
+	<canvas id="renderCanvas" touch-action="none"></canvas>
+	<div id="legend"></div>
+	<div id="nearestContainer">
+    <ul id="nearestList"></ul>
     </div>
-    <button class="toggleButton" data-target="searchContainer">Search</button>
+	<button class="toggleButton" data-target="searchContainer">Search</button>
     <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
     <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
-    <button id="demoModeButton" class="toggleButton" style="bottom: 130px; background-color: #28a745;">Mode Démo</button>
-    <div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
-        <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
-            <label for="passwordInput">Enter password:</label>
-            <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
-            <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
-        </div>
+	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+    <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
+        <label for="passwordInput">Enter password:</label>
+        <input type="password" id="passwordInput" style="width: 100%; padding: 10px;" />
+        <button id="submitPasswordButton" style="width: 100%; padding: 10px; margin-top: 10px;">Soumettre</button>
     </div>
-    <div id="virtualKeyboardHTML"></div>
-    <script>
-        function toggleHTMLKeyboard() {
-            const keyboard = document.getElementById('virtualKeyboardHTML');
-            if (keyboard.style.display === 'none' || keyboard.style.display === '') {
-                showHTMLKeyboard();
-            } else {
-                hideHTMLKeyboard();
-            }
-        }
-        
-        function showHTMLKeyboard() {
-            document.getElementById('virtualKeyboardHTML').style.display = 'block';
-        }
-        
-        function hideHTMLKeyboard() {
-            document.getElementById('virtualKeyboardHTML').style.display = 'none';
-        }
-        
-        // Exposer les fonctions globalement
-        window.toggleHTMLKeyboard = toggleHTMLKeyboard;
-        window.showHTMLKeyboard = showHTMLKeyboard;
-        window.hideHTMLKeyboard = hideHTMLKeyboard;
-
-        document.querySelectorAll('.toggleButton').forEach(button => {
+</div>
+	    <script>
+		const toggleButtons = document.querySelectorAll('.toggleButton');
+        toggleButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const target = document.querySelector(`#${button.dataset.target}`);
                 if (target) {
@@ -237,11 +206,7 @@
                 }
             });
         });
-        
-        // Gestionnaire pour le bouton du sélecteur d'images
-        document.getElementById('imageSelectorButton').addEventListener('click', function() {
-            window.open('image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-        });
     </script>
+</body>
 </body>
 </html>
