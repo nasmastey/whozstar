@@ -818,11 +818,14 @@ function main(currentData, ratio) {
         metadata: { subType: d.subType }
     }));
 
-    // Sprite manager
+    // Sprite manager - SYSTÈME SIMPLE TEMPORAIRE POUR CORRIGER LES BUGS
     const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
     labelSpriteManager.isPickable = true;
+    
+    // Stocker la référence pour compatibilité
+    window.labelSpriteManager = labelSpriteManager;
 
-    // Helper to create a sprite and attach actions - INTÉGRÉ AVEC SYSTÈME REPVAL
+    // Helper to create a sprite and attach actions - SYSTÈME REPVAL COMPLET
     function createLabelSprite(point, idx) {
         const position = new BABYLON.Vector3(point.x, point.y, point.z);
         originalPositions.push(position.clone());
@@ -870,7 +873,9 @@ function main(currentData, ratio) {
         const baseColor = point.color;
         const levelColor = getLevelColor(level, baseColor);
 
+        // SYSTÈME SIMPLE - Utiliser le sprite manager unique pour corriger les bugs
         const sprite = new BABYLON.Sprite(point.prefLabel, labelSpriteManager);
+        
         Object.assign(sprite, {
             isPickable: true,
             position,
@@ -1055,11 +1060,14 @@ engine.runRenderLoop(renderLoop);
     // Charger la configuration d'images
     loadImageConfiguration();
     
-    // Assigner des niveaux aléatoires aux sprites
+    // Mise à jour de la compatibilité avec l'ancien système
+    updateLegacySpriteReferences();
+    
+    // Assigner des niveaux aléatoires aux sprites (utilise maintenant getAllSprites())
     assignRandomLevels();
     
-    // Catégoriser les sprites (centraux vs orbitants)
-    categorizeSprites();
+    // Catégoriser les sprites (temporairement désactivé pour stabilité)
+    // categorizeSprites();
     
     console.log('✅ Système RepVal initialisé avec succès');
     console.log(`📊 Statistiques: ${centralSprites.length} sprites centraux, ${orbitingSprites.length} sprites orbitants`);
@@ -1312,7 +1320,7 @@ function getColor(type) {
     return randColor;
 }
 
-// Update sprite positions to add small movements - COMPATIBLE AVEC LE SCALE + SYSTÈME ORBITAL REPVAL
+// Update sprite positions to add small movements - RETOUR À L'ORIGINAL POUR STABILITÉ
 function updateSpritePositions() {
     time += 0.004;
 	const camera = scene.activeCamera;
@@ -1321,9 +1329,6 @@ function updateSpritePositions() {
 	const cameraPosition = camera.position;
 	const cameraGetTarget = camera.getTarget();
 
-	// Mettre à jour les positions orbitales d'abord (nouvelles fonctionnalités RepVal)
-	updateOrbitalPositions();
-
 	labelSprites.forEach((sprite, idx) => {
 		const distance = BABYLON.Vector3.Distance(cameraPosition, sprite.position);
 		
@@ -1331,31 +1336,29 @@ function updateSpritePositions() {
 			const spriteDirection = sprite.position.subtract(cameraPosition).normalize();
 			const angle = Math.acos(BABYLON.Vector3.Dot(cameraDirection, spriteDirection));
 			if( angle < fov) {
-				const spriteName = sprite.name;
-				const level = spriteLevel[spriteName] || 7; // Niveau par défaut
+				// RETOUR À LA LOGIQUE ORIGINALE STABLE
+				const originalPosition = originalPositions[idx];
+				const currentScale = scene.currentScaleValue || 1.0;
+				const scaleFactor = 1.0 / currentScale; // Même logique que updateScale
 				
-				// Vérifier si ce sprite orbite (niveau 5-13)
-				const isOrbiting = orbitingSprites.some(orbiter => orbiter.sprite.name === spriteName);
-				
-				if (!isOrbiting) {
-					// Sprites non-orbitants (centraux) : utiliser l'ancienne logique
-					const originalPosition = originalPositions[idx];
-					const currentScale = scene.currentScaleValue || 1.0;
-					const scaleFactor = 1.0 / currentScale;
-					
-					// Base scalée + petite animation
-					sprite.position.x = (originalPosition.x * scaleFactor) + 0.8 * Math.sin(time + idx);
-					sprite.position.y = (originalPosition.y * scaleFactor) + 0.8 * Math.cos(time + idx);
-					sprite.position.z = (originalPosition.z * scaleFactor) + 0.8 * Math.sin(time + idx);
-				}
-				// Les sprites orbitants sont déjà mis à jour par updateOrbitalPositions()
-				
+				// Base scalée + petite animation (comme l'original)
+				sprite.position.x = (originalPosition.x * scaleFactor) + 0.8 * Math.sin(time + idx);
+				sprite.position.y = (originalPosition.y * scaleFactor) + 0.8 * Math.cos(time + idx);
+				sprite.position.z = (originalPosition.z * scaleFactor) + 0.8 * Math.sin(time + idx);
 				sprite.angle = 0.01*idx;
 				
-				// Appliquer la taille selon le niveau (RepVal)
-				const newSize = getSizeForLevel(level);
-				if (sprite.size !== newSize) {
-					sprite.size = newSize;
+				// Appliquer la taille selon le niveau RepVal (optionnel et sécurisé)
+				try {
+					const spriteName = sprite.name;
+					const level = spriteLevel[spriteName];
+					if (level && typeof getSizeForLevel === 'function') {
+						const newSize = getSizeForLevel(level);
+						if (sprite.size !== newSize) {
+							sprite.size = newSize;
+						}
+					}
+				} catch (error) {
+					// Ignorer les erreurs - garder les tailles par défaut
 				}
 			}
 		}
@@ -2828,17 +2831,88 @@ let centralSprites = []; // Sprites centraux (niveau élevé)
 // Fonction pour charger la configuration d'images depuis localStorage
 function loadImageConfiguration() {
     try {
-        const saved = localStorage.getItem('spriteImageConfig');
+        const saved = localStorage.getItem('spriteImageConfig'); // Même clé que le sélecteur
         if (saved) {
             const parsed = JSON.parse(saved);
             currentImageConfiguration = {...defaultImageConfiguration, ...parsed};
-            console.log('Configuration d\'images chargée depuis localStorage:', currentImageConfiguration);
+            console.log('🖼️ Configuration d\'images chargée depuis localStorage:', currentImageConfiguration);
+        } else {
+            console.log('🖼️ Aucune configuration sauvegardée, utilisation des valeurs par défaut');
         }
     } catch (error) {
-        console.warn('Erreur lors du chargement de la configuration d\'images:', error);
+        console.warn('❌ Erreur lors du chargement de la configuration d\'images:', error);
         currentImageConfiguration = {...defaultImageConfiguration};
     }
 }
+
+// Fonction pour recharger avec la nouvelle configuration d'images (appelée par le sélecteur)
+function reloadWithNewImageConfiguration() {
+    console.log('🔄 Rechargement avec nouvelle configuration d\'images...');
+    
+    // Recharger la configuration
+    loadImageConfiguration();
+    
+    // Réassigner les niveaux et recategoriser
+    if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+        console.log('🔄 Mise à jour des sprites avec nouvelle configuration...');
+        
+        const sprites = scene.spriteManagers[0].sprites;
+        
+        // Mettre à jour les tailles et couleurs selon les nouveaux niveaux
+        sprites.forEach(sprite => {
+            const spriteName = sprite.name;
+            const level = spriteLevel[spriteName] || 7;
+            
+            // Appliquer la nouvelle taille
+            const newSize = getSizeForLevel(level);
+            sprite.size = newSize;
+            
+            // Appliquer la nouvelle couleur de niveau
+            const baseColor = getColor(sprite.metadata?.subType || 'default');
+            const levelColor = getLevelColor(level, baseColor);
+            sprite.color = new BABYLON.Color4(levelColor.r, levelColor.g, levelColor.b, 1);
+            
+            console.log(`🎨 Sprite ${spriteName} (niveau ${level}): taille=${newSize}, couleur mis à jour`);
+        });
+        
+        // Recategoriser les sprites orbitaux
+        categorizeSprites();
+        
+        console.log('✅ Sprites mis à jour avec succès avec la nouvelle configuration');
+    }
+}
+
+// Exposer la fonction globalement pour le sélecteur d'images
+window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
+
+// Écouter les changements de configuration via localStorage
+window.addEventListener('storage', function(event) {
+    if (event.key === 'spriteImageConfigUpdate') {
+        console.log('🔔 Changement de configuration détecté via localStorage');
+        setTimeout(() => {
+            reloadWithNewImageConfiguration();
+        }, 100); // Petit délai pour s'assurer que la config est sauvegardée
+    }
+});
+
+// Écouter aussi les changements directs de la configuration
+setInterval(() => {
+    const saved = localStorage.getItem('spriteImageConfig');
+    if (saved) {
+        try {
+            const newConfig = JSON.parse(saved);
+            const currentConfigStr = JSON.stringify(currentImageConfiguration);
+            const newConfigStr = JSON.stringify(newConfig);
+            
+            if (currentConfigStr !== newConfigStr) {
+                console.log('🔄 Configuration d\'images modifiée détectée');
+                reloadWithNewImageConfiguration();
+            }
+        } catch (error) {
+            // Ignorer les erreurs de parsing
+        }
+    }
+}, 2000); // Vérifier toutes les 2 secondes
 
 // Fonction pour sauvegarder la configuration d'images
 function saveImageConfiguration() {
@@ -2906,12 +2980,12 @@ function getLevelColor(level, baseColor) {
 
 // Fonction pour assigner un niveau aléatoire aux sprites existants
 function assignRandomLevels() {
-    if (!scene.spriteManagers[0] || !scene.spriteManagers[0].sprites) {
+    const sprites = getAllSprites();
+    if (!sprites || sprites.length === 0) {
         console.log('Aucun sprite disponible pour assigner des niveaux');
         return;
     }
     
-    const sprites = scene.spriteManagers[0].sprites;
     console.log(`Assignation de niveaux aléatoires à ${sprites.length} sprites`);
     
     sprites.forEach(sprite => {
@@ -3003,37 +3077,86 @@ function categorizeSprites() {
     console.log(`Catégorisation terminée: ${centralSprites.length} centraux, ${orbitingSprites.length} orbitants`);
 }
 
-// Fonction pour mettre à jour les positions orbitales (intégrée dans updateSpritePositions)
+// Fonction pour mettre à jour les positions orbitales - TEMPORAIREMENT DÉSACTIVÉE POUR STABILITÉ
 function updateOrbitalPositions() {
-    if (orbitingSprites.length === 0) return;
+    // DÉSACTIVÉ TEMPORAIREMENT pour corriger les bugs de mouvement
+    return;
     
-    const time = performance.now() * 0.001; // Temps en secondes
+    if (!orbitingSprites || orbitingSprites.length === 0) return;
     
-    orbitingSprites.forEach(orbiter => {
-        if (orbiter.centralSprite && orbiter.sprite.isVisible) {
-            const central = orbiter.centralSprite;
-            const currentScale = scene.currentScaleValue || 1.0;
-            const scaleFactor = 1.0 / currentScale;
-            
-            // Position centrale avec scale appliqué
-            const centralPos = central.originalPosition ?
-                central.originalPosition.clone().scale(scaleFactor) :
-                central.position.clone();
-            
-            // Calculer la position orbitale
-            orbiter.orbitAngle += orbiter.orbitSpeed;
-            const orbitRadius = orbiter.orbitDistance * scaleFactor;
-            
-            const orbitX = centralPos.x + Math.cos(orbiter.orbitAngle) * orbitRadius;
-            const orbitY = centralPos.y + Math.sin(orbiter.orbitAngle * 0.7) * (orbitRadius * 0.3); // Orbite elliptique
-            const orbitZ = centralPos.z + Math.sin(orbiter.orbitAngle) * orbitRadius;
-            
-            // Appliquer la position orbitale + petite animation existante
-            orbiter.sprite.position.x = orbitX + 0.8 * Math.sin(time + orbiter.sprite.name.length);
-            orbiter.sprite.position.y = orbitY + 0.8 * Math.cos(time + orbiter.sprite.name.length);
-            orbiter.sprite.position.z = orbitZ + 0.8 * Math.sin(time + orbiter.sprite.name.length);
-        }
-    });
+    try {
+        const time = performance.now() * 0.001; // Temps en secondes
+        
+        orbitingSprites.forEach(orbiter => {
+            if (orbiter && orbiter.centralSprite && orbiter.sprite && orbiter.sprite.isVisible) {
+                const central = orbiter.centralSprite;
+                const currentScale = scene.currentScaleValue || 1.0;
+                const scaleFactor = 1.0 / currentScale;
+                
+                // Position centrale avec scale appliqué
+                const centralPos = central.originalPosition ?
+                    central.originalPosition.clone().scale(scaleFactor) :
+                    central.position.clone();
+                
+                // Calculer la position orbitale avec animation réduite
+                orbiter.orbitAngle += orbiter.orbitSpeed * 0.1; // Vitesse réduite
+                const orbitRadius = orbiter.orbitDistance * scaleFactor * 0.5; // Rayon réduit
+                
+                const orbitX = centralPos.x + Math.cos(orbiter.orbitAngle) * orbitRadius;
+                const orbitY = centralPos.y + Math.sin(orbiter.orbitAngle * 0.7) * (orbitRadius * 0.3);
+                const orbitZ = centralPos.z + Math.sin(orbiter.orbitAngle) * orbitRadius;
+                
+                // Animation réduite pour éviter les sauts
+                const animOffset = 0.1;
+                orbiter.sprite.position.x = orbitX + animOffset * Math.sin(time + orbiter.sprite.name.length);
+                orbiter.sprite.position.y = orbitY + animOffset * Math.cos(time + orbiter.sprite.name.length);
+                orbiter.sprite.position.z = orbitZ + animOffset * Math.sin(time + orbiter.sprite.name.length);
+            }
+        });
+    } catch (error) {
+        console.warn('Erreur dans updateOrbitalPositions:', error);
+    }
+}
+
+// === FONCTIONS UTILITAIRES POUR COMPATIBILITÉ ===
+
+// Fonction utilitaire pour récupérer tous les sprites - SYSTÈME SIMPLIFIÉ
+function getAllSprites() {
+    // Système simple - utiliser le sprite manager principal
+    if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+        return scene.spriteManagers[0].sprites;
+    } else if (window.labelSpriteManager && window.labelSpriteManager.sprites) {
+        return window.labelSpriteManager.sprites;
+    } else if (labelSprites && labelSprites.length > 0) {
+        return labelSprites;
+    }
+    return [];
+}
+
+// Fonction utilitaire pour récupérer tous les sprite managers (compatibilité)
+function getAllSpriteManagers() {
+    if (window.spriteManagersByLevel) {
+        // Nouveau système RepVal
+        return Object.values(spriteManagersByLevel);
+    } else if (scene.spriteManagers) {
+        // Ancien système
+        return scene.spriteManagers;
+    }
+    return [];
+}
+
+// Mise à jour globale pour compatibilité avec l'ancien code - SYSTÈME SIMPLIFIÉ
+function updateLegacySpriteReferences() {
+    // Système simple - s'assurer que scene.spriteManagers[0] existe
+    if (!scene.spriteManagers) {
+        scene.spriteManagers = [];
+    }
+    
+    // Utiliser le sprite manager principal
+    if (window.labelSpriteManager) {
+        scene.spriteManagers[0] = window.labelSpriteManager;
+        console.log(`✅ Référence sprite manager mise à jour`);
+    }
 }
 
 console.log('✅ Nouvelles fonctionnalités RepVal intégrées - Système orbital, niveaux et images');

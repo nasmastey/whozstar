@@ -254,7 +254,7 @@
     </div>
 
     <script>
-        // Configuration par défaut basée sur les données
+        // Configuration par défaut basée sur les données RepVal
         const defaultConfiguration = {
             1: "1blackhole.png",
             2: "2blackhole.png", 
@@ -271,7 +271,7 @@
             13: "13asteroid.png"
         };
 
-        // Images disponibles
+        // Images disponibles (incluant les images par défaut whozstar)
         const availableImages = [
             "1blackhole.png",
             "2blackhole.png",
@@ -286,6 +286,8 @@
             "11moon.png",
             "12asteroid.png",
             "13asteroid.png",
+            "etoile2.png",        // Image par défaut whozstar
+            "bubble12.png",       // Autre image whozstar
             "whoz_logo.png",
             "bubble.png",
             "links.png"
@@ -294,9 +296,9 @@
         // Configuration actuelle
         let currentConfiguration = { ...defaultConfiguration };
 
-        // Charger la configuration sauvegardée
+        // Charger la configuration sauvegardée - COMPATIBLE AVEC WHOZSTAR
         function loadSavedConfiguration() {
-            const saved = localStorage.getItem('imageConfiguration');
+            const saved = localStorage.getItem('spriteImageConfig'); // Même clé que whozstar
             if (saved) {
                 try {
                     currentConfiguration = JSON.parse(saved);
@@ -306,9 +308,9 @@
             }
         }
 
-        // Sauvegarder la configuration
+        // Sauvegarder la configuration - COMPATIBLE AVEC WHOZSTAR
         function saveConfiguration() {
-            localStorage.setItem('imageConfiguration', JSON.stringify(currentConfiguration));
+            localStorage.setItem('spriteImageConfig', JSON.stringify(currentConfiguration)); // Même clé
         }
 
         // Initialiser l'interface
@@ -445,26 +447,47 @@
             }
         }
 
+        // Appliquer la configuration immédiatement - COMMUNICATION AVEC WHOZSTAR
+        function applyImmediately() {
+            saveConfiguration();
+            
+            // Déclencher l'événement de mise à jour pour whozstar
+            localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
+            
+            // Essayer de mettre à jour l'application principale directement
+            try {
+                if (window.opener && window.opener.reloadWithNewImageConfiguration) {
+                    window.opener.reloadWithNewImageConfiguration();
+                    alert('✅ Configuration appliquée immédiatement !\nLes changements sont visibles dans l\'application VR whozstar.');
+                } else {
+                    alert('⚡ Configuration sauvegardée !\nSi l\'application whozstar VR est ouverte, elle se mettra à jour automatiquement.');
+                }
+            } catch (error) {
+                console.log('Application whozstar non accessible directement');
+                alert('⚡ Configuration sauvegardée !\nRechargez l\'application whozstar VR pour voir les changements.');
+            }
+        }
+
         // Appliquer la configuration (mettre à jour les données JSON)
         function applyConfiguration() {
             saveConfiguration();
             
-            // Essayer de communiquer avec l'application principale
+            // Essayer de communiquer avec l'application principale whozstar
             try {
                 // Si l'application principale est ouverte dans une autre fenêtre
                 if (window.opener && window.opener.reloadWithNewImageConfiguration) {
                     window.opener.reloadWithNewImageConfiguration();
-                    alert('Configuration appliquée avec succès !\nLes changements sont visibles dans l\'application principale.');
+                    alert('Configuration appliquée avec succès !\nLes changements sont visibles dans l\'application whozstar VR.');
                 } else {
                     // Déclencher un événement storage pour notifier les autres onglets
-                    localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
+                    localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
                     
-                    const message = `Configuration appliquée et sauvegardée !\n\nPour voir les changements :\n• Si l'application principale est ouverte, elle se mettra à jour automatiquement\n• Sinon, ouvrez ou rechargez l'application principale`;
+                    const message = `Configuration appliquée et sauvegardée !\n\nPour voir les changements :\n• Si l'application whozstar VR est ouverte, elle se mettra à jour automatiquement\n• Sinon, ouvrez ou rechargez l'application whozstar VR`;
                     alert(message);
                 }
             } catch (error) {
                 console.error('Erreur lors de l\'application:', error);
-                alert('Configuration sauvegardée ! Rechargez l\'application principale pour voir les changements.');
+                alert('Configuration sauvegardée ! Rechargez l\'application whozstar VR pour voir les changements.');
             }
         }
 
@@ -485,7 +508,7 @@
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = 'image_configuration.json';
+            link.download = 'whozstar_image_configuration.json';
             link.click();
         }
 
@@ -532,28 +555,7 @@
         // Initialiser l'interface au chargement de la page
         document.addEventListener('DOMContentLoaded', initializeInterface);
 
-        // Fonction pour appliquer immédiatement les changements
-        function applyImmediately() {
-            saveConfiguration();
-            
-            // Déclencher l'événement de mise à jour
-            localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
-            
-            // Essayer de mettre à jour l'application principale directement
-            try {
-                if (window.opener && window.opener.reloadWithNewImageConfiguration) {
-                    window.opener.reloadWithNewImageConfiguration();
-                    alert('✅ Configuration appliquée immédiatement !\nLes changements sont visibles dans l\'application principale.');
-                } else {
-                    alert('⚡ Configuration sauvegardée !\nSi l\'application principale est ouverte, elle se mettra à jour automatiquement.');
-                }
-            } catch (error) {
-                console.log('Application principale non accessible directement');
-                alert('⚡ Configuration sauvegardée !\nRechargez l\'application principale pour voir les changements.');
-            }
-        }
-
-        // Exposer la configuration pour l'application principale
+        // Exposer la configuration pour l'application principale whozstar
         window.getImageConfiguration = function() {
             return currentConfiguration;
         };

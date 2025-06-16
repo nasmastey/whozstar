@@ -175,6 +175,11 @@
 	           </select>
 	           <button id="loadPresetButton" style="background-color: #007bff; padding: 8px 15px;">Charger prédéfini</button>
 	       </div>
+	       <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc;">
+	           <button id="openImageSelector" style="background-color: #ff6b35; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+	               🎨 Sélecteur d'Images RepVal
+	           </button>
+	       </div>
 	   </div>
 	<div id="searchContainer">
         <input type="text" id="searchInput" list="particlesList" placeholder="Enter particle name">
@@ -197,16 +202,46 @@
     </div>
 </div>
 	    <script>
-		const toggleButtons = document.querySelectorAll('.toggleButton');
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const target = document.querySelector(`#${button.dataset.target}`);
-                if (target) {
-                    target.style.display = target.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-        });
-    </script>
+	 const toggleButtons = document.querySelectorAll('.toggleButton');
+	       toggleButtons.forEach(button => {
+	           button.addEventListener('click', () => {
+	               const target = document.querySelector(`#${button.dataset.target}`);
+	               if (target) {
+	                   target.style.display = target.style.display === 'none' ? 'block' : 'none';
+	               }
+	           });
+	       });
+	       
+	       // Gestion du bouton sélecteur d'images RepVal
+	       document.addEventListener('DOMContentLoaded', function() {
+	           const openImageSelectorBtn = document.getElementById('openImageSelector');
+	           if (openImageSelectorBtn) {
+	               openImageSelectorBtn.addEventListener('click', function() {
+	                   // Ouvrir le sélecteur d'images dans un nouvel onglet
+	                   const imageSelectorWindow = window.open('./image_selector.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+	                   
+	                   if (imageSelectorWindow) {
+	                       console.log('✅ Sélecteur d\'images RepVal ouvert dans un nouvel onglet');
+	                       
+	                       // Optionnel: Afficher une notification
+	                       const statusMsg = document.getElementById('statusMessage');
+	                       if (statusMsg) {
+	                           const originalMsg = statusMsg.innerHTML;
+	                           statusMsg.innerHTML = '🎨 Sélecteur d\'images RepVal ouvert dans un nouvel onglet';
+	                           statusMsg.style.backgroundColor = '#e8f5e8';
+	                           
+	                           setTimeout(() => {
+	                               statusMsg.innerHTML = originalMsg;
+	                               statusMsg.style.backgroundColor = '#e3f2fd';
+	                           }, 3000);
+	                       }
+	                   } else {
+	                       alert('❌ Impossible d\'ouvrir le sélecteur d\'images.\nVeuillez autoriser les pop-ups pour ce site.');
+	                   }
+	               });
+	           }
+	       });
+	   </script>
 </body>
 </body>
 </html>
