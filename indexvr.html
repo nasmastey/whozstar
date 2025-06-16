@@ -176,8 +176,11 @@
 	           <button id="loadPresetButton" style="background-color: #007bff; padding: 8px 15px;">Charger prédéfini</button>
 	       </div>
 	       <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc;">
-	           <button id="openImageSelector" style="background-color: #ff6b35; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+	           <button id="openImageSelector" style="background-color: #ff6b35; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px;">
 	               🎨 Sélecteur d'Images RepVal
+	           </button>
+	           <button id="testImageReload" style="background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+	               🧪 Test Rechargement
 	           </button>
 	       </div>
 	   </div>
@@ -237,6 +240,34 @@
 	                       }
 	                   } else {
 	                       alert('❌ Impossible d\'ouvrir le sélecteur d\'images.\nVeuillez autoriser les pop-ups pour ce site.');
+	                   }
+	               });
+	           }
+	           
+	           // Gestion du bouton de test de rechargement
+	           const testImageReloadBtn = document.getElementById('testImageReload');
+	           if (testImageReloadBtn) {
+	               testImageReloadBtn.addEventListener('click', function() {
+	                   console.log('🧪 TEST: Bouton de test de rechargement cliqué');
+	                   
+	                   // Vérifier si la fonction existe
+	                   if (typeof window.reloadWithNewImageConfiguration === 'function') {
+	                       console.log('✅ Fonction reloadWithNewImageConfiguration trouvée');
+	                       window.reloadWithNewImageConfiguration();
+	                   } else {
+	                       console.error('❌ Fonction reloadWithNewImageConfiguration non trouvée');
+	                       alert('❌ Fonction de rechargement non disponible');
+	                   }
+	                   
+	                   // Afficher notification
+	                   const statusMsg = document.getElementById('statusMessage');
+	                   if (statusMsg) {
+	                       statusMsg.innerHTML = '🧪 Test de rechargement lancé - Vérifiez la console';
+	                       statusMsg.style.backgroundColor = '#fff3e0';
+	                       
+	                       setTimeout(() => {
+	                           statusMsg.style.backgroundColor = '#e3f2fd';
+	                       }, 3000);
 	                   }
 	               });
 	           }

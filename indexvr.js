@@ -472,9 +472,9 @@ scene.onBeforeRenderObservable.add(() => {
                             console.log(`VR HORIZONTAL ROTATION - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
                         }
                         
-                        // Mouvement vertical (haut/bas) avec zone morte réduite
-                        if (Math.abs(yAxis) > 0.05) { // Zone morte réduite de 0.1 à 0.05
-                            const movementSpeed = 0.15;
+                        // Mouvement vertical (haut/bas) avec sensibilité réduite
+                        if (Math.abs(yAxis) > 0.2) { // Zone morte augmentée pour moins de précision
+                            const movementSpeed = 0.05; // Vitesse réduite de 0.15 à 0.05
                             const yDelta = -yAxis * movementSpeed; // Inverted for intuitive control
                             scene.activeCamera.position.y += yDelta;
                             
@@ -506,9 +506,9 @@ scene.onBeforeRenderObservable.add(() => {
                         console.log(`VR HORIZONTAL ROTATION - Gamepad X: ${leftStickX.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
                     }
                     
-                    // Mouvement vertical (haut/bas) avec zone morte réduite
-                    if (Math.abs(leftStickY) > 0.05) {
-                        const movementSpeed = 0.15;
+                    // Mouvement vertical (haut/bas) avec sensibilité réduite
+                    if (Math.abs(leftStickY) > 0.2) { // Zone morte augmentée
+                        const movementSpeed = 0.05; // Vitesse réduite
                         const yDelta = -leftStickY * movementSpeed;
                         scene.activeCamera.position.y += yDelta;
                         
@@ -1068,6 +1068,15 @@ engine.runRenderLoop(renderLoop);
     
     // Catégoriser les sprites (temporairement désactivé pour stabilité)
     // categorizeSprites();
+    
+    // Appliquer la configuration d'images sauvegardée après le chargement
+    setTimeout(() => {
+        const savedConfig = localStorage.getItem('spriteImageConfig');
+        if (savedConfig) {
+            console.log('🎨 Application de la configuration d\'images sauvegardée...');
+            reloadWithNewImageConfiguration();
+        }
+    }, 1000); // Délai pour s'assurer que tout est initialisé
     
     console.log('✅ Système RepVal initialisé avec succès');
     console.log(`📊 Statistiques: ${centralSprites.length} sprites centraux, ${orbitingSprites.length} sprites orbitants`);
@@ -2043,7 +2052,7 @@ function updateVRParticleCache() {
             const distance = BABYLON.Vector3.Distance(cameraPosition, spritePosition);
             
             // Distance étendue mais raisonnable
-            if (distance > 0.5 && distance < 500) {
+            if (distance > 0.5 && distance < 5000) {
                 const spriteDirection = spritePosition.subtract(cameraPosition).normalize();
                 const angle = Math.acos(Math.max(-1, Math.min(1, BABYLON.Vector3.Dot(cameraDirection, spriteDirection))));
                 
@@ -2845,45 +2854,89 @@ function loadImageConfiguration() {
     }
 }
 
-// Fonction pour recharger avec la nouvelle configuration d'images (appelée par le sélecteur)
+// Fonction pour recharger avec la nouvelle configuration d'images - VERSION CORRIGÉE
 function reloadWithNewImageConfiguration() {
-    console.log('🔄 Rechargement avec nouvelle configuration d\'images...');
+    console.log('🔄🔄🔄 DEBUT RECHARGEMENT CONFIGURATION IMAGES 🔄🔄🔄');
     
-    // Recharger la configuration
-    loadImageConfiguration();
-    
-    // Réassigner les niveaux et recategoriser
-    if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
-        console.log('🔄 Mise à jour des sprites avec nouvelle configuration...');
+    try {
+        // Recharger la configuration
+        console.log('Étape 1: Chargement configuration...');
+        loadImageConfiguration();
+        console.log('✅ Configuration chargée:', currentImageConfiguration);
         
-        const sprites = scene.spriteManagers[0].sprites;
+        // Vérifier si des données sont chargées
+        const sprites = getAllSprites();
+        console.log('✅ getAllSprites() retourne:', sprites.length, 'sprites');
         
-        // Mettre à jour les tailles et couleurs selon les nouveaux niveaux
-        sprites.forEach(sprite => {
-            const spriteName = sprite.name;
-            const level = spriteLevel[spriteName] || 7;
+        if (sprites && sprites.length > 0) {
+            console.log(`🔄 Mise à jour de ${sprites.length} sprites avec nouvelle configuration...`);
             
-            // Appliquer la nouvelle taille
-            const newSize = getSizeForLevel(level);
-            sprite.size = newSize;
+            let updateCount = 0;
+            // Mettre à jour les tailles et couleurs selon les nouveaux niveaux
+            sprites.forEach((sprite, index) => {
+                try {
+                    const spriteName = sprite.name;
+                    const level = spriteLevel[spriteName] || 7;
+                    
+                    // Appliquer la nouvelle taille avec sécurité
+                    if (typeof getSizeForLevel === 'function') {
+                        const newSize = getSizeForLevel(level);
+                        sprite.size = newSize;
+                    }
+                    
+                    // Appliquer la nouvelle couleur de niveau avec sécurité
+                    if (typeof getLevelColor === 'function' && typeof getColor === 'function') {
+                        const baseColor = getColor(sprite.metadata?.subType || 'default');
+                        const levelColor = getLevelColor(level, baseColor);
+                        sprite.color = new BABYLON.Color4(levelColor.r, levelColor.g, levelColor.b, 1);
+                    }
+                    
+                    updateCount++;
+                } catch (spriteError) {
+                    console.warn(`❌ Erreur mise à jour sprite ${sprite.name}:`, spriteError);
+                }
+            });
             
-            // Appliquer la nouvelle couleur de niveau
-            const baseColor = getColor(sprite.metadata?.subType || 'default');
-            const levelColor = getLevelColor(level, baseColor);
-            sprite.color = new BABYLON.Color4(levelColor.r, levelColor.g, levelColor.b, 1);
+            console.log(`✅ ${updateCount}/${sprites.length} sprites mis à jour avec succès`);
             
-            console.log(`🎨 Sprite ${spriteName} (niveau ${level}): taille=${newSize}, couleur mis à jour`);
-        });
+            // Afficher notification dans le DOM
+            const statusMsg = document.getElementById('statusMessage');
+            if (statusMsg) {
+                statusMsg.innerHTML = `🎨 Configuration appliquée ! ${updateCount} sprites mis à jour.`;
+                statusMsg.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => {
+                    statusMsg.style.backgroundColor = '#e3f2fd';
+                }, 3000);
+            }
+            
+        } else {
+            // NOUVELLE GESTION : Aucune donnée chargée
+            console.warn('⚠️ Aucune donnée chargée - Configuration sauvegardée pour la prochaine fois');
+            
+            // Afficher notification expliquant le problème
+            const statusMsg = document.getElementById('statusMessage');
+            if (statusMsg) {
+                statusMsg.innerHTML = '⚠️ Veuillez d\'abord charger un fichier de données, puis utiliser le sélecteur d\'images.';
+                statusMsg.style.backgroundColor = '#fff3e0';
+                setTimeout(() => {
+                    statusMsg.style.backgroundColor = '#e3f2fd';
+                }, 5000);
+            }
+            
+            // La configuration est quand même sauvegardée pour quand les données seront chargées
+            console.log('ℹ️ Configuration sauvegardée - sera appliquée au prochain chargement de données');
+        }
         
-        // Recategoriser les sprites orbitaux
-        categorizeSprites();
-        
-        console.log('✅ Sprites mis à jour avec succès avec la nouvelle configuration');
+    } catch (error) {
+        console.error('❌ ERREUR CRITIQUE lors du rechargement de la configuration:', error);
     }
+    
+    console.log('🔄🔄🔄 FIN RECHARGEMENT CONFIGURATION IMAGES 🔄🔄🔄');
 }
 
-// Exposer la fonction globalement pour le sélecteur d'images
+// Exposer la fonction globalement pour le sélecteur d'images - VÉRIFICATION
 window.reloadWithNewImageConfiguration = reloadWithNewImageConfiguration;
+console.log('✅ Fonction reloadWithNewImageConfiguration exposée globalement:', typeof window.reloadWithNewImageConfiguration);
 
 // Écouter les changements de configuration via localStorage
 window.addEventListener('storage', function(event) {
@@ -3158,5 +3211,36 @@ function updateLegacySpriteReferences() {
         console.log(`✅ Référence sprite manager mise à jour`);
     }
 }
+
+// Test de communication avec le sélecteur au démarrage
+setTimeout(() => {
+    console.log('🔍 Test de communication avec le sélecteur d\'images...');
+    const testConfig = localStorage.getItem('spriteImageConfig');
+    if (testConfig) {
+        try {
+            const config = JSON.parse(testConfig);
+            console.log('✅ Configuration trouvée dans localStorage:', config);
+        } catch (error) {
+            console.log('⚠️ Configuration corrompue dans localStorage');
+        }
+    } else {
+        console.log('ℹ️ Aucune configuration personnalisée trouvée - utilisation des valeurs par défaut');
+    }
+}, 2000);
+
+// Amélioration de la vérification des changements de config
+let lastConfigCheck = '';
+setInterval(() => {
+    try {
+        const saved = localStorage.getItem('spriteImageConfig');
+        if (saved && saved !== lastConfigCheck) {
+            console.log('🔄 Nouvelle configuration détectée, rechargement...');
+            lastConfigCheck = saved;
+            reloadWithNewImageConfiguration();
+        }
+    } catch (error) {
+        console.warn('Erreur vérification config:', error);
+    }
+}, 1000);
 
 console.log('✅ Nouvelles fonctionnalités RepVal intégrées - Système orbital, niveaux et images');
