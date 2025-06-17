@@ -294,7 +294,7 @@
 
         // Charger la configuration sauvegardée
         function loadSavedConfiguration() {
-            const saved = localStorage.getItem('imageConfiguration');
+            const saved = localStorage.getItem('spriteImageConfig');
             if (saved) {
                 try {
                     const loadedConfig = JSON.parse(saved);
@@ -317,7 +317,7 @@
 
         // Sauvegarder la configuration
         function saveConfiguration() {
-            localStorage.setItem('imageConfiguration', JSON.stringify(currentConfiguration));
+            localStorage.setItem('spriteImageConfig', JSON.stringify(currentConfiguration));
         }
 
         // Initialiser l'interface
@@ -466,7 +466,7 @@
                     alert('Configuration appliquée avec succès !\nLes changements sont visibles dans l\'application principale.');
                 } else {
                     // Déclencher un événement storage pour notifier les autres onglets
-                    localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
+                    localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
                     
                     const message = `Configuration appliquée et sauvegardée !\n\nPour voir les changements :\n• Si l'application principale est ouverte, elle se mettra à jour automatiquement\n• Sinon, ouvrez ou rechargez l'application principale`;
                     alert(message);
@@ -546,7 +546,7 @@
             saveConfiguration();
             
             // Déclencher l'événement de mise à jour
-            localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
+            localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
             
             // Essayer de mettre à jour l'application principale directement
             try {
