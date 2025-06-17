@@ -20,32 +20,7 @@ scene.createDefaultXRExperienceAsync({
     window.xrHelper = xrHelper; // Global reference
     window.leftThumbstick = null;
 
-    // Simple controller setup
-    xrHelper.input.onControllerAddedObservable.add((controller) => {
-        console.log("Controller added:", controller.inputSource.handedness);
-        
-        controller.onMotionControllerInitObservable.add((motionController) => {
-            console.log("Motion controller initialized for:", motionController.handness);
-            
-            // Ensure controller mesh is visible with enhanced materials
-            if (motionController.rootMesh) {
-                motionController.rootMesh.setEnabled(true);
-                motionController.rootMesh.isVisible = true;
-                
-                // Make controller meshes glow
-                motionController.rootMesh.getChildMeshes().forEach(mesh => {
-                    mesh.setEnabled(true);
-                    mesh.isVisible = true;
-                    if (mesh.material) {
-                        mesh.material.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-                        mesh.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-                    }
-                });
-            }
-        });
-    });
-
-    // Enhanced controller setup with better pointer visibility
+    // Enhanced controller setup with equal priority for both controllers
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         console.log("Controller added:", controller.inputSource.handedness);
         
@@ -59,7 +34,7 @@ scene.createDefaultXRExperienceAsync({
                 
                 // Make controller meshes glow with different colors for left/right
                 const isLeft = motionController.handness === 'left';
-                const emissiveColor = isLeft ? new BABYLON.Color3(0, 0.8, 0) : new BABYLON.Color3(0.8, 0, 0);
+                const emissiveColor = isLeft ? new BABYLON.Color3(0, 0.6, 0) : new BABYLON.Color3(0.6, 0, 0);
                 
                 motionController.rootMesh.getChildMeshes().forEach(mesh => {
                     mesh.setEnabled(true);
@@ -71,46 +46,47 @@ scene.createDefaultXRExperienceAsync({
                 });
             }
             
-            // Force pointer ray creation for this controller
+            // Force pointer ray creation for this controller with equal priority
             setTimeout(() => {
                 createControllerPointer(controller, motionController);
             }, 100);
         });
     });
 
-    // Function to create/enhance controller pointers
+    // Function to create/enhance controller pointers with improved visibility
     function createControllerPointer(controller, motionController) {
         console.log("Creating pointer for controller:", motionController.handness);
         
-        // Create a custom pointer ray if none exists
-        if (!controller.pointer || !controller.pointer.isVisible) {
-            const isLeft = motionController.handness === 'left';
-            const rayColor = isLeft ? new BABYLON.Color3(0, 0.3, 0) : new BABYLON.Color3(0.3, 0, 0);
+        const isLeft = motionController.handness === 'left';
+        const rayColor = isLeft ? new BABYLON.Color3(0, 0.8, 0) : new BABYLON.Color3(0.8, 0, 0);
+        
+        // Enhanced pointer ray with better visibility
+        const ray = BABYLON.MeshBuilder.CreateCylinder("controllerRay_" + motionController.handness, {
+            height: 15,
+            diameterTop: 0.01,
+            diameterBottom: 0.02,
+            tessellation: 8
+        }, scene);
+        
+        // Create semi-transparent material for better visibility
+        const rayMaterial = new BABYLON.StandardMaterial("rayMat_" + motionController.handness, scene);
+        rayMaterial.emissiveColor = rayColor;
+        rayMaterial.diffuseColor = rayColor;
+        rayMaterial.disableLighting = true;
+        rayMaterial.alpha = 0.6; // Semi-transparent for better visibility
+        ray.material = rayMaterial;
+        
+        // Position ray relative to controller
+        if (motionController.rootMesh) {
+            ray.parent = motionController.rootMesh;
+            ray.position = new BABYLON.Vector3(0, 0, 7.5);
+            ray.rotation.x = Math.PI / 2;
             
-            // Create ray mesh - invisible but functional
-            const ray = BABYLON.MeshBuilder.CreateCylinder("controllerRay_" + motionController.handness, {
-                height: 10,
-                diameterTop: 0.002,
-                diameterBottom: 0.008,
-                tessellation: 6
-            }, scene);
-            
-            // Create transparent material
-            const rayMaterial = new BABYLON.StandardMaterial("rayMat_" + motionController.handness, scene);
-            rayMaterial.emissiveColor = rayColor;
-            rayMaterial.disableLighting = true;
-            rayMaterial.alpha = 0.0; // Completely transparent
-            ray.material = rayMaterial;
-            
-            // Position ray relative to controller
-            if (motionController.rootMesh) {
-                ray.parent = motionController.rootMesh;
-                ray.position = new BABYLON.Vector3(0, 0, 5);
-                ray.rotation.x = Math.PI / 2;
-                
-                console.log("Custom pointer ray created for", motionController.handness, "controller");
-            }
+            console.log("Enhanced pointer ray created for", motionController.handness, "controller");
         }
+        
+        // Store custom ray reference for both controllers equally
+        controller.customRay = ray;
     }
 
     // XR legend panel setup (hidden by default)
@@ -356,27 +332,31 @@ scene.createDefaultXRExperienceAsync({
         // Store reference to the pointer feature for accessing selection data
         window.vrPointerFeature = pointerFeature;
         
-        // Enhance existing pointer rays when they become available
+        // Enhance existing pointer rays when they become available with equal treatment
         setTimeout(() => {
-            xrHelper.input.controllers.forEach(controller => {
+            xrHelper.input.controllers.forEach((controller, index) => {
                 if (controller.pointer) {
-                    console.log("Enhancing pointer for controller:", controller.inputSource.handedness);
+                    console.log(`Enhancing pointer for controller ${index}:`, controller.inputSource.handedness);
                     
-                    // Make pointer ray more visible
+                    // Make pointer ray more visible with balanced colors
                     if (controller.pointer.material) {
                         const isLeft = controller.inputSource.handedness === 'left';
-                        controller.pointer.material.emissiveColor = isLeft ?
-                            new BABYLON.Color3(0, 0.8, 0) : new BABYLON.Color3(0.8, 0, 0);
-                        controller.pointer.material.alpha = 0.8; // Semi-transparent
+                        const color = isLeft ? new BABYLON.Color3(0, 0.7, 0) : new BABYLON.Color3(0.7, 0, 0);
+                        controller.pointer.material.emissiveColor = color;
+                        controller.pointer.material.diffuseColor = color;
+                        controller.pointer.material.alpha = 0.7; // Balanced transparency
                         controller.pointer.material.disableLighting = true;
                     }
                     
-                    // Ensure pointer is visible
+                    // Ensure pointer is visible and enabled equally
                     controller.pointer.setEnabled(true);
                     controller.pointer.isVisible = true;
+                    
+                    // Store enhanced pointer reference
+                    controller.enhancedPointer = true;
                 }
             });
-        }, 2000);
+        }, 1500);
         
     } catch (error) {
         console.log("Pointer selection feature not available:", error);
@@ -581,38 +561,59 @@ scene.onBeforeRenderObservable.add(() => {
             }
         }
         
-        // Gérer l'interaction continue avec le slider - VERSION SIMPLIFIÉE
+        // Gérer l'interaction continue avec le slider - VERSION ÉQUILIBRÉE
         if (sliderInteractionActive && triggerHeldControllers.size > 0) {
-            for (const [handness, heldController] of triggerHeldControllers) {
-                if (scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible && heldController.pointer) {
-                    const rayOrigin = heldController.pointer.absolutePosition || heldController.pointer.position;
-                    const rayDirection = heldController.pointer.getDirection ?
-                        heldController.pointer.getDirection(BABYLON.Vector3.Forward()) :
-                        new BABYLON.Vector3(0, 0, 1);
+            // Traiter les contrôleurs par ordre de priorité temporelle (le plus récent en premier)
+            const sortedControllers = Array.from(triggerHeldControllers.entries())
+                .sort((a, b) => b[1].timestamp - a[1].timestamp);
+            
+            for (const [handness, controllerData] of sortedControllers) {
+                const heldController = controllerData.controller;
+                
+                if (scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible) {
+                    let rayOrigin, rayDirection;
+                    
+                    // Utiliser le meilleur pointeur disponible
+                    if (heldController.customRay && heldController.customRay.absolutePosition) {
+                        rayOrigin = heldController.customRay.absolutePosition;
+                        rayDirection = heldController.customRay.getDirection ?
+                            heldController.customRay.getDirection(BABYLON.Vector3.Forward()) :
+                            new BABYLON.Vector3(0, 0, 1);
+                    } else if (heldController.pointer) {
+                        rayOrigin = heldController.pointer.absolutePosition || heldController.pointer.position;
+                        rayDirection = heldController.pointer.getDirection ?
+                            heldController.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                            new BABYLON.Vector3(0, 0, 1);
+                    } else {
+                        continue; // Passer au contrôleur suivant
+                    }
                     
                     // Créer un ray pour tester l'intersection continue avec le panneau de scale
                     const ray = new BABYLON.Ray(rayOrigin, rayDirection);
                     const hit = ray.intersectsMesh(scene.vrScalePanel3D.plane);
                     
                     if (hit.hit) {
-                        // Calculer la position relative sur le slider - COHÉRENT AVEC LA CORRECTION
+                        // Calculer la position relative sur le slider avec précision améliorée
                         const worldHitPoint = hit.pickedPoint;
                         const panelPosition = scene.vrScalePanel3D.plane.absolutePosition || scene.vrScalePanel3D.plane.position;
                         const localHitPoint = worldHitPoint.subtract(panelPosition);
                         
-                        // Même logique corrigée que pour le clic initial
+                        // Logique de mapping améliorée et équilibrée
                         const panelWidth = 1.2;
-                        let sliderValue = localHitPoint.x / (panelWidth * 0.35); // Facteur de correction empirique
+                        let sliderValue = localHitPoint.x / (panelWidth * 0.4); // Facteur ajusté pour plus de précision
                         sliderValue = Math.max(-1, Math.min(1, sliderValue)); // Forcer les limites
                         
                         // Mettre à jour directement
                         scene.vrScalePanel3D.updateScale(sliderValue);
                         scene.vrScalePanel3D.currentSliderValue = sliderValue;
                         
-                        // Log pour debug
+                        // Log pour debug avec contrôleur équilibré
                         if (debugLogCount % 60 === 0) {
-                            console.log(`🔄 VR Scale Drag: ${handness} - Local X: ${localHitPoint.x.toFixed(3)}, Slider: ${sliderValue.toFixed(3)}, Scale: ${scene.currentScaleValue.toFixed(2)}x`);
+                            console.log(`🔄 VR Scale Drag BALANCED: ${handness} (priority: ${controllerData.timestamp}) - Local X: ${localHitPoint.x.toFixed(3)}, Slider: ${sliderValue.toFixed(3)}, Scale: ${scene.currentScaleValue.toFixed(2)}x`);
                         }
+                        
+                        // Sortir après le premier hit pour éviter les conflits
+                        break;
                     }
                 }
             }
@@ -1991,7 +1992,7 @@ function handleVRTriggerInteraction(controller, handness) {
 
 // Cette fonction a été supprimée car dupliquée - voir la version corrigée plus bas
 
-// Fonction optimisée pour détecter la particule visée en continu (indicateur visuel)
+// Fonction optimisée pour détecter la particule visée en continu (indicateur visuel) - ÉQUILIBRÉE
 let detectionFrameCount = 0;
 const DETECTION_SKIP_FRAMES = 3; // Ne faire la détection qu'une fois toutes les 3 frames
 
@@ -2013,57 +2014,87 @@ function detectTargetedSprite() {
         }
         
         let targetedSprite = null;
+        let bestControllerScore = 0;
         
-        // Méthode optimisée pour VR avec cache
+        // Méthode équilibrée pour VR - traiter TOUS les contrôleurs de manière égale
         if (window.xrHelper && window.xrHelper.input && window.xrHelper.input.controllers.length > 0) {
-            for (const controller of window.xrHelper.input.controllers) {
-                if (controller.pointer) {
-                    const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-                    const rayDirection = controller.pointer.getDirection ?
+            // Traiter les contrôleurs dans un ordre aléatoire pour éviter le biais
+            const controllers = [...window.xrHelper.input.controllers];
+            // Shuffle l'ordre pour éviter que le premier contrôleur ait toujours la priorité
+            for (let i = controllers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [controllers[i], controllers[j]] = [controllers[j], controllers[i]];
+            }
+            
+            for (const controller of controllers) {
+                let rayOrigin, rayDirection;
+                
+                // Essayer d'obtenir le rayon du contrôleur de manière équitable
+                if (controller.customRay && controller.customRay.absolutePosition) {
+                    rayOrigin = controller.customRay.absolutePosition;
+                    rayDirection = controller.customRay.getDirection ?
+                        controller.customRay.getDirection(BABYLON.Vector3.Forward()) :
+                        new BABYLON.Vector3(0, 0, 1);
+                } else if (controller.pointer) {
+                    rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+                    rayDirection = controller.pointer.getDirection ?
                         controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
                         new BABYLON.Vector3(0, 0, 1);
+                } else {
+                    continue; // Passer au contrôleur suivant si pas de pointeur
+                }
+                
+                // Utiliser le cache optimisé pour la détection continue
+                const cachedParticles = updateVRParticleCache();
+                
+                let closestSprite = null;
+                let bestPrecision = 0;
+                let testedCount = 0;
+                
+                // Algorithme de détection équilibré et précis
+                for (const cachedParticle of cachedParticles) {
+                    const spritePosition = cachedParticle.position;
+                    const rayToSprite = spritePosition.subtract(rayOrigin);
+                    const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
                     
-                    // Utiliser le cache optimisé pour la détection continue ULTRA-PRÉCISE
-                    const cachedParticles = updateVRParticleCache();
-                    
-                    let closestSprite = null;
-                    let bestPrecision = 0;
-                    let testedCount = 0;
-                    
-                    // DÉTECTION CONTINUE ULTRA-PRÉCISE (version allégée du trigger)
-                    for (const cachedParticle of cachedParticles) {
-                        const spritePosition = cachedParticle.position;
-                        const rayToSprite = spritePosition.subtract(rayOrigin);
-                        const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+                    if (projectionLength > 0.1) {
+                        const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                        const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
                         
-                        if (projectionLength > 0.1) { // Distance quasi-infinie aussi pour l'indicateur
-                            const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
-                            const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
+                        // Seuil de précision adaptatif pour l'indicateur (plus tolérant que le trigger)
+                        let precisionThreshold;
+                        if (projectionLength < 100) {
+                            precisionThreshold = 3.0; // Plus tolérant pour l'indicateur visuel
+                        } else if (projectionLength < 300) {
+                            precisionThreshold = 6.0;
+                        } else {
+                            precisionThreshold = 12.0 + (projectionLength * 0.02);
+                        }
+                        
+                        if (distanceToRay < precisionThreshold) {
+                            // Score de précision équilibré
+                            const angleScore = 1.0 / (1.0 + distanceToRay);
+                            const distanceScore = 1.0 / (1.0 + projectionLength * 0.02);
+                            const precision = angleScore * 0.6 + distanceScore * 0.4;
                             
-                            // Même algorithme de précision que le trigger (mais plus tolérant pour l'indicateur)
-                            const angleFromRay = Math.atan2(distanceToRay, projectionLength);
-                            const precision = 1.0 / (1.0 + angleFromRay * 500); // Plus tolérant que le trigger (500 vs 1000)
-                            
-                            // Seuil MAXIMUM pour l'indicateur visuel (distance quasi-infinie)
-                            const maxAngleIndicator = 0.175; // ~10 degrés pour particules très lointaines
-                            
-                            if (angleFromRay < maxAngleIndicator && precision > bestPrecision) {
+                            if (precision > bestPrecision) {
                                 closestSprite = cachedParticle.sprite;
                                 bestPrecision = precision;
                             }
                         }
-                        
-                        testedCount++;
-                        // Limite maximale pour particules à l'infini
-                        if (testedCount > 1000) {
-                            break;
-                        }
                     }
                     
-                    if (closestSprite) {
-                        targetedSprite = closestSprite;
+                    testedCount++;
+                    // Limite pour performance
+                    if (testedCount > 300) {
                         break;
                     }
+                }
+                
+                // Garder le meilleur sprite parmi tous les contrôleurs
+                if (closestSprite && bestPrecision > bestControllerScore) {
+                    targetedSprite = closestSprite;
+                    bestControllerScore = bestPrecision;
                 }
             }
         }
@@ -2312,70 +2343,97 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
             return;
         }
         
-        // === DÉTECTION DE PARTICULES OPTIMISÉE ===
+        // === DÉTECTION DE PARTICULES ÉQUILIBRÉE ET PRÉCISE ===
         let targetedSprite = null;
         
-        if (controller.pointer) {
-            const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-            const rayDirection = controller.pointer.getDirection ?
+        // Utiliser le pointeur custom ou le pointeur standard avec traitement égal
+        let rayOrigin, rayDirection;
+        
+        if (controller.customRay && controller.customRay.absolutePosition) {
+            // Utiliser le pointeur custom amélioré
+            rayOrigin = controller.customRay.absolutePosition;
+            rayDirection = controller.customRay.getDirection ?
+                controller.customRay.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else if (controller.pointer) {
+            // Utiliser le pointeur standard
+            rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+            rayDirection = controller.pointer.getDirection ?
                 controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
                 new BABYLON.Vector3(0, 0, 1);
+        } else if (controller.motionController && controller.motionController.rootMesh) {
+            // Fallback vers le mesh du contrôleur
+            rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
+            rayDirection = controller.motionController.rootMesh.getDirection ?
+                controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else {
+            console.log(`❌ VR ${handness}: No valid pointer source found`);
+            return;
+        }
+        
+        console.log(`🔍 VR ${handness}: BALANCED particle search starting...`);
+        const searchStart = performance.now();
+        
+        // Utiliser le cache optimisé avec algorithme de précision amélioré
+        const cachedParticles = updateVRParticleCache();
+        
+        let closestSprite = null;
+        let bestPrecisionScore = 0;
+        let testedCount = 0;
+        
+        // Algorithme ULTRA-PRÉCIS pour éviter les sélections voisines
+        for (const cachedParticle of cachedParticles) {
+            testedCount++;
+            const spritePosition = cachedParticle.position;
+            const rayToSprite = spritePosition.subtract(rayOrigin);
+            const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
             
-            console.log(`🔍 VR ${handness}: Optimized particle search starting...`);
-            const searchStart = performance.now();
-            
-            // Utiliser le cache optimisé au lieu de toutes les particules
-            const cachedParticles = updateVRParticleCache();
-            
-            // RETOUR À L'ALGORITHME ORIGINAL SIMPLE QUI MARCHAIT
-            let closestSprite = null;
-            let closestDistance = Infinity;
-            let testedCount = 0;
-            
-            // Tester les particules du cache (simple et efficace)
-            for (const cachedParticle of cachedParticles) {
-                testedCount++;
-                const spritePosition = cachedParticle.position;
-                const rayToSprite = spritePosition.subtract(rayOrigin);
-                const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+            if (projectionLength > 0.1) {
+                const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
                 
-                // Distance QUASI-INFINIE pour particules à n'importe quelle distance
-                if (projectionLength > 0.05) { // Pas de limite supérieure !
-                    const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
-                    const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
-                    
-                    // Seuil adaptatif pour distance quasi-infinie - EXTRÊMEMENT tolérant
-                    let precisionThreshold;
-                    if (projectionLength < 100) {
-                        precisionThreshold = 2.0; // Précision normale pour courte distance
-                    } else if (projectionLength < 1000) {
-                        precisionThreshold = 5.0 + (projectionLength * 0.02); // Tolérant pour moyenne distance
-                    } else if (projectionLength < 10000) {
-                        precisionThreshold = 25.0 + (projectionLength * 0.05); // Très tolérant pour longue distance
-                    } else {
-                        precisionThreshold = 500.0 + (projectionLength * 0.1); // ULTRA tolérant pour distance quasi-infinie
-                    }
-                    
-                    if (distanceToRay < precisionThreshold && projectionLength < closestDistance) {
-                        closestSprite = cachedParticle.sprite;
-                        closestDistance = projectionLength;
-                        
-                        console.log(`🎯 VR ${handness}: Found DISTANT target: ${closestSprite.name}, ray distance: ${distanceToRay.toFixed(1)}, distance: ${projectionLength.toFixed(1)}, threshold: ${precisionThreshold.toFixed(1)}`);
-                    }
+                // Seuils BEAUCOUP plus stricts pour éviter les sélections voisines
+                let precisionThreshold;
+                if (projectionLength < 20) {
+                    precisionThreshold = 0.2; // ULTRA strict pour très courte distance
+                } else if (projectionLength < 50) {
+                    precisionThreshold = 0.4; // TRÈS strict pour courte distance
+                } else if (projectionLength < 100) {
+                    precisionThreshold = 0.6; // Strict pour moyenne distance
+                } else if (projectionLength < 300) {
+                    precisionThreshold = 1.0; // Assez strict pour longue distance
+                } else {
+                    precisionThreshold = 2.0 + (projectionLength * 0.003); // Plus tolérant seulement pour très loin
                 }
                 
-                // Limite MAXIMALE pour particules à distance quasi-infinie
-                if (testedCount > 1500) {
-                    console.log(`⏱️ VR ${handness}: Stopping search at 1500 tests (INFINITE range)`);
-                    break;
+                if (distanceToRay < precisionThreshold) {
+                    // Score privilégiant MASSIVEMENT la précision angulaire
+                    const angleScore = 1.0 / (1.0 + distanceToRay * 20); // Pénaliser TRÈS fortement l'écart angulaire
+                    const distanceScore = 1.0 / (1.0 + projectionLength * 0.001); // Importance très réduite de la distance
+                    const precisionScore = angleScore * 0.95 + distanceScore * 0.05; // 95% angle, 5% distance
+                    
+                    // Seulement accepter si VRAIMENT plus précis
+                    if (precisionScore > bestPrecisionScore * 1.2) { // Nécessite 20% de meilleure précision
+                        closestSprite = cachedParticle.sprite;
+                        bestPrecisionScore = precisionScore;
+                        
+                        console.log(`🎯 VR ${handness}: ULTRA-PRECISE target: ${closestSprite.name}, score: ${precisionScore.toFixed(4)}, rayDist: ${distanceToRay.toFixed(3)}, projDist: ${projectionLength.toFixed(1)}, threshold: ${precisionThreshold.toFixed(3)}`);
+                    }
                 }
             }
             
-            const searchTime = performance.now() - searchStart;
-            console.log(`🔍 VR ${handness}: Search completed in ${searchTime.toFixed(2)}ms, tested ${testedCount}/${cachedParticles.length} particles`);
-            
-            targetedSprite = closestSprite;
+            // Limite réduite pour performance
+            if (testedCount > 400) {
+                console.log(`⏱️ VR ${handness}: Stopping search at 400 tests for ULTRA-PRECISION focus`);
+                break;
+            }
         }
+        
+        const searchTime = performance.now() - searchStart;
+        console.log(`🔍 VR ${handness}: BALANCED search completed in ${searchTime.toFixed(2)}ms, tested ${testedCount}/${cachedParticles.length} particles, bestScore: ${bestPrecisionScore.toFixed(3)}`);
+        
+        targetedSprite = closestSprite;
         
         // NAVIGATION VERS LA PARTICULE TROUVÉE - CORRECTION CRITIQUE
         if (targetedSprite) {
