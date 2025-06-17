@@ -267,7 +267,7 @@ scene.createDefaultXRExperienceAsync({
         }
     });
 
-    // Toggle panel with X button (Quest 3) and handle trigger interactions
+    // Toggle panel with X button (Quest 3) - NOW TOGGLES VR 3D SEARCH PANEL
     xrHelper.input.onControllerAddedObservable.add(ctrl => {
         ctrl.onMotionControllerInitObservable.add(motionController => {
             if (motionController.handness === 'left') {
@@ -277,10 +277,16 @@ scene.createDefaultXRExperienceAsync({
                 if (xButtonComponent) {
                     xButtonComponent.onButtonStateChangedObservable.add(() => {
                         if (xButtonComponent.pressed) {
-                            searchPanel.isVisible = !searchPanel.isVisible;
-                            if (searchPanel.isVisible) {
-                                inputText.text = "";
-                                searchResultText.text = "";
+                            // Toggle new VR 3D search panel instead of 2D
+                            if (scene.vrSearchPanel3D) {
+                                scene.vrSearchPanel3D.toggle();
+                            } else {
+                                // Fallback to old 2D panel if 3D not available
+                                searchPanel.isVisible = !searchPanel.isVisible;
+                                if (searchPanel.isVisible) {
+                                    inputText.text = "";
+                                    searchResultText.text = "";
+                                }
                             }
                         }
                     });
@@ -1213,6 +1219,16 @@ engine.runRenderLoop(renderLoop);
     // Créer le panneau de scale VR 3D
     if (!scene.vrScalePanel3D) {
       scene.vrScalePanel3D = createVRScalePanel3D(scene);
+    }
+    
+    // Créer le panneau de recherche VR 3D avec VRAI GUI 3D
+    if (!scene.vrSearchPanel3D) {
+      scene.vrSearchPanel3D = createVRSearchPanel3D(scene, data);
+      if (scene.vrSearchPanel3D) {
+        console.log("✅ VR Search Panel 3D with REAL GUI 3D created successfully");
+      } else {
+        console.error("❌ VR Search Panel 3D creation failed");
+      }
     }
     
     // Créer le panneau de légende VR 3D avec délai pour s'assurer que tout est prêt
@@ -2259,6 +2275,47 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
             }
         }
         
+        // Vérification panneau de recherche VR 3D
+        if (isPressed && scene.vrSearchPanel3D && scene.vrSearchPanel3D.plane.isVisible) {
+            let rayOrigin, rayDirection;
+            
+            if (controller.pointer) {
+                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+                rayDirection = controller.pointer.getDirection ?
+                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else if (controller.motionController && controller.motionController.rootMesh) {
+                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
+                rayDirection = controller.motionController.rootMesh.getDirection ?
+                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                    new BABYLON.Vector3(0, 0, 1);
+            } else {
+                rayOrigin = new BABYLON.Vector3(0, 0, 0);
+                rayDirection = new BABYLON.Vector3(0, 0, 1);
+            }
+            
+            const ray = new BABYLON.Ray(rayOrigin, rayDirection);
+            const hit = ray.intersectsMesh(scene.vrSearchPanel3D.plane);
+            
+            if (hit.hit) {
+                console.log(`🎯 VR ${handness}: SEARCH PANEL HIT`);
+                
+                const worldHitPoint = hit.pickedPoint;
+                const planePosition = scene.vrSearchPanel3D.plane.absolutePosition || scene.vrSearchPanel3D.plane.position;
+                const localHitPoint = worldHitPoint.subtract(planePosition);
+                
+                const planeWidth = 3;
+                const planeHeight = 2;
+                
+                const clicked = scene.vrSearchPanel3D.handleClick(localHitPoint.x, localHitPoint.y, planeWidth, planeHeight);
+                
+                if (clicked) {
+                    console.log(`🎯 VR ${handness}: SEARCH PANEL INTERACTION`);
+                    return;
+                }
+            }
+        }
+        
         // Vérification légende 3D
         if (isPressed && scene.vrLegendPanel3D && scene.vrLegendPanel3D.plane.isVisible) {
             let rayOrigin, rayDirection;
@@ -2951,6 +3008,340 @@ function createVRLegendPanel3D(scene, data) {
         console.error("❌ Error creating VR Legend Panel 3D:", error);
         console.error("Error details:", error.message);
         console.error("Stack trace:", error.stack);
+        return null;
+    }
+}
+// Fonction pour créer un panneau de recherche VR 3D avec plan + texture dynamique (comme les autres panneaux)
+function createVRSearchPanel3D(scene, data) {
+    const searchPanelSystem = {};
+    
+    console.log("🔍 Creating VR Search Panel 3D with plane + dynamic texture...");
+    
+    try {
+        // Créer le plan principal pour la recherche
+        const searchPlane = BABYLON.MeshBuilder.CreatePlane("vrSearchPlane", {
+            width: 3,
+            height: 2
+        }, scene);
+        
+        // Position devant l'utilisateur
+        searchPlane.position = new BABYLON.Vector3(2, -0.5, 4);
+        searchPlane.isVisible = false;
+        
+        // Créer une texture dynamique pour l'interface
+        const textureHeight = 600;
+        let searchTexture = new BABYLON.DynamicTexture("vrSearchTexture", {width: 800, height: textureHeight}, scene);
+        const searchMaterial = new BABYLON.StandardMaterial("vrSearchMat", scene);
+        searchMaterial.diffuseTexture = searchTexture;
+        searchMaterial.emissiveTexture = searchTexture;
+        searchMaterial.disableLighting = true;
+        searchMaterial.hasAlpha = true;
+        searchPlane.material = searchMaterial;
+        
+        // Variables d'état
+        let currentSearchText = "";
+        let keyboardVisible = false;
+        
+        // Générer la liste d'autocomplétion à partir des données
+        const particleNames = data ? data.map(item => item.prefLabel || item.name || "").filter(name => name.length > 0) : [];
+        const uniqueNames = [...new Set(particleNames)].sort();
+        
+        console.log(`📋 Autocomplete database: ${uniqueNames.length} unique particle names`);
+        
+        // Zones cliquables pour l'interface
+        const clickableAreas = [];
+        
+        // Fonction pour dessiner l'interface de recherche
+        function updateSearchTexture() {
+            searchTexture.clear();
+            const context = searchTexture.getContext();
+            clickableAreas.length = 0; // Reset clickable areas
+            
+            // Fond avec dégradé
+            const gradient = context.createLinearGradient(0, 0, 0, textureHeight);
+            gradient.addColorStop(0, "rgba(20, 30, 60, 0.95)");
+            gradient.addColorStop(1, "rgba(10, 15, 30, 0.95)");
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 800, textureHeight);
+            
+            // Bordure principale avec glow
+            context.strokeStyle = "#00aaff";
+            context.lineWidth = 4;
+            context.shadowColor = "#00aaff";
+            context.shadowBlur = 10;
+            context.strokeRect(10, 10, 780, textureHeight - 20);
+            context.shadowBlur = 0;
+            
+            // Titre avec style moderne
+            context.font = "bold 36px Arial";
+            const titleGrad = context.createLinearGradient(0, 0, 800, 0);
+            titleGrad.addColorStop(0, "#ffaa00");
+            titleGrad.addColorStop(1, "#ff6600");
+            context.fillStyle = titleGrad;
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillText("🔍 RECHERCHE VR", 400, 60);
+            
+            // Zone de texte de recherche avec style moderne
+            const inputX = 50;
+            const inputY = 120;
+            const inputWidth = 700;
+            const inputHeight = 60;
+            
+            // Fond du champ de recherche avec dégradé
+            const inputGrad = context.createLinearGradient(0, inputY, 0, inputY + inputHeight);
+            inputGrad.addColorStop(0, keyboardVisible ? "rgba(0, 100, 200, 0.4)" : "rgba(40, 40, 60, 0.8)");
+            inputGrad.addColorStop(1, keyboardVisible ? "rgba(0, 80, 160, 0.6)" : "rgba(20, 20, 40, 0.9)");
+            context.fillStyle = inputGrad;
+            context.fillRect(inputX, inputY, inputWidth, inputHeight);
+            
+            // Bordure du champ avec glow
+            context.strokeStyle = keyboardVisible ? "#00ffaa" : "#ffffff";
+            context.lineWidth = 3;
+            context.shadowColor = keyboardVisible ? "#00ffaa" : "#ffffff";
+            context.shadowBlur = 8;
+            context.strokeRect(inputX, inputY, inputWidth, inputHeight);
+            context.shadowBlur = 0;
+            
+            // Texte dans le champ de recherche
+            context.font = "28px Arial";
+            context.fillStyle = currentSearchText ? "#00ffff" : "#cccccc";
+            context.textAlign = "left";
+            context.textBaseline = "middle";
+            const displayText = currentSearchText || "Tapez le nom d'une particule...";
+            context.fillText(displayText, inputX + 20, inputY + inputHeight/2);
+            
+            // Zone cliquable pour le champ de recherche
+            clickableAreas.push({
+                type: "searchInput",
+                x1: inputX,
+                y1: inputY,
+                x2: inputX + inputWidth,
+                y2: inputY + inputHeight
+            });
+            
+            // Clavier virtuel si visible
+            if (keyboardVisible) {
+                drawVirtualKeyboard(context, 50, 220);
+            }
+            
+            // Instructions avec style
+            const instructY = textureHeight - 80;
+            context.font = "20px Arial";
+            context.fillStyle = "#88ccff";
+            context.textAlign = "center";
+            context.fillText("🎮 Cliquez sur le champ pour activer le clavier", 400, instructY);
+            context.fillText("⌨️ Utilisez les contrôleurs VR pour taper", 400, instructY + 30);
+            
+            searchTexture.update();
+        }
+        
+        // Fonction pour dessiner le clavier virtuel
+        function drawVirtualKeyboard(context, startX, startY) {
+            const keyLayout = [
+                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫', '✓']
+            ];
+            
+            const keyWidth = 65;
+            const keyHeight = 50;
+            const keySpacing = 8;
+            
+            keyLayout.forEach((row, rowIndex) => {
+                const rowY = startY + rowIndex * (keyHeight + keySpacing);
+                const rowStartX = startX + (rowIndex * 15); // Décalage progressif
+                
+                row.forEach((key, keyIndex) => {
+                    const keyX = rowStartX + keyIndex * (keyWidth + keySpacing);
+                    let currentKeyWidth = keyWidth;
+                    
+                    // Touches spéciales plus larges
+                    if (key === '⌫' || key === '✓') currentKeyWidth = keyWidth * 1.2;
+                    
+                    // Fond de touche avec dégradé
+                    let gradStart, gradEnd;
+                    if (key === '⌫') {
+                        gradStart = "rgba(200, 60, 60, 0.9)";
+                        gradEnd = "rgba(160, 40, 40, 0.9)";
+                    } else if (key === '✓') {
+                        gradStart = "rgba(60, 200, 60, 0.9)";
+                        gradEnd = "rgba(40, 160, 40, 0.9)";
+                    } else {
+                        gradStart = "rgba(80, 80, 120, 0.9)";
+                        gradEnd = "rgba(60, 60, 100, 0.9)";
+                    }
+                    
+                    const keyGrad = context.createLinearGradient(0, rowY, 0, rowY + keyHeight);
+                    keyGrad.addColorStop(0, gradStart);
+                    keyGrad.addColorStop(1, gradEnd);
+                    context.fillStyle = keyGrad;
+                    context.fillRect(keyX, rowY, currentKeyWidth, keyHeight);
+                    
+                    // Bordure de touche avec glow
+                    context.strokeStyle = "#ffffff";
+                    context.lineWidth = 2;
+                    context.shadowColor = "#ffffff";
+                    context.shadowBlur = 4;
+                    context.strokeRect(keyX, rowY, currentKeyWidth, keyHeight);
+                    context.shadowBlur = 0;
+                    
+                    // Texte de touche
+                    context.font = "22px Arial";
+                    context.fillStyle = "white";
+                    context.textAlign = "center";
+                    context.textBaseline = "middle";
+                    
+                    let displayKey = key;
+                    if (key === '⌫') displayKey = 'SUP';
+                    if (key === '✓') displayKey = 'OK';
+                    
+                    context.fillText(displayKey, keyX + currentKeyWidth/2, rowY + keyHeight/2);
+                    
+                    // Zone cliquable pour cette touche
+                    clickableAreas.push({
+                        type: "key",
+                        key: key,
+                        x1: keyX,
+                        y1: rowY,
+                        x2: keyX + currentKeyWidth,
+                        y2: rowY + keyHeight
+                    });
+                });
+            });
+        }
+        
+        // Fonction pour gérer les clics
+        function handleClick(localX, localY, planeWidth, planeHeight) {
+            // Convertir les coordonnées locales en coordonnées texture
+            const normalizedX = (localX + planeWidth/2) / planeWidth;
+            const normalizedY = (localY + planeHeight/2) / planeHeight;
+            const textureX = normalizedX * 800;
+            const textureY = (1.0 - normalizedY) * textureHeight;
+            
+            console.log(`🔍 Search click: texture(${textureX.toFixed(1)}, ${textureY.toFixed(1)})`);
+            
+            // Tester chaque zone cliquable
+            for (const area of clickableAreas) {
+                if (textureX >= area.x1 && textureX <= area.x2 &&
+                    textureY >= area.y1 && textureY <= area.y2) {
+                    
+                    console.log(`🎯 Search hit: ${area.type}`, area);
+                    
+                    switch (area.type) {
+                        case "searchInput":
+                            keyboardVisible = !keyboardVisible;
+                            console.log(`⌨️ Keyboard toggled: ${keyboardVisible}`);
+                            updateSearchTexture();
+                            break;
+                            
+                        case "key":
+                            handleKeyPress(area.key);
+                            break;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Fonction pour gérer les touches du clavier virtuel
+        function handleKeyPress(key) {
+            console.log(`⌨️ Virtual key pressed: ${key}`);
+            
+            switch (key) {
+                case '⌫': // Backspace
+                    if (currentSearchText.length > 0) {
+                        currentSearchText = currentSearchText.slice(0, -1);
+                    }
+                    break;
+                    
+                case '✓': // Valider
+                    if (currentSearchText.length > 0) {
+                        keyboardVisible = false;
+                        performSearch(currentSearchText);
+                    }
+                    break;
+                    
+                default:
+                    currentSearchText += key.toLowerCase();
+                    break;
+            }
+            
+            updateSearchTexture();
+        }
+        
+        // Fonction pour effectuer la recherche
+        function performSearch(query) {
+            console.log(`🔍 Performing search for: "${query}"`);
+            
+            try {
+                // Appeler la fonction de navigation existante
+                moveCameraToSprite(query);
+                
+                // Fermer le panneau après la recherche
+                setTimeout(() => {
+                    searchPanelSystem.hide();
+                }, 500);
+                
+            } catch (error) {
+                console.error(`❌ Search error for "${query}":`, error);
+            }
+        }
+        
+        // Fonction pour attacher le panneau à la caméra
+        function attachToCamera() {
+            const camera = scene.activeCamera;
+            if (camera) {
+                searchPlane.parent = camera;
+                console.log("📷 VR Search Panel 3D attached to camera");
+            }
+        }
+        
+        // Stocker les références
+        searchPanelSystem.plane = searchPlane;
+        searchPanelSystem.texture = searchTexture;
+        searchPanelSystem.material = searchMaterial;
+        searchPanelSystem.handleClick = handleClick;
+        
+        // Fonctions publiques
+        searchPanelSystem.show = function() {
+            console.log("👁️ VR: Showing search panel 3D");
+            searchPlane.isVisible = true;
+            currentSearchText = "";
+            keyboardVisible = false;
+            updateSearchTexture();
+            attachToCamera();
+        };
+        
+        searchPanelSystem.hide = function() {
+            console.log("🙈 VR: Hiding search panel 3D");
+            searchPlane.isVisible = false;
+            keyboardVisible = false;
+        };
+        
+        searchPanelSystem.toggle = function() {
+            if (searchPlane.isVisible) {
+                this.hide();
+            } else {
+                this.show();
+            }
+        };
+        
+        searchPanelSystem.dispose = function() {
+            if (searchTexture) searchTexture.dispose();
+            if (searchMaterial) searchMaterial.dispose();
+            if (searchPlane) searchPlane.dispose();
+        };
+        
+        // Initialiser la texture
+        updateSearchTexture();
+        
+        console.log("✅ VR Search Panel 3D with plane + dynamic texture created successfully");
+        return searchPanelSystem;
+        
+    } catch (error) {
+        console.error("❌ Error creating VR Search Panel 3D:", error);
         return null;
     }
 }
