@@ -243,18 +243,16 @@
         <div class="level-grid" id="levelGrid"></div>
 
         <div class="controls">
-            <button class="btn" onclick="applyImmediately()" style="background: linear-gradient(45deg, #ff9500, #ffb347);">⚡ Appliquer Immédiatement</button>
             <button class="btn" onclick="applyConfiguration()">Appliquer la Configuration</button>
             <button class="btn secondary" onclick="resetToDefault()">Réinitialiser</button>
-            <button class="btn secondary" onclick="exportConfiguration()">Exporter Config</button>
-            <button class="btn" onclick="importConfiguration()">Importer Config</button>
+            <button class="btn" onclick="applyToAll()" style="background: linear-gradient(45deg, #9c27b0, #e91e63);">🎯 Appliquer sur tout</button>
         </div>
 
         <input type="file" id="configFileInput" accept=".json" style="display: none;">
     </div>
 
     <script>
-        // Configuration par défaut basée sur les données RepVal
+        // Configuration par défaut basée sur les données
         const defaultConfiguration = {
             1: "1blackhole.png",
             2: "2blackhole.png", 
@@ -271,7 +269,7 @@
             13: "13asteroid.png"
         };
 
-        // Images disponibles (incluant les images par défaut whozstar)
+        // Images disponibles
         const availableImages = [
             "1blackhole.png",
             "2blackhole.png",
@@ -286,7 +284,6 @@
             "11moon.png",
             "12asteroid.png",
             "13asteroid.png",
-            "etoile2.png",        // Image par défaut whozstar
             "whoz_logo.png",
             "bubble.png",
             "links.png"
@@ -295,21 +292,32 @@
         // Configuration actuelle
         let currentConfiguration = { ...defaultConfiguration };
 
-        // Charger la configuration sauvegardée - COMPATIBLE AVEC WHOZSTAR
+        // Charger la configuration sauvegardée
         function loadSavedConfiguration() {
-            const saved = localStorage.getItem('spriteImageConfig'); // Même clé que whozstar
+            const saved = localStorage.getItem('imageConfiguration');
             if (saved) {
                 try {
-                    currentConfiguration = JSON.parse(saved);
+                    const loadedConfig = JSON.parse(saved);
+                    
+                    // Valider et nettoyer la configuration
+                    for (let level = 1; level <= 13; level++) {
+                        if (loadedConfig[level] && availableImages.includes(loadedConfig[level])) {
+                            currentConfiguration[level] = loadedConfig[level];
+                        } else {
+                            // Si l'image n'est plus disponible, utiliser l'image par défaut
+                            currentConfiguration[level] = defaultConfiguration[level];
+                            console.warn(`Image ${loadedConfig[level]} non disponible pour le niveau ${level}, utilisation de l'image par défaut`);
+                        }
+                    }
                 } catch (e) {
                     console.error('Erreur lors du chargement de la configuration:', e);
                 }
             }
         }
 
-        // Sauvegarder la configuration - COMPATIBLE AVEC WHOZSTAR
+        // Sauvegarder la configuration
         function saveConfiguration() {
-            localStorage.setItem('spriteImageConfig', JSON.stringify(currentConfiguration)); // Même clé
+            localStorage.setItem('imageConfiguration', JSON.stringify(currentConfiguration));
         }
 
         // Initialiser l'interface
@@ -446,47 +454,26 @@
             }
         }
 
-        // Appliquer la configuration immédiatement - COMMUNICATION AVEC WHOZSTAR
-        function applyImmediately() {
-            saveConfiguration();
-            
-            // Déclencher l'événement de mise à jour pour whozstar
-            localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
-            
-            // Essayer de mettre à jour l'application principale directement
-            try {
-                if (window.opener && window.opener.reloadWithNewImageConfiguration) {
-                    window.opener.reloadWithNewImageConfiguration();
-                    alert('✅ Configuration appliquée immédiatement !\nLes changements sont visibles dans l\'application VR whozstar.');
-                } else {
-                    alert('⚡ Configuration sauvegardée !\nSi l\'application whozstar VR est ouverte, elle se mettra à jour automatiquement.');
-                }
-            } catch (error) {
-                console.log('Application whozstar non accessible directement');
-                alert('⚡ Configuration sauvegardée !\nRechargez l\'application whozstar VR pour voir les changements.');
-            }
-        }
-
         // Appliquer la configuration (mettre à jour les données JSON)
         function applyConfiguration() {
             saveConfiguration();
             
-            // Essayer de communiquer avec l'application principale whozstar
+            // Essayer de communiquer avec l'application principale
             try {
                 // Si l'application principale est ouverte dans une autre fenêtre
                 if (window.opener && window.opener.reloadWithNewImageConfiguration) {
                     window.opener.reloadWithNewImageConfiguration();
-                    alert('Configuration appliquée avec succès !\nLes changements sont visibles dans l\'application whozstar VR.');
+                    alert('Configuration appliquée avec succès !\nLes changements sont visibles dans l\'application principale.');
                 } else {
                     // Déclencher un événement storage pour notifier les autres onglets
-                    localStorage.setItem('spriteImageConfigUpdate', Date.now().toString());
+                    localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
                     
-                    const message = `Configuration appliquée et sauvegardée !\n\nPour voir les changements :\n• Si l'application whozstar VR est ouverte, elle se mettra à jour automatiquement\n• Sinon, ouvrez ou rechargez l'application whozstar VR`;
+                    const message = `Configuration appliquée et sauvegardée !\n\nPour voir les changements :\n• Si l'application principale est ouverte, elle se mettra à jour automatiquement\n• Sinon, ouvrez ou rechargez l'application principale`;
                     alert(message);
                 }
             } catch (error) {
                 console.error('Erreur lors de l\'application:', error);
-                alert('Configuration sauvegardée ! Rechargez l\'application whozstar VR pour voir les changements.');
+                alert('Configuration sauvegardée ! Rechargez l\'application principale pour voir les changements.');
             }
         }
 
@@ -507,7 +494,7 @@
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = 'whozstar_image_configuration.json';
+            link.download = 'image_configuration.json';
             link.click();
         }
 
@@ -554,7 +541,102 @@
         // Initialiser l'interface au chargement de la page
         document.addEventListener('DOMContentLoaded', initializeInterface);
 
-        // Exposer la configuration pour l'application principale whozstar
+        // Fonction pour appliquer immédiatement les changements
+        function applyImmediately() {
+            saveConfiguration();
+            
+            // Déclencher l'événement de mise à jour
+            localStorage.setItem('imageConfigurationUpdate', Date.now().toString());
+            
+            // Essayer de mettre à jour l'application principale directement
+            try {
+                if (window.opener && window.opener.reloadWithNewImageConfiguration) {
+                    window.opener.reloadWithNewImageConfiguration();
+                    alert('✅ Configuration appliquée immédiatement !\nLes changements sont visibles dans l\'application principale.');
+                } else {
+                    alert('⚡ Configuration sauvegardée !\nSi l\'application principale est ouverte, elle se mettra à jour automatiquement.');
+                }
+            } catch (error) {
+                console.log('Application principale non accessible directement');
+                alert('⚡ Configuration sauvegardée !\nRechargez l\'application principale pour voir les changements.');
+            }
+        }
+
+        // Fonction pour appliquer une image à tous les niveaux
+        function applyToAll() {
+            // Créer une liste d'options pour le sélecteur
+            let options = '';
+            availableImages.forEach(imageName => {
+                options += `<option value="${imageName}">${imageName.replace('.png', '')}</option>`;
+            });
+            
+            // Créer le HTML du sélecteur
+            const selectorHTML = `
+                <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.8); color: white; border-radius: 10px;">
+                    <h3 style="margin-top: 0; color: white; text-shadow: 1px 1px 0px black; font-family: 'FreeMono', monospace; text-transform: uppercase;">
+                        🎯 Choisir une image pour tous les niveaux
+                    </h3>
+                    <select id="imageSelector" style="padding: 10px; font-size: 16px; border-radius: 5px; margin: 10px; background: white; color: black; font-family: 'FreeMono', monospace;">
+                        ${options}
+                    </select>
+                    <br><br>
+                    <button onclick="confirmApplyToAll()" style="background: linear-gradient(45deg, #00ff88, #00d4ff); border: 2px solid cyan; color: white; padding: 10px 20px; border-radius: 15px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 5px; text-transform: uppercase; font-family: 'FreeMono', monospace;">
+                        ✅ Confirmer
+                    </button>
+                    <button onclick="cancelApplyToAll()" style="background: linear-gradient(45deg, #ff6b6b, #ffa500); border: 2px solid orange; color: white; padding: 10px 20px; border-radius: 15px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 5px; text-transform: uppercase; font-family: 'FreeMono', monospace;">
+                        ❌ Annuler
+                    </button>
+                </div>
+            `;
+            
+            // Créer et afficher le modal
+            const modal = document.createElement('div');
+            modal.id = 'applyToAllModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            modal.innerHTML = selectorHTML;
+            document.body.appendChild(modal);
+        }
+        
+        // Confirmer l'application à tous les niveaux
+        function confirmApplyToAll() {
+            const selectedImage = document.getElementById('imageSelector').value;
+            
+            // Appliquer l'image sélectionnée à tous les niveaux
+            for (let level = 1; level <= 13; level++) {
+                currentConfiguration[level] = selectedImage;
+            }
+            
+            // Sauvegarder et mettre à jour l'interface
+            saveConfiguration();
+            createLevelSelectors();
+            updateCurrentSelection();
+            
+            // Fermer le modal
+            cancelApplyToAll();
+            
+            alert(`✅ Image "${selectedImage.replace('.png', '')}" appliquée à tous les niveaux !`);
+        }
+        
+        // Annuler l'application à tous les niveaux
+        function cancelApplyToAll() {
+            const modal = document.getElementById('applyToAllModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Exposer la configuration pour l'application principale
         window.getImageConfiguration = function() {
             return currentConfiguration;
         };

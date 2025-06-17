@@ -2962,18 +2962,18 @@ function createVRLegendPanel3D(scene, data) {
 // Configuration des images par niveau (1-13)
 const defaultImageConfiguration = {
     1: '1blackhole.png',
-    2: '2nebula.png',
-    3: '3star.png',
-    4: '4planet.png',
-    5: '5moon.png',
-    6: '6comet.png',
-    7: '7asteroid.png',
-    8: '8satellite.png',
-    9: '9debris.png',
-    10: '10particle.png',
-    11: '11dust.png',
-    12: '12gas.png',
-    13: '13energy.png'
+    2: '2blackhole.png',
+    3: '3whitehole.png',
+    4: '4nebuleuse.png',
+    5: '5etoile.png',
+    6: '6etoile.png',
+    7: '7neutronstar.png',
+    8: '8planet.png',
+    9: '9planet.png',
+    10: '10protoplanet.png',
+    11: '11moon.png',
+    12: '12asteroid.png',
+    13: '13asteroid.png'
 };
 
 // Variables globales pour le système RepVal
