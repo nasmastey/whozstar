@@ -3241,131 +3241,93 @@ function createVRSearchPanel3D(scene, data) {
             if (!vrInput) {
                 vrInput = document.createElement('input');
                 vrInput.type = 'text';
-                vrInput.style.position = 'absolute';
-                vrInput.style.left = '-9999px';
-                vrInput.style.opacity = '0';
-                vrInput.style.pointerEvents = 'none';
+                vrInput.style.position = 'fixed';
+                vrInput.style.top = '-100px';
+                vrInput.style.left = '50%';
+                vrInput.style.width = '300px';
+                vrInput.style.height = '40px';
+                vrInput.style.opacity = '0.01'; // Presque invisible mais pas complètement
+                vrInput.style.zIndex = '9999';
+                vrInput.style.border = 'none';
+                vrInput.style.background = 'transparent';
                 vrInput.setAttribute('autocomplete', 'off');
                 vrInput.setAttribute('autocorrect', 'off');
                 vrInput.setAttribute('autocapitalize', 'off');
                 vrInput.setAttribute('spellcheck', 'false');
                 document.body.appendChild(vrInput);
                 
-                // Écouter les changements avec debug amélioré
+                console.log(`✅ VR Input created and positioned for Meta Quest`);
+                
+                // Événement principal - input
                 vrInput.addEventListener('input', (e) => {
-                    const newValue = e.target.value;
-                    console.log(`⌨️ INPUT EVENT: "${newValue}" (length: ${newValue.length})`);
+                    const newValue = e.target.value || "";
+                    console.log(`⌨️ INPUT: "${currentSearchText}" → "${newValue}"`);
                     currentSearchText = newValue;
                     updateVRDisplay();
-                    console.log(`✅ currentSearchText updated: "${currentSearchText}"`);
                 });
                 
-                // Écouter tous les événements clavier pour debug
+                // Événements clavier
                 vrInput.addEventListener('keydown', (e) => {
-                    console.log(`⌨️ KEYDOWN: ${e.key}, currentText: "${currentSearchText}"`);
-                    if (e.key === 'Enter' && currentSearchText.length > 0) {
-                        e.preventDefault();
-                        console.log(`🔍 ENTER pressed, searching: "${currentSearchText}"`);
-                        hideKeyboard();
-                        performSearch(currentSearchText);
-                    } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        hideKeyboard();
-                    }
+                    console.log(`⌨️ KEYDOWN: ${e.key}, value: "${e.target.value}"`);
                 });
                 
                 vrInput.addEventListener('keyup', (e) => {
-                    console.log(`⌨️ KEYUP: ${e.key}, input value: "${e.target.value}"`);
-                    currentSearchText = e.target.value;
+                    const newValue = e.target.value || "";
+                    console.log(`⌨️ KEYUP: ${e.key}, value: "${newValue}"`);
+                    if (newValue !== currentSearchText) {
+                        currentSearchText = newValue;
+                        updateVRDisplay();
+                    }
+                });
+                
+                // Événement de changement
+                vrInput.addEventListener('change', (e) => {
+                    const newValue = e.target.value || "";
+                    console.log(`⌨️ CHANGE: "${newValue}"`);
+                    currentSearchText = newValue;
                     updateVRDisplay();
                 });
                 
-                // Éviter les freezes
-                vrInput.addEventListener('blur', () => {
-                    console.log(`🔽 INPUT BLUR, text: "${currentSearchText}"`);
-                    setTimeout(() => {
-                        if (vrInput && document.activeElement !== vrInput) {
-                            hideKeyboard();
-                        }
-                    }, 300);
+                // Focus/Blur
+                vrInput.addEventListener('focus', () => {
+                    console.log(`🎯 INPUT FOCUSED`);
+                    keyboardVisible = true;
+                    updateVRDisplay();
                 });
                 
-                console.log(`✅ Hidden input created with enhanced event listeners`);
+                vrInput.addEventListener('blur', () => {
+                    console.log(`🔽 INPUT BLUR`);
+                    setTimeout(() => {
+                        if (document.activeElement !== vrInput) {
+                            keyboardVisible = false;
+                            updateVRDisplay();
+                        }
+                    }, 500);
+                });
             }
         }
         
-        // Système de polling pour surveiller les changements
-        let pollingInterval = null;
-        
-        function startInputPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-            }
-            
-            pollingInterval = setInterval(() => {
-                if (vrInput && keyboardVisible) {
-                    const inputValue = vrInput.value || "";
-                    if (inputValue !== currentSearchText) {
-                        console.log(`🔄 POLLING: Input changed from "${currentSearchText}" to "${inputValue}"`);
-                        currentSearchText = inputValue;
-                        updateVRDisplay();
-                    }
-                }
-            }, 200); // Vérifier toutes les 200ms
-            
-            console.log("📊 Input polling started");
-        }
-        
-        function stopInputPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-                console.log("⏹️ Input polling stopped");
-            }
-        }
+        // Version simplifiée sans polling - Les événements doivent suffire
         
         function showKeyboard() {
-            console.log(`🎮 SHOW KEYBOARD called, currentSearchText: "${currentSearchText}"`);
+            console.log(`⌨️ SHOW KEYBOARD`);
             createHiddenInput();
             
-            // Synchroniser la valeur avant de focus
+            keyboardVisible = true;
             vrInput.value = currentSearchText || "";
-            console.log(`🔄 vrInput.value set to: "${vrInput.value}"`);
+            vrInput.focus();
+            updateVRDisplay();
             
-            // Focus sécurisé avec délai
-            setTimeout(() => {
-                if (document.activeElement !== vrInput) {
-                    try {
-                        vrInput.focus();
-                        keyboardVisible = true;
-                        updateVRDisplay();
-                        console.log("⌨️ Meta Quest keyboard opened successfully");
-                        console.log(`📝 Input focused, value: "${vrInput.value}"`);
-                        
-                        // Démarrer le polling pour surveiller les changements
-                        startInputPolling();
-                    } catch (error) {
-                        console.error("❌ Error focusing input:", error);
-                    }
-                }
-            }, 100);
+            console.log(`📝 Keyboard visible, input value: "${vrInput.value}"`);
         }
-        
+
         function hideKeyboard() {
-            if (vrInput && keyboardVisible) {
-                // Synchronisation finale avant fermeture
-                const finalValue = vrInput.value || "";
-                if (finalValue !== currentSearchText) {
-                    console.log(`🔄 FINAL SYNC: "${currentSearchText}" → "${finalValue}"`);
-                    currentSearchText = finalValue;
-                }
-                
+            console.log(`🔽 HIDE KEYBOARD`);
+            keyboardVisible = false;
+            if (vrInput) {
                 vrInput.blur();
-                keyboardVisible = false;
-                stopInputPolling();
-                updateVRDisplay();
-                console.log("🔽 Meta Quest keyboard closed");
             }
+            updateVRDisplay();
         }
         
         // Fonction pour gérer les clics VR
