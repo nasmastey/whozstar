@@ -3024,6 +3024,13 @@ function createVRSearchPanel3D(scene, data) {
         
         console.log(`📋 Autocomplete database: ${uniqueNames.length} unique particle names`);
         
+        // Debug: Afficher quelques exemples de noms
+        if (uniqueNames.length > 0) {
+            console.log(`📝 Example names:`, uniqueNames.slice(0, 10));
+        } else {
+            console.warn(`⚠️ No particle names found in data. Data structure:`, data ? data.slice(0, 3) : 'no data');
+        }
+        
         // Variables d'état
         let currentSearchText = "";
         let keyboardVisible = false;
@@ -3054,17 +3061,42 @@ function createVRSearchPanel3D(scene, data) {
         
         // Fonction pour filtrer les suggestions d'autocomplétion
         function getAutocompleteSuggestions(query) {
-            if (!query || query.length < 3) return [];
+            console.log(`🔍 AUTOCOMPLETE: query="${query}", length=${query ? query.length : 0}`);
+            
+            if (!query || query.length < 3) {
+                console.log(`❌ Query too short or empty`);
+                return [];
+            }
+            
+            // Vérifier que la base de données existe
+            if (!uniqueNames || uniqueNames.length === 0) {
+                console.warn(`⚠️ uniqueNames is empty or undefined:`, uniqueNames);
+                // Fallback: essayer d'obtenir les noms depuis les sprites existants
+                const sprites = getAllSprites();
+                if (sprites && sprites.length > 0) {
+                    const fallbackNames = sprites.map(s => s.name).filter(name => name && name.length > 0);
+                    console.log(`🔄 Using fallback names from sprites: ${fallbackNames.length} names`);
+                    const suggestions = fallbackNames.filter(name =>
+                        name.toLowerCase().includes(query.toLowerCase())
+                    ).slice(0, 6);
+                    console.log(`✅ Fallback suggestions:`, suggestions);
+                    return suggestions;
+                }
+                return [];
+            }
             
             const suggestions = uniqueNames.filter(name =>
                 name.toLowerCase().includes(query.toLowerCase())
             ).slice(0, 6);
             
+            console.log(`✅ AUTOCOMPLETE found ${suggestions.length} suggestions:`, suggestions);
             return suggestions;
         }
         
         // Fonction pour dessiner l'affichage 3D VR - MÊME DESIGN QUE L'INTERFACE 2D
         function updateVRDisplay() {
+            console.log(`🖼️ UPDATE VR DISPLAY: currentSearchText="${currentSearchText}", keyboardVisible=${keyboardVisible}`);
+            
             searchTexture.clear();
             const context = searchTexture.getContext();
             clickableAreas.length = 0;
@@ -3092,9 +3124,9 @@ function createVRSearchPanel3D(scene, data) {
             context.fillStyle = "white";
             context.fillRect(60, inputY, 480, inputHeight);
             
-            // Bordure noire du champ
-            context.strokeStyle = "black";
-            context.lineWidth = 1;
+            // Bordure noire du champ (verte si clavier actif)
+            context.strokeStyle = keyboardVisible ? "#00ff00" : "black";
+            context.lineWidth = keyboardVisible ? 2 : 1;
             context.strokeRect(60, inputY, 480, inputHeight);
             
             // Texte dans le champ (noir comme l'interface 2D)
@@ -3105,6 +3137,8 @@ function createVRSearchPanel3D(scene, data) {
             const textColor = currentSearchText ? "black" : "#999";
             context.fillStyle = textColor;
             context.fillText(displayText, 70, inputY + 25);
+            
+            console.log(`📝 Displaying text: "${displayText}", color: ${textColor}`);
             
             // Curseur clignotant noir
             if (keyboardVisible && currentSearchText && Date.now() % 1000 < 500) {
@@ -3148,8 +3182,11 @@ function createVRSearchPanel3D(scene, data) {
             });
             
             // Autocomplétion avec style plus sobre
-            if (currentSearchText.length >= 3) {
+            if (currentSearchText && currentSearchText.length >= 3) {
+                console.log(`🔍 Checking autocomplete for: "${currentSearchText}"`);
                 autocompleteList = getAutocompleteSuggestions(currentSearchText);
+                console.log(`📝 Got ${autocompleteList.length} suggestions:`, autocompleteList);
+                
                 if (autocompleteList.length > 0) {
                     let currentY = 200;
                     
@@ -3208,19 +3245,27 @@ function createVRSearchPanel3D(scene, data) {
                 vrInput.style.left = '-9999px';
                 vrInput.style.opacity = '0';
                 vrInput.style.pointerEvents = 'none';
+                vrInput.setAttribute('autocomplete', 'off');
+                vrInput.setAttribute('autocorrect', 'off');
+                vrInput.setAttribute('autocapitalize', 'off');
+                vrInput.setAttribute('spellcheck', 'false');
                 document.body.appendChild(vrInput);
                 
-                // Écouter les changements
+                // Écouter les changements avec debug amélioré
                 vrInput.addEventListener('input', (e) => {
-                    currentSearchText = e.target.value;
+                    const newValue = e.target.value;
+                    console.log(`⌨️ INPUT EVENT: "${newValue}" (length: ${newValue.length})`);
+                    currentSearchText = newValue;
                     updateVRDisplay();
-                    console.log(`⌨️ Meta Quest input: "${currentSearchText}"`);
+                    console.log(`✅ currentSearchText updated: "${currentSearchText}"`);
                 });
                 
-                // Écouter Enter
+                // Écouter tous les événements clavier pour debug
                 vrInput.addEventListener('keydown', (e) => {
+                    console.log(`⌨️ KEYDOWN: ${e.key}, currentText: "${currentSearchText}"`);
                     if (e.key === 'Enter' && currentSearchText.length > 0) {
                         e.preventDefault();
+                        console.log(`🔍 ENTER pressed, searching: "${currentSearchText}"`);
                         hideKeyboard();
                         performSearch(currentSearchText);
                     } else if (e.key === 'Escape') {
@@ -3229,34 +3274,95 @@ function createVRSearchPanel3D(scene, data) {
                     }
                 });
                 
+                vrInput.addEventListener('keyup', (e) => {
+                    console.log(`⌨️ KEYUP: ${e.key}, input value: "${e.target.value}"`);
+                    currentSearchText = e.target.value;
+                    updateVRDisplay();
+                });
+                
                 // Éviter les freezes
                 vrInput.addEventListener('blur', () => {
+                    console.log(`🔽 INPUT BLUR, text: "${currentSearchText}"`);
                     setTimeout(() => {
                         if (vrInput && document.activeElement !== vrInput) {
                             hideKeyboard();
                         }
                     }, 300);
                 });
+                
+                console.log(`✅ Hidden input created with enhanced event listeners`);
+            }
+        }
+        
+        // Système de polling pour surveiller les changements
+        let pollingInterval = null;
+        
+        function startInputPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            pollingInterval = setInterval(() => {
+                if (vrInput && keyboardVisible) {
+                    const inputValue = vrInput.value || "";
+                    if (inputValue !== currentSearchText) {
+                        console.log(`🔄 POLLING: Input changed from "${currentSearchText}" to "${inputValue}"`);
+                        currentSearchText = inputValue;
+                        updateVRDisplay();
+                    }
+                }
+            }, 200); // Vérifier toutes les 200ms
+            
+            console.log("📊 Input polling started");
+        }
+        
+        function stopInputPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                console.log("⏹️ Input polling stopped");
             }
         }
         
         function showKeyboard() {
+            console.log(`🎮 SHOW KEYBOARD called, currentSearchText: "${currentSearchText}"`);
             createHiddenInput();
-            vrInput.value = currentSearchText;
             
-            // Focus sécurisé
-            if (document.activeElement !== vrInput) {
-                vrInput.focus();
-                keyboardVisible = true;
-                updateVRDisplay();
-                console.log("⌨️ Meta Quest keyboard opened");
-            }
+            // Synchroniser la valeur avant de focus
+            vrInput.value = currentSearchText || "";
+            console.log(`🔄 vrInput.value set to: "${vrInput.value}"`);
+            
+            // Focus sécurisé avec délai
+            setTimeout(() => {
+                if (document.activeElement !== vrInput) {
+                    try {
+                        vrInput.focus();
+                        keyboardVisible = true;
+                        updateVRDisplay();
+                        console.log("⌨️ Meta Quest keyboard opened successfully");
+                        console.log(`📝 Input focused, value: "${vrInput.value}"`);
+                        
+                        // Démarrer le polling pour surveiller les changements
+                        startInputPolling();
+                    } catch (error) {
+                        console.error("❌ Error focusing input:", error);
+                    }
+                }
+            }, 100);
         }
         
         function hideKeyboard() {
             if (vrInput && keyboardVisible) {
+                // Synchronisation finale avant fermeture
+                const finalValue = vrInput.value || "";
+                if (finalValue !== currentSearchText) {
+                    console.log(`🔄 FINAL SYNC: "${currentSearchText}" → "${finalValue}"`);
+                    currentSearchText = finalValue;
+                }
+                
                 vrInput.blur();
                 keyboardVisible = false;
+                stopInputPolling();
                 updateVRDisplay();
                 console.log("🔽 Meta Quest keyboard closed");
             }
