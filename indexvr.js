@@ -397,33 +397,38 @@ let currentTargetedSprite = null;
 let triggerHeldControllers = new Map(); // Stocke l'état des triggers maintenus par contrôleur
 let sliderInteractionActive = false;
 
-// Fonction ultra-simple pour scale les particules
+// Fonction ultra-simple pour scale les particules - SYSTÈME MULTI-MANAGERS CORRIGÉ
 function applyScaleToParticles(scaleValue) {
     try {
-        if (labelSprites && labelSprites.length > 0) {
+        const sprites = getAllSprites(); // Utiliser le nouveau système multi-managers
+        
+        if (sprites && sprites.length > 0) {
             // Facteur d'espacement inverse : scale élevé = particules serrées
             const factor = 1.0 / scaleValue;
             
-            console.log(`Applying scale ${scaleValue.toFixed(2)} with factor ${factor.toFixed(3)} to ${labelSprites.length} sprites`);
+            console.log(`Applying scale ${scaleValue.toFixed(2)} with factor ${factor.toFixed(3)} to ${sprites.length} sprites (multi-manager)`);
             
-            // Appliquer directement aux sprites
-            for (let i = 0; i < labelSprites.length; i++) {
-                const sprite = labelSprites[i];
-                const originalPos = originalPositions[i];
-                
-                if (sprite && originalPos) {
-                    sprite.position.x = originalPos.x * factor;
-                    sprite.position.y = originalPos.y * factor;
-                    sprite.position.z = originalPos.z * factor;
+            // Appliquer directement aux sprites avec leurs originalPosition
+            sprites.forEach(sprite => {
+                if (sprite && sprite.originalPosition) {
+                    sprite.position.x = sprite.originalPosition.x * factor;
+                    sprite.position.y = sprite.originalPosition.y * factor;
+                    sprite.position.z = sprite.originalPosition.z * factor;
                 }
-            }
+            });
             
-            console.log(`✅ Scale applied successfully`);
+            console.log(`✅ Scale applied successfully to ALL sprite managers`);
         } else {
-            console.log(`❌ No labelSprites available (${labelSprites ? labelSprites.length : 'undefined'})`);
+            console.log(`❌ No sprites available from getAllSprites() (${sprites ? sprites.length : 'undefined'})`);
+            
+            // Debug pour diagnostiquer
+            console.log(`🔍 Debug info:`);
+            console.log(`  - labelSprites array: ${labelSprites ? labelSprites.length : 'undefined'}`);
+            console.log(`  - window.spriteManagersByLevel: ${window.spriteManagersByLevel ? Object.keys(window.spriteManagersByLevel).length + ' managers' : 'undefined'}`);
+            console.log(`  - scene.spriteManagers: ${scene.spriteManagers ? scene.spriteManagers.length + ' managers' : 'undefined'}`);
         }
     } catch (error) {
-        console.error(`❌ Error applying scale:`, error);
+        console.error(`❌ Error applying scale (multi-manager):`, error);
     }
 }
 
@@ -2039,8 +2044,8 @@ function detectTargetedSprite() {
                             const angleFromRay = Math.atan2(distanceToRay, projectionLength);
                             const precision = 1.0 / (1.0 + angleFromRay * 500); // Plus tolérant que le trigger (500 vs 1000)
                             
-                            // Seuil plus large pour l'indicateur visuel (5 degrés vs 1.15° pour le trigger)
-                            const maxAngleIndicator = 0.087; // ~5 degrés
+                            // Seuil MAXIMUM pour l'indicateur visuel (distance quasi-infinie)
+                            const maxAngleIndicator = 0.175; // ~10 degrés pour particules très lointaines
                             
                             if (angleFromRay < maxAngleIndicator && precision > bestPrecision) {
                                 closestSprite = cachedParticle.sprite;
@@ -2049,8 +2054,8 @@ function detectTargetedSprite() {
                         }
                         
                         testedCount++;
-                        // Limite réduite pour la détection continue (performance)
-                        if (testedCount > 200) {
+                        // Limite maximale pour particules à l'infini
+                        if (testedCount > 1000) {
                             break;
                         }
                     }
@@ -2174,13 +2179,13 @@ function updateVRParticleCache() {
             const spritePosition = sprite.position;
             const distance = BABYLON.Vector3.Distance(cameraPosition, spritePosition);
             
-            // Distance étendue mais raisonnable
-            if (distance > 0.5 && distance < 5000) {
+            // Distance QUASI-INFINIE - Aucune limite supérieure !
+            if (distance > 0.05) { // Pas de limite supérieure du tout !
                 const spriteDirection = spritePosition.subtract(cameraPosition).normalize();
                 const angle = Math.acos(Math.max(-1, Math.min(1, BABYLON.Vector3.Dot(cameraDirection, spriteDirection))));
                 
-                // FOV élargi
-                if (angle < fov * 1.8) {
+                // FOV MAXIMUM pour détecter particules à l'infini
+                if (angle < fov * 5.0) {
                     vrParticleCache.push({
                         sprite: sprite,
                         position: spritePosition,
@@ -2196,7 +2201,7 @@ function updateVRParticleCache() {
     vrParticleCache.sort((a, b) => a.distance - b.distance);
     vrCacheLastUpdate = now;
     
-    console.log(`🔄 VR Cache: ${vrParticleCache.length} particles within range 500`);
+    console.log(`🔄 VR Cache: ${vrParticleCache.length} particles within INFINITE range`);
     return vrParticleCache;
 }
 
@@ -2334,25 +2339,34 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
                 const rayToSprite = spritePosition.subtract(rayOrigin);
                 const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
                 
-                // Distance très étendue comme vous le voulez
-                if (projectionLength > 0.5 && projectionLength < 2000) {
+                // Distance QUASI-INFINIE pour particules à n'importe quelle distance
+                if (projectionLength > 0.05) { // Pas de limite supérieure !
                     const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
                     const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
                     
-                    // Seuil adaptatif mais plus strict que l'original
-                    const precisionThreshold = Math.min(2.0, 0.3 + (projectionLength * 0.015));
+                    // Seuil adaptatif pour distance quasi-infinie - EXTRÊMEMENT tolérant
+                    let precisionThreshold;
+                    if (projectionLength < 100) {
+                        precisionThreshold = 2.0; // Précision normale pour courte distance
+                    } else if (projectionLength < 1000) {
+                        precisionThreshold = 5.0 + (projectionLength * 0.02); // Tolérant pour moyenne distance
+                    } else if (projectionLength < 10000) {
+                        precisionThreshold = 25.0 + (projectionLength * 0.05); // Très tolérant pour longue distance
+                    } else {
+                        precisionThreshold = 500.0 + (projectionLength * 0.1); // ULTRA tolérant pour distance quasi-infinie
+                    }
                     
                     if (distanceToRay < precisionThreshold && projectionLength < closestDistance) {
                         closestSprite = cachedParticle.sprite;
                         closestDistance = projectionLength;
                         
-                        console.log(`🎯 VR ${handness}: Found target: ${closestSprite.name}, ray distance: ${distanceToRay.toFixed(3)}, distance: ${projectionLength.toFixed(1)}`);
+                        console.log(`🎯 VR ${handness}: Found DISTANT target: ${closestSprite.name}, ray distance: ${distanceToRay.toFixed(1)}, distance: ${projectionLength.toFixed(1)}, threshold: ${precisionThreshold.toFixed(1)}`);
                     }
                 }
                 
-                // Limite pour les performances
-                if (testedCount > 300) {
-                    console.log(`⏱️ VR ${handness}: Stopping search at 300 tests`);
+                // Limite MAXIMALE pour particules à distance quasi-infinie
+                if (testedCount > 1500) {
+                    console.log(`⏱️ VR ${handness}: Stopping search at 1500 tests (INFINITE range)`);
                     break;
                 }
             }
@@ -2669,15 +2683,15 @@ function createVRScalePanel3D(scene) {
         
         console.log(`🎯 Scale Update: SliderValue=${currentSliderValue.toFixed(3)}, Scale=${currentScale.toFixed(2)}x`);
         
-        // Appliquer directement aux particules avec espacement inverse simple
+        // Appliquer directement aux particules avec espacement inverse simple - SYSTÈME MULTI-MANAGERS
         try {
-            if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
-                const sprites = scene.spriteManagers[0].sprites;
-                
+            const sprites = getAllSprites(); // Utiliser la nouvelle fonction pour tous les managers
+            
+            if (sprites && sprites.length > 0) {
                 // Facteur d'espacement simple : plus le scale est élevé, plus les particules sont serrées
                 const spacingFactor = 1.0 / currentScale;
                 
-                console.log(`Applying scale ${currentScale.toFixed(2)}x with spacing factor ${spacingFactor.toFixed(3)} to ${sprites.length} sprites`);
+                console.log(`Applying scale ${currentScale.toFixed(2)}x with spacing factor ${spacingFactor.toFixed(3)} to ${sprites.length} sprites (multi-manager)`);
                 
                 sprites.forEach(sprite => {
                     if (sprite.originalPosition) {
@@ -2687,12 +2701,20 @@ function createVRScalePanel3D(scene) {
                     }
                 });
                 
-                console.log(`✅ Scale applied successfully - Spacing: ${spacingFactor.toFixed(3)}x`);
+                console.log(`✅ Scale applied successfully to ALL managers - Spacing: ${spacingFactor.toFixed(3)}x`);
             } else {
-                console.log(`❌ No sprite managers or sprites available`);
+                console.log(`❌ No sprites available from getAllSprites() - length: ${sprites ? sprites.length : 'undefined'}`);
+                
+                // Debug: Vérifier les managers disponibles
+                if (window.spriteManagersByLevel) {
+                    console.log(`🔍 Available sprite managers by level:`, Object.keys(window.spriteManagersByLevel));
+                    Object.entries(window.spriteManagersByLevel).forEach(([level, manager]) => {
+                        console.log(`  Level ${level}: ${manager.sprites ? manager.sprites.length : 0} sprites`);
+                    });
+                }
             }
         } catch (error) {
-            console.error(`❌ Error applying scale:`, error);
+            console.error(`❌ Error applying scale (multi-manager):`, error);
         }
         
         updateScaleTexture();
