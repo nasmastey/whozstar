@@ -933,7 +933,8 @@ async function main(currentData, ratio) {
     //const labelSpriteManager = new BABYLON.SpriteManager('labelSpriteManager', imageUrl, data.length, imageSize, scene);
     //labelSpriteManager.isPickable = true;
     
-    // Stocker la référence pour compatibilité - utiliser le premier sprite manager créé
+    // Stocker toutes les références pour compatibilité
+    window.spriteManagersByLevel = spriteManagers;
     window.labelSpriteManager = Object.values(spriteManagers)[0];
 
     // Helper to create a sprite and attach actions - SYSTÈME REPVAL COMPLET
@@ -1007,7 +1008,7 @@ async function main(currentData, ratio) {
             BABYLON.ActionManager.OnPointerOverTrigger,
             evt => {
                 const spriteName = evt.source.name;
-                const sprites = scene.spriteManagers[0].sprites;
+                const sprites = getAllSprites();
                 const targetSprite = sprites.find(s => s.name === spriteName);
                 const distances = sprites.filter(s => s.isVisible && s.originalPosition && targetSprite && targetSprite.originalPosition).map(s => ({
                     name: s.name,
@@ -1039,6 +1040,9 @@ async function main(currentData, ratio) {
         particle.position = originalPositions[particle.idx];
     });
 
+    // Pas besoin de mise à jour ici
+    // updateLegacySpriteReferences();
+
 scene.onBeforeRenderObservable.add(() => {
 	
 	updateSpritePositions();
@@ -1056,7 +1060,7 @@ scene.onBeforeRenderObservable.add(() => {
 		const fov = camera.fov; // Champs de vision de la caméra
 		const cameraPosition = camera.position;
 	
-    scene.spriteManagers[0].sprites.map(s => {
+    getAllSprites().map(s => {
         var width = engine.getRenderWidth();
         var height = engine.getRenderHeight();
         var identityMatrix = BABYLON.Matrix.Identity();
@@ -1175,8 +1179,8 @@ engine.runRenderLoop(renderLoop);
     // Charger la configuration d'images
     loadImageConfiguration();
     
-    // Mise à jour de la compatibilité avec l'ancien système
-    updateLegacySpriteReferences();
+    // La mise à jour sera faite après la création des sprites
+    // updateLegacySpriteReferences();
     
     // Assigner des niveaux aléatoires aux sprites (utilise maintenant getAllSprites())
     assignRandomLevels();
@@ -1537,7 +1541,7 @@ function moveCameraToSprite(spriteName) {
         return;
     }
 
-    const sprites = scene.spriteManagers[0].sprites; // Assuming the first sprite manager
+    const sprites = getAllSprites(); // Get all sprites from all managers
     let targetSprite = sprites.find(s => s.name === spriteName);
 
     if (targetSprite) {
@@ -1716,7 +1720,7 @@ function createLegend(data) {
 
 // Function to filter sprites by type
 function filterByType(type) {
-    scene.spriteManagers[0].sprites.forEach(sprite => {
+    getAllSprites().forEach(sprite => {
 		if (sprite.metadata && sprite.metadata.subType === type) {
             sprite.isVisible = !sprite.isVisible;
         }
@@ -1742,7 +1746,7 @@ function updateParticleList() {
     const dataList = document.getElementById('particlesList');
     dataList.innerHTML = ''; // Clear existing items
 
-    const particleNames = scene.spriteManagers[0].sprites
+    const particleNames = getAllSprites()
         .filter(sprite => sprite.isVisible)
         .map(sprite => sprite.name);
     
@@ -1775,7 +1779,8 @@ function toggleDemoModeVR() {
 }
 
 function startDemoModeVR() {
-    if (!scene.spriteManagers[0] || !scene.spriteManagers[0].sprites.length) {
+    const allSprites = getAllSprites();
+    if (!allSprites || allSprites.length === 0) {
         console.log('Aucune étoile disponible pour le mode démo VR');
         return;
     }
@@ -1802,7 +1807,7 @@ function stopDemoModeVR() {
 
 function createDemoGroupsVR() {
     // Créer des groupes d'étoiles basés sur les types (subType)
-    const sprites = scene.spriteManagers[0].sprites.filter(s => s.isVisible);
+    const sprites = getAllSprites().filter(s => s.isVisible);
     const groupsByType = {};
     
     sprites.forEach(sprite => {
@@ -1877,8 +1882,9 @@ function handleVRTriggerInteraction(controller, handness) {
             let closestDistance = Infinity;
             
             // Vérifier toutes les particules visibles
-            if (scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
-                scene.spriteManagers[0].sprites.forEach(sprite => {
+            const allSprites = getAllSprites();
+            if (allSprites && allSprites.length > 0) {
+                allSprites.forEach(sprite => {
                     if (sprite.isVisible) {
                         // Utiliser la méthode intersectsMesh pour la détection précise
                         const spritePosition = sprite.position;
@@ -1938,9 +1944,10 @@ function handleVRTriggerInteraction(controller, handness) {
         let closestScreenDistance = Infinity;
         
         // Méthode alternative: trouver l'étoile la plus proche visuellement
-        if (scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
+        const allSprites = getAllSprites();
+        if (allSprites && allSprites.length > 0) {
             const camera = scene.activeCamera;
-            scene.spriteManagers[0].sprites.forEach(sprite => {
+            allSprites.forEach(sprite => {
                 if (sprite.isVisible) {
                     // Calculer la distance 3D au contrôleur
                     const distance3D = BABYLON.Vector3.Distance(controllerPosition, sprite.position);
@@ -2151,7 +2158,8 @@ function updateVRParticleCache() {
     }
     
     const camera = scene.activeCamera;
-    if (!camera || !scene.spriteManagers[0]) {
+    const allSprites = getAllSprites();
+    if (!camera || !allSprites || allSprites.length === 0) {
         return [];
     }
     
@@ -2161,7 +2169,7 @@ function updateVRParticleCache() {
     
     // Cache simple avec distance étendue
     vrParticleCache = [];
-    scene.spriteManagers[0].sprites.forEach(sprite => {
+    allSprites.forEach(sprite => {
         if (sprite.isVisible) {
             const spritePosition = sprite.position;
             const distance = BABYLON.Vector3.Distance(cameraPosition, spritePosition);
@@ -3288,17 +3296,43 @@ function updateOrbitalPositions() {
 
 // === FONCTIONS UTILITAIRES POUR COMPATIBILITÉ ===
 
-// Fonction utilitaire pour récupérer tous les sprites - SYSTÈME SIMPLIFIÉ
+// Fonction utilitaire pour récupérer tous les sprites - SYSTÈME MULTI-MANAGERS
 function getAllSprites() {
-    // Système simple - utiliser le sprite manager principal
-    if (scene.spriteManagers && scene.spriteManagers[0] && scene.spriteManagers[0].sprites) {
-        return scene.spriteManagers[0].sprites;
-    } else if (window.labelSpriteManager && window.labelSpriteManager.sprites) {
+    const allSprites = [];
+    
+    // Utiliser tous les sprite managers
+    if (window.spriteManagersByLevel) {
+        Object.values(window.spriteManagersByLevel).forEach(manager => {
+            if (manager && manager.sprites) {
+                allSprites.push(...manager.sprites);
+            }
+        });
+        if (allSprites.length > 0) {
+            return allSprites;
+        }
+    }
+    
+    // Fallback aux anciennes méthodes
+    if (scene.spriteManagers && scene.spriteManagers.length > 0) {
+        scene.spriteManagers.forEach(manager => {
+            if (manager && manager.sprites) {
+                allSprites.push(...manager.sprites);
+            }
+        });
+        if (allSprites.length > 0) {
+            return allSprites;
+        }
+    }
+    
+    if (window.labelSpriteManager && window.labelSpriteManager.sprites) {
         return window.labelSpriteManager.sprites;
-    } else if (labelSprites && labelSprites.length > 0) {
+    }
+    
+    if (labelSprites && labelSprites.length > 0) {
         return labelSprites;
     }
-    return [];
+    
+    return allSprites;
 }
 
 // Fonction utilitaire pour récupérer tous les sprite managers (compatibilité)
@@ -3313,17 +3347,28 @@ function getAllSpriteManagers() {
     return [];
 }
 
-// Mise à jour globale pour compatibilité avec l'ancien code - SYSTÈME SIMPLIFIÉ
+// Mise à jour globale pour compatibilité avec l'ancien code - SYSTÈME MULTI-MANAGERS
 function updateLegacySpriteReferences() {
-    // Système simple - s'assurer que scene.spriteManagers[0] existe
+    // S'assurer que scene.spriteManagers existe
     if (!scene.spriteManagers) {
         scene.spriteManagers = [];
     }
     
-    // Utiliser le sprite manager principal
-    if (window.labelSpriteManager) {
+    // Créer un sprite manager virtuel qui combine tous les sprites
+    if (window.spriteManagersByLevel) {
+        const allSprites = getAllSprites();
+        
+        // Créer un objet manager virtuel avec tous les sprites
+        const virtualManager = {
+            sprites: allSprites,
+            isPickable: true
+        };
+        
+        scene.spriteManagers[0] = virtualManager;
+        console.log(`✅ Référence sprite manager mise à jour avec ${allSprites.length} sprites de ${Object.keys(window.spriteManagersByLevel).length} managers`);
+    } else if (window.labelSpriteManager) {
         scene.spriteManagers[0] = window.labelSpriteManager;
-        console.log(`✅ Référence sprite manager mise à jour`);
+        console.log(`✅ Référence sprite manager mise à jour (fallback)`);
     }
 }
 
