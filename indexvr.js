@@ -3011,11 +3011,11 @@ function createVRLegendPanel3D(scene, data) {
         return null;
     }
 }
-// Fonction pour créer un système de recherche VR simple avec input Meta Quest
+// Fonction pour créer un système de recherche VR hybride : input invisible + panneau 3D visible
 function createVRSearchPanel3D(scene, data) {
     const searchPanelSystem = {};
     
-    console.log("🔍 Creating simple VR Search with Meta Quest keyboard...");
+    console.log("🔍 Creating hybrid VR Search (invisible input + 3D panel)...");
     
     try {
         // Générer la liste d'autocomplétion à partir des données
@@ -3026,8 +3026,31 @@ function createVRSearchPanel3D(scene, data) {
         
         // Variables d'état
         let currentSearchText = "";
+        let keyboardVisible = false;
         let autocompleteList = [];
         let autocompleteDiv = null;
+        
+        // Créer le panneau 3D visible dans le casque VR
+        const searchPlane = BABYLON.MeshBuilder.CreatePlane("vrSearchPlane", {
+            width: 2.5,
+            height: 1.5
+        }, scene);
+        
+        searchPlane.position = new BABYLON.Vector3(0, 0, 3);
+        searchPlane.isVisible = false;
+        
+        // Créer une texture dynamique pour l'affichage 3D
+        const textureHeight = 400;
+        let searchTexture = new BABYLON.DynamicTexture("vrSearchTexture", {width: 600, height: textureHeight}, scene);
+        const searchMaterial = new BABYLON.StandardMaterial("vrSearchMat", scene);
+        searchMaterial.diffuseTexture = searchTexture;
+        searchMaterial.emissiveTexture = searchTexture;
+        searchMaterial.disableLighting = true;
+        searchMaterial.hasAlpha = true;
+        searchPlane.material = searchMaterial;
+        
+        // Zones cliquables pour les suggestions
+        const clickableAreas = [];
         
         // Fonction pour filtrer les suggestions d'autocomplétion
         function getAutocompleteSuggestions(query) {
@@ -3035,145 +3058,242 @@ function createVRSearchPanel3D(scene, data) {
             
             const suggestions = uniqueNames.filter(name =>
                 name.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 6); // Limiter à 6 suggestions
+            ).slice(0, 6);
             
             return suggestions;
         }
         
-        // Créer l'input HTML pour le clavier Meta Quest
+        // Fonction pour dessiner l'affichage 3D VR - MÊME DESIGN QUE L'INTERFACE 2D
+        function updateVRDisplay() {
+            searchTexture.clear();
+            const context = searchTexture.getContext();
+            clickableAreas.length = 0;
+            
+            // Fond blanc semi-transparent comme l'interface 2D originale
+            context.fillStyle = "rgba(255, 255, 255, 0.7)";
+            context.fillRect(0, 0, 600, textureHeight);
+            
+            // Bordure simple
+            context.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            context.lineWidth = 1;
+            context.strokeRect(10, 10, 580, textureHeight - 20);
+            
+            // Titre "Recherche de particule" (même texte que l'interface 2D)
+            context.font = "20px Arial";
+            context.fillStyle = "black";
+            context.textAlign = "center";
+            context.fillText("Recherche de particule", 300, 50);
+            
+            // Champ de saisie blanc comme l'interface 2D
+            const inputY = 80;
+            const inputHeight = 40;
+            
+            // Fond blanc du champ de saisie
+            context.fillStyle = "white";
+            context.fillRect(60, inputY, 480, inputHeight);
+            
+            // Bordure noire du champ
+            context.strokeStyle = "black";
+            context.lineWidth = 1;
+            context.strokeRect(60, inputY, 480, inputHeight);
+            
+            // Texte dans le champ (noir comme l'interface 2D)
+            context.font = "16px Arial";
+            context.fillStyle = "black";
+            context.textAlign = "left";
+            const displayText = currentSearchText || "Nom de particule...";
+            const textColor = currentSearchText ? "black" : "#999";
+            context.fillStyle = textColor;
+            context.fillText(displayText, 70, inputY + 25);
+            
+            // Curseur clignotant noir
+            if (keyboardVisible && currentSearchText && Date.now() % 1000 < 500) {
+                const textWidth = context.measureText(currentSearchText).width;
+                context.fillStyle = "black";
+                context.fillRect(70 + textWidth + 2, inputY + 10, 1, 20);
+            }
+            
+            // Zone cliquable du champ
+            clickableAreas.push({
+                type: "searchInput",
+                x1: 60,
+                y1: inputY,
+                x2: 540,
+                y2: inputY + inputHeight
+            });
+            
+            // Bouton "Rechercher" bleu comme l'interface 2D
+            const buttonY = 140;
+            const buttonHeight = 40;
+            const buttonWidth = 120;
+            const buttonX = (600 - buttonWidth) / 2;
+            
+            // Fond bleu du bouton (#007bff comme l'interface 2D)
+            context.fillStyle = "#007bff";
+            context.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            
+            // Texte blanc du bouton
+            context.font = "16px Arial";
+            context.fillStyle = "white";
+            context.textAlign = "center";
+            context.fillText("Rechercher", buttonX + buttonWidth/2, buttonY + 25);
+            
+            // Zone cliquable du bouton
+            clickableAreas.push({
+                type: "searchButton",
+                x1: buttonX,
+                y1: buttonY,
+                x2: buttonX + buttonWidth,
+                y2: buttonY + buttonHeight
+            });
+            
+            // Autocomplétion avec style plus sobre
+            if (currentSearchText.length >= 3) {
+                autocompleteList = getAutocompleteSuggestions(currentSearchText);
+                if (autocompleteList.length > 0) {
+                    let currentY = 200;
+                    
+                    autocompleteList.forEach((suggestion, index) => {
+                        const itemY = currentY + index * 30;
+                        
+                        // Fond blanc pour les suggestions
+                        context.fillStyle = "white";
+                        context.fillRect(60, itemY - 2, 480, 26);
+                        
+                        // Bordure fine
+                        context.strokeStyle = "#ddd";
+                        context.lineWidth = 1;
+                        context.strokeRect(60, itemY - 2, 480, 26);
+                        
+                        // Texte noir des suggestions
+                        context.font = "14px Arial";
+                        context.fillStyle = "black";
+                        context.textAlign = "left";
+                        context.fillText(suggestion, 70, itemY + 15);
+                        
+                        // Zone cliquable
+                        clickableAreas.push({
+                            type: "autocomplete",
+                            text: suggestion,
+                            x1: 60,
+                            y1: itemY - 2,
+                            x2: 540,
+                            y2: itemY + 24
+                        });
+                    });
+                }
+            }
+            
+            // Instructions discrètes en bas
+            context.font = "12px Arial";
+            context.fillStyle = "#666";
+            context.textAlign = "center";
+            if (keyboardVisible) {
+                context.fillText("Clavier actif - Tapez votre recherche", 300, textureHeight - 20);
+            } else {
+                context.fillText("Cliquez dans le champ pour rechercher", 300, textureHeight - 20);
+            }
+            
+            searchTexture.update();
+        }
+        
+        // Input HTML invisible pour le clavier Meta Quest seulement
         let vrInput = null;
         
-        function createVRInput() {
+        function createHiddenInput() {
             if (!vrInput) {
                 vrInput = document.createElement('input');
                 vrInput.type = 'text';
-                vrInput.placeholder = 'Rechercher une particule...';
-                
-                // Style pour le faire apparaître en overlay VR
-                vrInput.style.position = 'fixed';
-                vrInput.style.top = '40%';
-                vrInput.style.left = '50%';
-                vrInput.style.transform = 'translate(-50%, -50%)';
-                vrInput.style.width = '400px';
-                vrInput.style.height = '50px';
-                vrInput.style.fontSize = '20px';
-                vrInput.style.padding = '15px';
-                vrInput.style.border = '3px solid #00aaff';
-                vrInput.style.borderRadius = '12px';
-                vrInput.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                vrInput.style.color = 'white';
-                vrInput.style.zIndex = '10000';
-                vrInput.style.display = 'none';
-                vrInput.style.boxShadow = '0 0 20px rgba(0, 170, 255, 0.5)';
-                
+                vrInput.style.position = 'absolute';
+                vrInput.style.left = '-9999px';
+                vrInput.style.opacity = '0';
+                vrInput.style.pointerEvents = 'none';
                 document.body.appendChild(vrInput);
                 
-                // Créer la div d'autocomplétion
-                autocompleteDiv = document.createElement('div');
-                autocompleteDiv.style.position = 'fixed';
-                autocompleteDiv.style.top = '50%';
-                autocompleteDiv.style.left = '50%';
-                autocompleteDiv.style.transform = 'translate(-50%, -50%)';
-                autocompleteDiv.style.width = '400px';
-                autocompleteDiv.style.maxHeight = '300px';
-                autocompleteDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                autocompleteDiv.style.border = '2px solid #00aaff';
-                autocompleteDiv.style.borderRadius = '8px';
-                autocompleteDiv.style.overflowY = 'auto';
-                autocompleteDiv.style.zIndex = '10001';
-                autocompleteDiv.style.display = 'none';
-                autocompleteDiv.style.boxShadow = '0 0 15px rgba(0, 170, 255, 0.3)';
-                
-                document.body.appendChild(autocompleteDiv);
-                
-                // Écouter les changements de l'input
+                // Écouter les changements
                 vrInput.addEventListener('input', (e) => {
                     currentSearchText = e.target.value;
-                    updateAutocomplete();
-                    console.log(`⌨️ Meta Quest keyboard input: "${currentSearchText}"`);
+                    updateVRDisplay();
+                    console.log(`⌨️ Meta Quest input: "${currentSearchText}"`);
                 });
                 
-                // Écouter la validation (Enter)
+                // Écouter Enter
                 vrInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && currentSearchText.length > 0) {
                         e.preventDefault();
-                        hideVRInput();
+                        hideKeyboard();
                         performSearch(currentSearchText);
                     } else if (e.key === 'Escape') {
                         e.preventDefault();
-                        hideVRInput();
+                        hideKeyboard();
                     }
                 });
                 
-                // Quand le clavier se ferme
+                // Éviter les freezes
                 vrInput.addEventListener('blur', () => {
                     setTimeout(() => {
-                        hideVRInput();
-                    }, 200);
+                        if (vrInput && document.activeElement !== vrInput) {
+                            hideKeyboard();
+                        }
+                    }, 300);
                 });
             }
         }
         
-        function updateAutocomplete() {
-            if (!autocompleteDiv) return;
-            
-            autocompleteList = getAutocompleteSuggestions(currentSearchText);
-            
-            if (autocompleteList.length > 0) {
-                autocompleteDiv.innerHTML = '';
-                autocompleteList.forEach(suggestion => {
-                    const item = document.createElement('div');
-                    item.textContent = suggestion;
-                    item.style.padding = '12px 15px';
-                    item.style.color = 'white';
-                    item.style.cursor = 'pointer';
-                    item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.2)';
-                    item.style.fontSize = '18px';
-                    
-                    item.addEventListener('mouseenter', () => {
-                        item.style.backgroundColor = 'rgba(0, 170, 255, 0.3)';
-                    });
-                    
-                    item.addEventListener('mouseleave', () => {
-                        item.style.backgroundColor = 'transparent';
-                    });
-                    
-                    item.addEventListener('click', () => {
-                        hideVRInput();
-                        performSearch(suggestion);
-                    });
-                    
-                    autocompleteDiv.appendChild(item);
-                });
-                autocompleteDiv.style.display = 'block';
-            } else {
-                autocompleteDiv.style.display = 'none';
-            }
-        }
-        
-        function showVRInput() {
-            createVRInput();
+        function showKeyboard() {
+            createHiddenInput();
             vrInput.value = currentSearchText;
-            vrInput.style.display = 'block';
-            autocompleteDiv.style.display = 'none';
             
-            // Focus avec un petit délai pour assurer que l'input est visible
-            setTimeout(() => {
+            // Focus sécurisé
+            if (document.activeElement !== vrInput) {
                 vrInput.focus();
-                vrInput.select();
-                console.log("⌨️ Meta Quest keyboard opened with visible input");
-            }, 100);
+                keyboardVisible = true;
+                updateVRDisplay();
+                console.log("⌨️ Meta Quest keyboard opened");
+            }
         }
         
-        function hideVRInput() {
-            if (vrInput) {
-                vrInput.style.display = 'none';
+        function hideKeyboard() {
+            if (vrInput && keyboardVisible) {
                 vrInput.blur();
+                keyboardVisible = false;
+                updateVRDisplay();
                 console.log("🔽 Meta Quest keyboard closed");
             }
-            if (autocompleteDiv) {
-                autocompleteDiv.style.display = 'none';
+        }
+        
+        // Fonction pour gérer les clics VR
+        function handleClick(localX, localY, planeWidth, planeHeight) {
+            const normalizedX = (localX + planeWidth/2) / planeWidth;
+            const normalizedY = (localY + planeHeight/2) / planeHeight;
+            const textureX = normalizedX * 600;
+            const textureY = (1.0 - normalizedY) * textureHeight;
+            
+            for (const area of clickableAreas) {
+                if (textureX >= area.x1 && textureX <= area.x2 &&
+                    textureY >= area.y1 && textureY <= area.y2) {
+                    
+                    switch (area.type) {
+                        case "searchInput":
+                            showKeyboard();
+                            break;
+                            
+                        case "searchButton":
+                            if (currentSearchText && currentSearchText.trim().length > 0) {
+                                hideKeyboard();
+                                performSearch(currentSearchText.trim());
+                            }
+                            break;
+                            
+                        case "autocomplete":
+                            hideKeyboard();
+                            performSearch(area.text);
+                            break;
+                    }
+                    return true;
+                }
             }
+            return false;
         }
         
         // Fonction pour effectuer la recherche
@@ -3181,27 +3301,46 @@ function createVRSearchPanel3D(scene, data) {
             console.log(`🔍 Performing search for: "${query}"`);
             
             try {
-                // Appeler la fonction de navigation existante
                 moveCameraToSprite(query);
-                
+                setTimeout(() => {
+                    searchPanelSystem.hide();
+                }, 500);
             } catch (error) {
                 console.error(`❌ Search error for "${query}":`, error);
             }
         }
         
+        // Fonction pour attacher à la caméra
+        function attachToCamera() {
+            const camera = scene.activeCamera;
+            if (camera) {
+                searchPlane.parent = camera;
+                console.log("📷 VR Search Panel 3D attached to camera");
+            }
+        }
+        
+        // Stocker les références
+        searchPanelSystem.plane = searchPlane;
+        searchPanelSystem.handleClick = handleClick;
+        
         // Fonctions publiques
         searchPanelSystem.show = function() {
-            console.log("👁️ VR: Showing search input");
-            showVRInput();
+            console.log("👁️ VR: Showing hybrid search panel");
+            searchPlane.isVisible = true;
+            currentSearchText = "";
+            keyboardVisible = false;
+            updateVRDisplay();
+            attachToCamera();
         };
         
         searchPanelSystem.hide = function() {
-            console.log("🙈 VR: Hiding search input");
-            hideVRInput();
+            console.log("🙈 VR: Hiding hybrid search panel");
+            searchPlane.isVisible = false;
+            hideKeyboard();
         };
         
         searchPanelSystem.toggle = function() {
-            if (vrInput && vrInput.style.display === 'block') {
+            if (searchPlane.isVisible) {
                 this.hide();
             } else {
                 this.show();
@@ -3209,21 +3348,23 @@ function createVRSearchPanel3D(scene, data) {
         };
         
         searchPanelSystem.dispose = function() {
+            if (searchTexture) searchTexture.dispose();
+            if (searchMaterial) searchMaterial.dispose();
+            if (searchPlane) searchPlane.dispose();
             if (vrInput) {
                 document.body.removeChild(vrInput);
                 vrInput = null;
             }
-            if (autocompleteDiv) {
-                document.body.removeChild(autocompleteDiv);
-                autocompleteDiv = null;
-            }
         };
         
-        console.log("✅ VR Search with Meta Quest keyboard created successfully");
+        // Initialiser l'affichage
+        updateVRDisplay();
+        
+        console.log("✅ VR Hybrid Search (invisible input + 3D panel) created successfully");
         return searchPanelSystem;
         
     } catch (error) {
-        console.error("❌ Error creating VR Search:", error);
+        console.error("❌ Error creating VR Hybrid Search:", error);
         return null;
     }
 }
