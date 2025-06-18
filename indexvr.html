@@ -149,6 +149,34 @@
 		  margin-right: 10px;
 		  min-width: 150px;
 }
+
+/* Style pour le bouton d'aide */
+#helpButton {
+    position: fixed;
+    top: 20px;
+    right: 80px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid #007bff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #007bff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+#helpButton:hover {
+    background-color: #007bff;
+    color: white;
+    transform: scale(1.1);
+}
         </style>
     </head>
 <body>
@@ -195,8 +223,11 @@
     <ul id="nearestList"></ul>
     </div>
 	<button class="toggleButton" data-target="searchContainer">Search</button>
-    <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
-    <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+	   <button class="toggleButton" data-target="legend" style="bottom: 50px;">Legend</button>
+	   <button class="toggleButton" data-target="nearestContainer" style="bottom: 10px;">Nearest</button>
+	
+	<!-- Bouton d'aide -->
+	<button id="helpButton" title="Aide - Fonctionnalités des manettes VR">?</button>
 	<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
     <div style="max-width: 400px; margin:20% auto; padding:20px; background:white; border-radius:5px;">
         <label for="passwordInput">Enter password:</label>
@@ -272,6 +303,21 @@
 	               });
 	           }
 	       });
+	       
+	       // Gestion du bouton d'aide
+	       const helpButton = document.getElementById('helpButton');
+	       if (helpButton) {
+	           helpButton.addEventListener('click', function() {
+	               // Ouvrir la page d'aide dans un nouvel onglet
+	               const helpWindow = window.open('./aide_vr.html', '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+	               
+	               if (helpWindow) {
+	                   console.log('✅ Page d\'aide VR ouverte dans un nouvel onglet');
+	               } else {
+	                   alert('❌ Impossible d\'ouvrir la page d\'aide.\nVeuillez autoriser les pop-ups pour ce site.');
+	               }
+	           });
+	       }
 	   </script>
 </body>
 </body>

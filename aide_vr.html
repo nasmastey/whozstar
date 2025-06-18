@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aide - Fonctionnalités des Manettes VR</title>
+    <style>
+        body {
+            font-family: 'FreeMono', monospace;
+            margin: 20px;
+            background: linear-gradient(135deg, #87CEEB 0%, #87CEFA 100%);
+            min-height: 100vh;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            text-transform: uppercase;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid cyan;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 2px solid cyan;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .content {
+            padding: 20px 0;
+        }
+        
+        .image-container {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid cyan;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid cyan;
+        }
+        
+        .controls-section {
+            margin-top: 40px;
+        }
+        
+        .controls-section h2 {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 2px solid cyan;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .controller {
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid cyan;
+            transition: all 0.3s ease;
+        }
+        
+        .controller:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controller h3 {
+            color: white;
+            margin-top: 0;
+            font-size: 1.4em;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid cyan;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .button-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .button-list li {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 2px solid cyan;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .button-list li:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .button-name {
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .button-function {
+            color: white;
+            margin-left: 10px;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: none;
+        }
+        
+        .movement-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid cyan;
+            transition: all 0.3s ease;
+        }
+        
+        .movement-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .movement-section h3 {
+            color: white;
+            margin-top: 0;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid cyan;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        .close-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: 2px solid cyan;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            font-weight: bold;
+            z-index: 9999;
+        }
+        
+        .close-button:hover {
+            transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .note {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid cyan;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .note:hover {
+            background: rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .note strong {
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+        
+        /* Animations et effets supplémentaires */
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px cyan; }
+            50% { box-shadow: 0 0 20px cyan, 0 0 30px cyan; }
+            100% { box-shadow: 0 0 5px cyan; }
+        }
+        
+        .container {
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        .controller, .movement-section {
+            backdrop-filter: blur(5px);
+        }
+        
+        /* Style pour les émojis */
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="close-button" onclick="window.close()" title="Fermer">&times;</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Aide VR - WhozStar</h1>
+            <p>Guide des fonctionnalités des manettes VR</p>
+        </div>
+        
+        <div class="content">
+            <div class="image-container">
+                <img src="manettes_vr.png" alt="Manettes VR" />
+            </div>
+            
+            <div class="controls-section">
+                <h2>🎯 Fonctionnalités des Manettes</h2>
+                
+                <div class="controller">
+                    <h3>🟢 Manette Gauche</h3>
+                    <ul class="button-list">
+                        <li>
+                            <span class="button-name">Bouton X :</span>
+                            <span class="button-function">Ouvrir/Fermer le panneau de recherche 3D</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Bouton Y :</span>
+                            <span class="button-function">Activer/Désactiver le mode démo automatique</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Trigger (Gâchette) :</span>
+                            <span class="button-function">Sélectionner une particule visée pour navigation</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Joystick :</span>
+                            <span class="button-function">Rotation horizontale (gauche/droite) et mouvement vertical (haut/bas)</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="controller">
+                    <h3>🔴 Manette Droite</h3>
+                    <ul class="button-list">
+                        <li>
+                            <span class="button-name">Bouton A :</span>
+                            <span class="button-function">Ouvrir/Fermer le panneau de contrôle d'échelle</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Bouton B :</span>
+                            <span class="button-function">Ouvrir/Fermer la légende 3D des types de particules</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Trigger (Gâchette) :</span>
+                            <span class="button-function">Sélectionner une particule visée pour navigation</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Joystick :</span>
+                            <span class="button-function">Déplacement classique (gauche/droite/avant/arrière) + Contrôle d'échelle quand le panneau est ouvert</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="movement-section">
+                    <h3>🚀 Système de Mouvement</h3>
+                    <ul class="button-list">
+                        <li>
+                            <span class="button-name">Mouvement WebXR :</span>
+                            <span class="button-function">Déplacement naturel dans l'espace 3D avec téléportation désactivée</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Joystick Gauche (Horizontal) :</span>
+                            <span class="button-function">Rotation de la caméra (sensibilité élevée, zone morte réduite)</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Joystick Gauche (Vertical) :</span>
+                            <span class="button-function">Mouvement vertical haut/bas (sensibilité réduite pour plus de contrôle)</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Joystick Droit :</span>
+                            <span class="button-function">Déplacement classique (gauche/droite/avant/arrière) + Contrôle de l'échelle des particules (0.1x à 10x) quand le panneau d'échelle est actif</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="controller">
+                    <h3>🎯 Interaction avec les Particules</h3>
+                    <ul class="button-list">
+                        <li>
+                            <span class="button-name">Pointage :</span>
+                            <span class="button-function">Les manettes émettent des rayons pour viser les particules</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Sélection :</span>
+                            <span class="button-function">Appuyer sur le trigger pour naviguer vers la particule visée</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Indicateur Visuel :</span>
+                            <span class="button-function">Les particules visées changent de couleur (jaune)</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Navigation :</span>
+                            <span class="button-function">Animation fluide de la caméra vers la particule sélectionnée</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="controller">
+                    <h3>📋 Panneaux d'Interface 3D</h3>
+                    <ul class="button-list">
+                        <li>
+                            <span class="button-name">Panneau de Recherche :</span>
+                            <span class="button-function">Interface de saisie avec autocomplétion pour rechercher des particules</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Panneau d'Échelle :</span>
+                            <span class="button-function">Slider interactif pour ajuster l'espacement des particules</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Légende 3D :</span>
+                            <span class="button-function">Liste interactive des types de particules avec filtrage</span>
+                        </li>
+                        <li>
+                            <span class="button-name">Indicateur de Cible :</span>
+                            <span class="button-function">Affichage du nom de la particule actuellement visée</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="note">
+                    <strong>💡 Astuce :</strong> Tous les panneaux 3D sont attachés à votre caméra et vous suivent dans vos déplacements. 
+                    Utilisez les triggers pour interagir avec les éléments des panneaux et les joysticks pour un contrôle précis.
+                </div>
+                
+                <div class="note">
+                    <strong>🔧 Compatibilité :</strong> Ces fonctionnalités sont optimisées pour les casques Meta Quest et autres casques VR compatibles WebXR. 
+                    Les contrôles de bureau sont également disponibles avec les touches W/S pour le mouvement vertical.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
