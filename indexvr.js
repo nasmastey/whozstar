@@ -465,7 +465,7 @@ scene.onBeforeRenderObservable.add(() => {
                 console.log("Left controller found, checking for motion controller...");
             }
             
-            // Method 1: Try motion controller components
+            // Method 1: Try motion controller components - AMÉLIORATION PRÉCISION JOYSTICK
             if (leftController.motionController) {
                 const componentNames = ["xr-standard-thumbstick", "thumbstick", "trackpad"];
                 
@@ -475,21 +475,33 @@ scene.onBeforeRenderObservable.add(() => {
                         const xAxis = component.axes[0]; // X axis (left/right rotation)
                         const yAxis = component.axes[1]; // Y axis (up/down)
                         
-                        // Rotation horizontale (gauche/droite) avec sensibilité élevée et zone morte réduite
-                        if (Math.abs(xAxis) > 0.05) { // Zone morte réduite de 0.1 à 0.05
-                            const rotationSpeed = 0.12; // Sensibilité encore plus élevée pour la rotation
-                            scene.activeCamera.rotation.y += xAxis * rotationSpeed;
-                            
-                            console.log(`VR HORIZONTAL ROTATION - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
-                        }
+                        // Calculer l'amplitude totale du mouvement
+                        const totalMagnitude = Math.sqrt(xAxis * xAxis + yAxis * yAxis);
                         
-                        // Mouvement vertical (haut/bas) avec sensibilité réduite
-                        if (Math.abs(yAxis) > 0.2) { // Zone morte augmentée pour moins de précision
-                            const movementSpeed = 0.05; // Vitesse réduite de 0.15 à 0.05
-                            const yDelta = -yAxis * movementSpeed; // Inverted for intuitive control
-                            scene.activeCamera.position.y += yDelta;
+                        // Seuil minimal pour tout mouvement
+                        const minThreshold = 0.15;
+                        
+                        if (totalMagnitude > minThreshold) {
+                            // Calculer les ratios de mouvement
+                            const xRatio = Math.abs(xAxis) / totalMagnitude;
+                            const yRatio = Math.abs(yAxis) / totalMagnitude;
                             
-                            console.log(`VR VERTICAL MOVEMENT - Component: ${name}, Y-axis: ${yAxis.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                            // PRIORISER LE MOUVEMENT VERTICAL avec un seuil plus bas
+                            if (yRatio > 0.6) {
+                                // Mouvement principalement vertical - PRIORITÉ
+                                const movementSpeed = 0.06;
+                                const yDelta = -yAxis * movementSpeed;
+                                scene.activeCamera.position.y += yDelta;
+                                
+                                console.log(`VR VERTICAL PRIORITY - Component: ${name}, Y-axis: ${yAxis.toFixed(2)}, Y-ratio: ${yRatio.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                            } else if (xRatio > 0.7) {
+                                // Mouvement principalement horizontal - seuil plus élevé pour éviter les conflits
+                                const rotationSpeed = 0.1;
+                                scene.activeCamera.rotation.y += xAxis * rotationSpeed;
+                                
+                                console.log(`VR HORIZONTAL - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, X-ratio: ${xRatio.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
+                            }
+                            // Si ni vertical ni horizontal dominant, ne rien faire pour éviter les conflits
                         }
                         break; // Found working component, stop searching
                     }
@@ -502,28 +514,40 @@ scene.onBeforeRenderObservable.add(() => {
                 }
             }
             
-            // Method 2: Direct gamepad access
+            // Method 2: Direct gamepad access - MÊME AMÉLIORATION
             if (leftController.inputSource.gamepad) {
                 const gamepad = leftController.inputSource.gamepad;
                 if (gamepad.axes && gamepad.axes.length >= 4) {
                     const leftStickX = gamepad.axes[2]; // Standard left stick X (rotation)
                     const leftStickY = gamepad.axes[3]; // Standard left stick Y (mouvement vertical)
                     
-                    // Rotation horizontale (gauche/droite) avec sensibilité élevée et zone morte réduite
-                    if (Math.abs(leftStickX) > 0.05) {
-                        const rotationSpeed = 0.12; // Sensibilité encore plus élevée pour la rotation
-                        scene.activeCamera.rotation.y += leftStickX * rotationSpeed;
-                        
-                        console.log(`VR HORIZONTAL ROTATION - Gamepad X: ${leftStickX.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
-                    }
+                    // Calculer l'amplitude totale du mouvement
+                    const totalMagnitude = Math.sqrt(leftStickX * leftStickX + leftStickY * leftStickY);
                     
-                    // Mouvement vertical (haut/bas) avec sensibilité réduite
-                    if (Math.abs(leftStickY) > 0.2) { // Zone morte augmentée
-                        const movementSpeed = 0.05; // Vitesse réduite
-                        const yDelta = -leftStickY * movementSpeed;
-                        scene.activeCamera.position.y += yDelta;
+                    // Seuil minimal pour tout mouvement
+                    const minThreshold = 0.15;
+                    
+                    if (totalMagnitude > minThreshold) {
+                        // Calculer les ratios de mouvement
+                        const xRatio = Math.abs(leftStickX) / totalMagnitude;
+                        const yRatio = Math.abs(leftStickY) / totalMagnitude;
                         
-                        console.log(`VR VERTICAL MOVEMENT - Gamepad Y: ${leftStickY.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                        // PRIORISER LE MOUVEMENT VERTICAL avec un seuil plus bas
+                        if (yRatio > 0.6) {
+                            // Mouvement principalement vertical - PRIORITÉ
+                            const movementSpeed = 0.06;
+                            const yDelta = -leftStickY * movementSpeed;
+                            scene.activeCamera.position.y += yDelta;
+                            
+                            console.log(`VR VERTICAL PRIORITY - Gamepad Y: ${leftStickY.toFixed(2)}, Y-ratio: ${yRatio.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                        } else if (xRatio > 0.7) {
+                            // Mouvement principalement horizontal - seuil plus élevé
+                            const rotationSpeed = 0.1;
+                            scene.activeCamera.rotation.y += leftStickX * rotationSpeed;
+                            
+                            console.log(`VR HORIZONTAL - Gamepad X: ${leftStickX.toFixed(2)}, X-ratio: ${xRatio.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
+                        }
+                        // Si ni vertical ni horizontal dominant, ne rien faire
                     }
                 }
                 
@@ -2221,39 +2245,46 @@ function updateVRParticleCache() {
     return vrParticleCache;
 }
 
-// Version ultra-optimisée de la fonction trigger pour gros datasets
+// Version améliorée avec contrôleurs indépendants et précision accrue
 function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
     const action = isPressed ? "pressed" : "released";
-    console.log(`🎯 VR Trigger OPTIMIZED ${action} on ${handness} controller`);
+    console.log(`🎯 VR Trigger PRECISE ${action} on ${handness} controller`);
     
     try {
-        // Gérer l'état du trigger maintenu
+        // Gérer l'état du trigger maintenu par contrôleur spécifique
+        const controllerKey = `${handness}_${controller.id || Math.random()}`;
         if (isPressed) {
-            triggerHeldControllers.set(handness, controller);
+            triggerHeldControllers.set(controllerKey, controller);
         } else {
-            triggerHeldControllers.delete(handness);
+            triggerHeldControllers.delete(controllerKey);
             sliderInteractionActive = false;
         }
         
-        // Vérifications UI d'abord (scale panel, legend)
-        if (isPressed && scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible) {
-            let rayOrigin, rayDirection;
-            
-            if (controller.pointer) {
-                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-                rayDirection = controller.pointer.getDirection ?
-                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else if (controller.motionController && controller.motionController.rootMesh) {
-                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
-                rayDirection = controller.motionController.rootMesh.getDirection ?
-                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else {
-                rayOrigin = new BABYLON.Vector3(0, 0, 0);
-                rayDirection = new BABYLON.Vector3(0, 0, 1);
-            }
-            
+        // Si trigger relâché, arrêter ici
+        if (!isPressed) {
+            return;
+        }
+        
+        // Obtenir le ray de façon précise pour ce contrôleur spécifique
+        let rayOrigin, rayDirection;
+        
+        if (controller.pointer) {
+            rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
+            rayDirection = controller.pointer.getDirection ?
+                controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else if (controller.motionController && controller.motionController.rootMesh) {
+            rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
+            rayDirection = controller.motionController.rootMesh.getDirection ?
+                controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
+                new BABYLON.Vector3(0, 0, 1);
+        } else {
+            console.log(`❌ VR ${handness}: No valid pointer found`);
+            return;
+        }
+        
+        // Vérifications UI d'abord (scale panel, legend, search)
+        if (scene.vrScalePanel3D && scene.vrScalePanel3D.plane.isVisible) {
             const ray = new BABYLON.Ray(rayOrigin, rayDirection);
             const hit = ray.intersectsMesh(scene.vrScalePanel3D.plane);
             
@@ -2275,25 +2306,7 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
             }
         }
         
-        // Vérification panneau de recherche VR 3D
-        if (isPressed && scene.vrSearchPanel3D && scene.vrSearchPanel3D.plane.isVisible) {
-            let rayOrigin, rayDirection;
-            
-            if (controller.pointer) {
-                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-                rayDirection = controller.pointer.getDirection ?
-                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else if (controller.motionController && controller.motionController.rootMesh) {
-                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
-                rayDirection = controller.motionController.rootMesh.getDirection ?
-                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else {
-                rayOrigin = new BABYLON.Vector3(0, 0, 0);
-                rayDirection = new BABYLON.Vector3(0, 0, 1);
-            }
-            
+        if (scene.vrSearchPanel3D && scene.vrSearchPanel3D.plane.isVisible) {
             const ray = new BABYLON.Ray(rayOrigin, rayDirection);
             const hit = ray.intersectsMesh(scene.vrSearchPanel3D.plane);
             
@@ -2316,25 +2329,7 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
             }
         }
         
-        // Vérification légende 3D
-        if (isPressed && scene.vrLegendPanel3D && scene.vrLegendPanel3D.plane.isVisible) {
-            let rayOrigin, rayDirection;
-            
-            if (controller.pointer) {
-                rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-                rayDirection = controller.pointer.getDirection ?
-                    controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else if (controller.motionController && controller.motionController.rootMesh) {
-                rayOrigin = controller.motionController.rootMesh.absolutePosition || controller.motionController.rootMesh.position;
-                rayDirection = controller.motionController.rootMesh.getDirection ?
-                    controller.motionController.rootMesh.getDirection(BABYLON.Vector3.Forward()) :
-                    new BABYLON.Vector3(0, 0, 1);
-            } else {
-                rayOrigin = new BABYLON.Vector3(0, 0, 0);
-                rayDirection = new BABYLON.Vector3(0, 0, 1);
-            }
-            
+        if (scene.vrLegendPanel3D && scene.vrLegendPanel3D.plane.isVisible) {
             const ray = new BABYLON.Ray(rayOrigin, rayDirection);
             const hit = ray.intersectsMesh(scene.vrLegendPanel3D.plane);
             
@@ -2364,96 +2359,81 @@ function handleVRTriggerInteractionNew(controller, handness, isPressed = true) {
             }
         }
         
-        // Si trigger relâché, arrêter ici
-        if (!isPressed) {
+        // === DÉTECTION DE PARTICULES ULTRA-PRÉCISE POUR CE CONTRÔLEUR ===
+        console.log(`🔍 VR ${handness}: Starting PRECISE particle search...`);
+        const searchStart = performance.now();
+        
+        let targetedSprite = null;
+        let bestPrecision = 0;
+        let bestDistance = Infinity;
+        
+        // Obtenir toutes les particules visibles
+        const allSprites = getAllSprites();
+        if (!allSprites || allSprites.length === 0) {
+            console.log(`❌ VR ${handness}: No sprites available`);
             return;
         }
         
-        // === DÉTECTION DE PARTICULES OPTIMISÉE ===
-        let targetedSprite = null;
+        console.log(`🔍 VR ${handness}: Testing ${allSprites.length} sprites for precise hit...`);
         
-        if (controller.pointer) {
-            const rayOrigin = controller.pointer.absolutePosition || controller.pointer.position;
-            const rayDirection = controller.pointer.getDirection ?
-                controller.pointer.getDirection(BABYLON.Vector3.Forward()) :
-                new BABYLON.Vector3(0, 0, 1);
+        // Algorithm de précision amélioré - un seul test par particule
+        for (let i = 0; i < allSprites.length; i++) {
+            const sprite = allSprites[i];
+            if (!sprite.isVisible) continue;
             
-            console.log(`🔍 VR ${handness}: Optimized particle search starting...`);
-            const searchStart = performance.now();
+            const spritePosition = sprite.position;
+            const rayToSprite = spritePosition.subtract(rayOrigin);
+            const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
             
-            // Utiliser le cache optimisé au lieu de toutes les particules
-            const cachedParticles = updateVRParticleCache();
-            
-            // RETOUR À L'ALGORITHME ORIGINAL SIMPLE QUI MARCHAIT
-            let closestSprite = null;
-            let closestDistance = Infinity;
-            let testedCount = 0;
-            
-            // Tester les particules du cache (simple et efficace)
-            for (const cachedParticle of cachedParticles) {
-                testedCount++;
-                const spritePosition = cachedParticle.position;
-                const rayToSprite = spritePosition.subtract(rayOrigin);
-                const projectionLength = BABYLON.Vector3.Dot(rayToSprite, rayDirection);
+            // La particule doit être devant le ray
+            if (projectionLength > 0.1) {
+                const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
+                const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
                 
-                // Distance QUASI-INFINIE pour particules à n'importe quelle distance
-                if (projectionLength > 0.05) { // Pas de limite supérieure !
-                    const closestPointOnRay = rayOrigin.add(rayDirection.scale(projectionLength));
-                    const distanceToRay = BABYLON.Vector3.Distance(spritePosition, closestPointOnRay);
-                    
-                    // Seuil adaptatif pour distance quasi-infinie - EXTRÊMEMENT tolérant
-                    let precisionThreshold;
-                    if (projectionLength < 100) {
-                        precisionThreshold = 2.0; // Précision normale pour courte distance
-                    } else if (projectionLength < 1000) {
-                        precisionThreshold = 5.0 + (projectionLength * 0.02); // Tolérant pour moyenne distance
-                    } else if (projectionLength < 10000) {
-                        precisionThreshold = 25.0 + (projectionLength * 0.05); // Très tolérant pour longue distance
-                    } else {
-                        precisionThreshold = 500.0 + (projectionLength * 0.1); // ULTRA tolérant pour distance quasi-infinie
-                    }
-                    
-                    if (distanceToRay < precisionThreshold && projectionLength < closestDistance) {
-                        closestSprite = cachedParticle.sprite;
-                        closestDistance = projectionLength;
-                        
-                        console.log(`🎯 VR ${handness}: Found DISTANT target: ${closestSprite.name}, ray distance: ${distanceToRay.toFixed(1)}, distance: ${projectionLength.toFixed(1)}, threshold: ${precisionThreshold.toFixed(1)}`);
-                    }
+                // Calcul de précision : plus la particule est proche du centre du ray, plus le score est élevé
+                const precision = 1.0 / (1.0 + distanceToRay);
+                
+                // Seuil de précision ajustable selon la distance
+                let precisionThreshold;
+                if (projectionLength < 50) {
+                    precisionThreshold = 0.2; // Très précis pour courte distance
+                } else if (projectionLength < 200) {
+                    precisionThreshold = 0.1; // Précis pour moyenne distance
+                } else {
+                    precisionThreshold = 0.05; // Moins précis pour longue distance
                 }
                 
-                // Limite MAXIMALE pour particules à distance quasi-infinie
-                if (testedCount > 1500) {
-                    console.log(`⏱️ VR ${handness}: Stopping search at 1500 tests (INFINITE range)`);
-                    break;
+                // Sélectionner la particule la plus précise ET la plus proche
+                if (precision > precisionThreshold &&
+                    (precision > bestPrecision ||
+                     (precision === bestPrecision && projectionLength < bestDistance))) {
+                    targetedSprite = sprite;
+                    bestPrecision = precision;
+                    bestDistance = projectionLength;
+                    
+                    console.log(`🎯 VR ${handness}: Better target: ${sprite.name}, precision: ${precision.toFixed(3)}, distance: ${projectionLength.toFixed(1)}`);
                 }
             }
-            
-            const searchTime = performance.now() - searchStart;
-            console.log(`🔍 VR ${handness}: Search completed in ${searchTime.toFixed(2)}ms, tested ${testedCount}/${cachedParticles.length} particles`);
-            
-            targetedSprite = closestSprite;
         }
         
-        // NAVIGATION VERS LA PARTICULE TROUVÉE - CORRECTION CRITIQUE
+        const searchTime = performance.now() - searchStart;
+        console.log(`🔍 VR ${handness}: Search completed in ${searchTime.toFixed(2)}ms`);
+        
+        // NAVIGATION VERS LA PARTICULE TROUVÉE
         if (targetedSprite) {
-            console.log(`✅ VR ${handness}: PRECISE hit on ${targetedSprite.name} - NAVIGATING NOW`);
+            console.log(`✅ VR ${handness}: PRECISE hit on ${targetedSprite.name} (precision: ${bestPrecision.toFixed(3)}) - NAVIGATING NOW`);
             
-            // S'assurer que la navigation fonctionne en passant le nom exact
             const spriteName = targetedSprite.name;
-            console.log(`🚀 VR ${handness}: Calling moveCameraToSprite("${spriteName}")`);
-            
-            // Appeler la fonction de navigation
             moveCameraToSprite(spriteName);
             
-            // Vérification que la fonction a bien été appelée
-            console.log(`✅ VR ${handness}: moveCameraToSprite() called successfully for ${spriteName}`);
+            console.log(`✅ VR ${handness}: Navigation started for ${spriteName}`);
             
         } else {
             console.log(`❌ VR ${handness}: No precise target found`);
             
             // Indication visuelle d'échec
             if (scene.vrTargetIndicator && scene.vrTargetIndicator.show) {
-                scene.vrTargetIndicator.show(`❌ Aucune cible précise ${handness}`);
+                scene.vrTargetIndicator.show(`❌ Aucune cible précise (${handness})`);
                 setTimeout(() => {
                     if (scene.vrTargetIndicator && scene.vrTargetIndicator.hide) {
                         scene.vrTargetIndicator.hide();
