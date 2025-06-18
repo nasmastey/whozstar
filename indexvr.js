@@ -465,7 +465,7 @@ scene.onBeforeRenderObservable.add(() => {
                 console.log("Left controller found, checking for motion controller...");
             }
             
-            // Method 1: Try motion controller components - AMÉLIORATION PRÉCISION JOYSTICK
+            // Method 1: Try motion controller components - APPROCHE SIMPLIFIÉE
             if (leftController.motionController) {
                 const componentNames = ["xr-standard-thumbstick", "thumbstick", "trackpad"];
                 
@@ -475,34 +475,27 @@ scene.onBeforeRenderObservable.add(() => {
                         const xAxis = component.axes[0]; // X axis (left/right rotation)
                         const yAxis = component.axes[1]; // Y axis (up/down)
                         
-                        // Calculer l'amplitude totale du mouvement
-                        const totalMagnitude = Math.sqrt(xAxis * xAxis + yAxis * yAxis);
+                        // Zones mortes INDÉPENDANTES pour chaque axe
+                        const xDeadzone = 0.3; // Zone morte plus large pour X (rotation)
+                        const yDeadzone = 0.1; // Zone morte plus petite pour Y (vertical)
                         
-                        // Seuil minimal pour tout mouvement
-                        const minThreshold = 0.15;
-                        
-                        if (totalMagnitude > minThreshold) {
-                            // Calculer les ratios de mouvement
-                            const xRatio = Math.abs(xAxis) / totalMagnitude;
-                            const yRatio = Math.abs(yAxis) / totalMagnitude;
+                        // Mouvement vertical - PRIORITÉ avec zone morte petite
+                        if (Math.abs(yAxis) > yDeadzone) {
+                            const movementSpeed = 0.08;
+                            const yDelta = -yAxis * movementSpeed;
+                            scene.activeCamera.position.y += yDelta;
                             
-                            // PRIORISER LE MOUVEMENT VERTICAL avec un seuil plus bas
-                            if (yRatio > 0.6) {
-                                // Mouvement principalement vertical - PRIORITÉ
-                                const movementSpeed = 0.06;
-                                const yDelta = -yAxis * movementSpeed;
-                                scene.activeCamera.position.y += yDelta;
-                                
-                                console.log(`VR VERTICAL PRIORITY - Component: ${name}, Y-axis: ${yAxis.toFixed(2)}, Y-ratio: ${yRatio.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
-                            } else if (xRatio > 0.7) {
-                                // Mouvement principalement horizontal - seuil plus élevé pour éviter les conflits
-                                const rotationSpeed = 0.1;
-                                scene.activeCamera.rotation.y += xAxis * rotationSpeed;
-                                
-                                console.log(`VR HORIZONTAL - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, X-ratio: ${xRatio.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
-                            }
-                            // Si ni vertical ni horizontal dominant, ne rien faire pour éviter les conflits
+                            console.log(`VR VERTICAL - Component: ${name}, Y-axis: ${yAxis.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
                         }
+                        
+                        // Rotation horizontale - seulement si mouvement X significatif
+                        if (Math.abs(xAxis) > xDeadzone) {
+                            const rotationSpeed = 0.08;
+                            scene.activeCamera.rotation.y += xAxis * rotationSpeed;
+                            
+                            console.log(`VR HORIZONTAL - Component: ${name}, X-axis: ${xAxis.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
+                        }
+                        
                         break; // Found working component, stop searching
                     }
                 }
@@ -514,40 +507,32 @@ scene.onBeforeRenderObservable.add(() => {
                 }
             }
             
-            // Method 2: Direct gamepad access - MÊME AMÉLIORATION
+            // Method 2: Direct gamepad access - APPROCHE SIMPLIFIÉE
             if (leftController.inputSource.gamepad) {
                 const gamepad = leftController.inputSource.gamepad;
                 if (gamepad.axes && gamepad.axes.length >= 4) {
                     const leftStickX = gamepad.axes[2]; // Standard left stick X (rotation)
                     const leftStickY = gamepad.axes[3]; // Standard left stick Y (mouvement vertical)
                     
-                    // Calculer l'amplitude totale du mouvement
-                    const totalMagnitude = Math.sqrt(leftStickX * leftStickX + leftStickY * leftStickY);
+                    // Zones mortes INDÉPENDANTES pour chaque axe
+                    const xDeadzone = 0.3; // Zone morte plus large pour X (rotation)
+                    const yDeadzone = 0.1; // Zone morte plus petite pour Y (vertical)
                     
-                    // Seuil minimal pour tout mouvement
-                    const minThreshold = 0.15;
-                    
-                    if (totalMagnitude > minThreshold) {
-                        // Calculer les ratios de mouvement
-                        const xRatio = Math.abs(leftStickX) / totalMagnitude;
-                        const yRatio = Math.abs(leftStickY) / totalMagnitude;
+                    // Mouvement vertical - PRIORITÉ avec zone morte petite
+                    if (Math.abs(leftStickY) > yDeadzone) {
+                        const movementSpeed = 0.08;
+                        const yDelta = -leftStickY * movementSpeed;
+                        scene.activeCamera.position.y += yDelta;
                         
-                        // PRIORISER LE MOUVEMENT VERTICAL avec un seuil plus bas
-                        if (yRatio > 0.6) {
-                            // Mouvement principalement vertical - PRIORITÉ
-                            const movementSpeed = 0.06;
-                            const yDelta = -leftStickY * movementSpeed;
-                            scene.activeCamera.position.y += yDelta;
-                            
-                            console.log(`VR VERTICAL PRIORITY - Gamepad Y: ${leftStickY.toFixed(2)}, Y-ratio: ${yRatio.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
-                        } else if (xRatio > 0.7) {
-                            // Mouvement principalement horizontal - seuil plus élevé
-                            const rotationSpeed = 0.1;
-                            scene.activeCamera.rotation.y += leftStickX * rotationSpeed;
-                            
-                            console.log(`VR HORIZONTAL - Gamepad X: ${leftStickX.toFixed(2)}, X-ratio: ${xRatio.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
-                        }
-                        // Si ni vertical ni horizontal dominant, ne rien faire
+                        console.log(`VR VERTICAL - Gamepad Y: ${leftStickY.toFixed(2)}, Camera Y: ${scene.activeCamera.position.y.toFixed(2)}`);
+                    }
+                    
+                    // Rotation horizontale - seulement si mouvement X significatif
+                    if (Math.abs(leftStickX) > xDeadzone) {
+                        const rotationSpeed = 0.08;
+                        scene.activeCamera.rotation.y += leftStickX * rotationSpeed;
+                        
+                        console.log(`VR HORIZONTAL - Gamepad X: ${leftStickX.toFixed(2)}, Camera rotation Y: ${scene.activeCamera.rotation.y.toFixed(2)}`);
                     }
                 }
                 
