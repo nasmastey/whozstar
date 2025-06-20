@@ -934,19 +934,81 @@ async function main(currentData, ratio) {
         dataByLevel[level].elements.push(d);
     });
 
-    // Create sprite managers for each level
+    // Create sprite managers for each level with custom image support
     const spriteManagers = {};
+    
     Object.keys(dataByLevel).forEach(level => {
         const levelData = dataByLevel[level];
-        const spriteManager = new BABYLON.SpriteManager(
-            `labelSpriteManager_level_${level}`,
-            levelData.imageFile,
-            levelData.elements.length,
-            imageSize,
-            scene
-        );
-        spriteManager.isPickable = true;
-        spriteManagers[level] = spriteManager;
+        const imageFile = levelData.imageFile;
+        
+        // Vérifier si c'est une image personnalisée (data URL)
+        if (imageFile && imageFile.startsWith('data:')) {
+            console.log(`🎨 Creating sprite manager for level ${level} with custom image (data URL)`);
+            
+            try {
+                // Créer directement le sprite manager avec le data URL
+                // Babylon.js peut gérer les data URLs directement
+                const spriteManager = new BABYLON.SpriteManager(
+                    `labelSpriteManager_level_${level}`,
+                    imageFile, // Utiliser directement le data URL
+                    levelData.elements.length,
+                    imageSize,
+                    scene
+                );
+                spriteManager.isPickable = true;
+                spriteManagers[level] = spriteManager;
+                console.log(`✅ Custom sprite manager created for level ${level} with data URL`);
+                
+            } catch (error) {
+                console.error(`❌ Error creating sprite manager with data URL for level ${level}:`, error);
+                
+                // Fallback 1: Essayer avec une texture créée
+                try {
+                    const texture = createTextureFromDataUrl(imageFile, `custom_texture_level_${level}`, scene);
+                    if (texture) {
+                        const spriteManager = new BABYLON.SpriteManager(
+                            `labelSpriteManager_level_${level}`,
+                            texture,
+                            levelData.elements.length,
+                            imageSize,
+                            scene
+                        );
+                        spriteManager.isPickable = true;
+                        spriteManagers[level] = spriteManager;
+                        console.log(`✅ Custom sprite manager created for level ${level} with texture fallback`);
+                    } else {
+                        throw new Error('Texture creation failed');
+                    }
+                } catch (textureError) {
+                    console.error(`❌ Texture fallback failed for level ${level}:`, textureError);
+                    
+                    // Fallback 2: Utiliser l'image par défaut
+                    const fallbackImage = defaultImageConfiguration[level] || 'etoile2.png';
+                    const spriteManager = new BABYLON.SpriteManager(
+                        `labelSpriteManager_level_${level}`,
+                        fallbackImage,
+                        levelData.elements.length,
+                        imageSize,
+                        scene
+                    );
+                    spriteManager.isPickable = true;
+                    spriteManagers[level] = spriteManager;
+                    console.log(`🔄 Final fallback sprite manager created for level ${level} with: ${fallbackImage}`);
+                }
+            }
+        } else {
+            // Image prédéfinie standard
+            console.log(`📁 Creating sprite manager for level ${level} with standard image: ${imageFile}`);
+            const spriteManager = new BABYLON.SpriteManager(
+                `labelSpriteManager_level_${level}`,
+                imageFile,
+                levelData.elements.length,
+                imageSize,
+                scene
+            );
+            spriteManager.isPickable = true;
+            spriteManagers[level] = spriteManager;
+        }
     });
     
     // Sprite manager - SYSTÈME SIMPLE TEMPORAIRE POUR CORRIGER LES BUGS
@@ -3429,13 +3491,41 @@ let spriteLevel = {}; // Stocker le niveau de chaque sprite par son nom
 let orbitingSprites = []; // Sprites en orbite
 let centralSprites = []; // Sprites centraux (niveau élevé)
 
-// Fonction pour charger la configuration d'images depuis localStorage
+// Fonction pour charger la configuration d'images depuis localStorage avec nettoyage
 function loadImageConfiguration() {
     try {
         const saved = localStorage.getItem('spriteImageConfig'); // Même clé que le sélecteur
         if (saved) {
             const parsed = JSON.parse(saved);
-            currentImageConfiguration = {...defaultImageConfiguration, ...parsed};
+            let needsCleaning = false;
+            const cleanedConfig = {...defaultImageConfiguration};
+            
+            // Nettoyer la configuration : supprimer les références aux noms de fichiers d'images personnalisées
+            for (let level = 1; level <= 13; level++) {
+                const configValue = parsed[level];
+                
+                if (configValue && configValue.startsWith('custom_') && !configValue.startsWith('data:')) {
+                    // C'est un ancien nom de fichier d'image personnalisée, le supprimer
+                    console.warn(`🧹 Nettoyage: suppression de l'ancienne référence ${configValue} pour le niveau ${level}`);
+                    cleanedConfig[level] = defaultImageConfiguration[level];
+                    needsCleaning = true;
+                } else if (configValue && (configValue.startsWith('data:') || !configValue.startsWith('custom_'))) {
+                    // C'est soit un data URL (image personnalisée valide) soit une image prédéfinie
+                    cleanedConfig[level] = configValue;
+                } else {
+                    // Utiliser l'image par défaut
+                    cleanedConfig[level] = defaultImageConfiguration[level];
+                }
+            }
+            
+            currentImageConfiguration = cleanedConfig;
+            
+            // Sauvegarder la configuration nettoyée
+            if (needsCleaning) {
+                localStorage.setItem('spriteImageConfig', JSON.stringify(cleanedConfig));
+                console.log('✅ Configuration nettoyée et sauvegardée');
+            }
+            
             console.log('🖼️ Configuration d\'images chargée depuis localStorage:', currentImageConfiguration);
         } else {
             console.log('🖼️ Aucune configuration sauvegardée, utilisation des valeurs par défaut');
@@ -3443,6 +3533,142 @@ function loadImageConfiguration() {
     } catch (error) {
         console.warn('❌ Erreur lors du chargement de la configuration d\'images:', error);
         currentImageConfiguration = {...defaultImageConfiguration};
+    }
+}
+
+// Fonction pour charger les images personnalisées depuis localStorage
+function loadCustomImages() {
+    try {
+        const saved = localStorage.getItem('customImages');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des images personnalisées:', error);
+    }
+    return [];
+}
+
+// Fonction pour obtenir l'URL d'une image (prédéfinie ou personnalisée)
+function getImageUrl(imageName) {
+    // Vérifier si c'est déjà un data URL
+    if (imageName && imageName.startsWith('data:')) {
+        console.log(`🎯 Image déjà en data URL: ${imageName.substring(0, 50)}...`);
+        return imageName;
+    }
+    
+    // Vérifier si c'est une image personnalisée par son nom
+    const customImages = loadCustomImages();
+    const customImage = customImages.find(img => img.name === imageName);
+    
+    if (customImage) {
+        console.log(`🎨 Image personnalisée trouvée: ${imageName} -> data URL`);
+        return customImage.dataUrl;
+    }
+    
+    // Sinon, c'est une image prédéfinie
+    console.log(`📁 Image prédéfinie: ${imageName}`);
+    return imageName;
+}
+
+// Cache pour les textures créées à partir de data URLs
+const textureCache = new Map();
+
+// Fonction pour créer une texture Babylon.js à partir d'un data URL
+function createTextureFromDataUrl(dataUrl, name, scene) {
+    // Vérifier le cache d'abord
+    if (textureCache.has(dataUrl)) {
+        console.log(`🎯 Texture trouvée dans le cache pour ${name}`);
+        return textureCache.get(dataUrl);
+    }
+    
+    try {
+        console.log(`🎨 Création d'une texture directement depuis data URL pour ${name}`);
+        
+        // Babylon.js peut utiliser directement les data URLs comme source de texture
+        const texture = new BABYLON.Texture(dataUrl, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+        
+        // Configuration de la texture
+        texture.name = name;
+        texture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+        texture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+        
+        // Mettre en cache
+        textureCache.set(dataUrl, texture);
+        
+        console.log(`✅ Texture créée avec succès pour ${name} directement depuis data URL`);
+        return texture;
+        
+    } catch (error) {
+        console.error(`❌ Erreur lors de la création de texture directe pour ${name}:`, error);
+        
+        // Fallback : créer une texture dynamique avec canvas
+        try {
+            console.log(`🔄 Fallback: création avec canvas pour ${name}`);
+            
+            // Créer une texture dynamique
+            const dynamicTexture = new BABYLON.DynamicTexture(name, {width: 640, height: 640}, scene);
+            
+            // Créer un canvas temporaire
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            canvas.width = 640;
+            canvas.height = 640;
+            
+            img.onload = function() {
+                // Dessiner l'image sur le canvas
+                ctx.drawImage(img, 0, 0, 640, 640);
+                
+                // Copier vers la texture dynamique
+                const imageData = ctx.getImageData(0, 0, 640, 640);
+                dynamicTexture.getContext().putImageData(imageData, 0, 0);
+                dynamicTexture.update();
+                
+                console.log(`✅ Texture fallback créée pour ${name}`);
+            };
+            
+            img.onerror = function() {
+                console.error(`❌ Erreur fallback pour ${name}`);
+            };
+            
+            img.src = dataUrl;
+            
+            // Mettre en cache
+            textureCache.set(dataUrl, dynamicTexture);
+            return dynamicTexture;
+            
+        } catch (fallbackError) {
+            console.error(`❌ Erreur fallback pour ${name}:`, fallbackError);
+            return null;
+        }
+    }
+}
+
+// Fonction pour créer un blob URL temporaire à partir d'un data URL (alternative)
+function createTemporaryBlobUrl(dataUrl, name) {
+    try {
+        // Convertir le data URL en blob
+        const byteString = atob(dataUrl.split(',')[1]);
+        const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+        
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([ab], {type: mimeString});
+        const blobUrl = URL.createObjectURL(blob);
+        
+        console.log(`🔗 Blob URL temporaire créé pour ${name}: ${blobUrl.substring(0, 50)}...`);
+        return blobUrl;
+        
+    } catch (error) {
+        console.error(`❌ Erreur création blob URL pour ${name}:`, error);
+        return null;
     }
 }
 
@@ -3572,7 +3798,8 @@ function saveImageConfiguration() {
 // Fonction pour obtenir l'image par niveau
 function getImageForLevel(level) {
     const clampedLevel = Math.max(1, Math.min(13, Math.round(level)));
-    return currentImageConfiguration[clampedLevel] || defaultImageConfiguration[clampedLevel] || 'etoile2.png';
+    const imageName = currentImageConfiguration[clampedLevel] || defaultImageConfiguration[clampedLevel] || 'etoile2.png';
+    return getImageUrl(imageName); // Résoudre l'URL correcte (prédéfinie ou personnalisée)
 }
 
 // Fonction pour calculer la taille par niveau
@@ -3871,5 +4098,47 @@ setInterval(() => {
         console.warn('Erreur vérification config:', error);
     }
 }, 1000);
+
+// Fonction de nettoyage du localStorage pour supprimer les anciennes configurations problématiques
+function cleanupOldImageConfigurations() {
+    try {
+        console.log('🧹 Nettoyage des anciennes configurations d\'images...');
+        
+        const saved = localStorage.getItem('spriteImageConfig');
+        if (saved) {
+            const config = JSON.parse(saved);
+            let hasOldReferences = false;
+            
+            // Vérifier s'il y a des anciennes références à des noms de fichiers
+            for (let level = 1; level <= 13; level++) {
+                const value = config[level];
+                if (value && value.startsWith('custom_') && !value.startsWith('data:')) {
+                    hasOldReferences = true;
+                    console.log(`🗑️ Ancienne référence trouvée: ${value}`);
+                }
+            }
+            
+            if (hasOldReferences) {
+                console.log('🔄 Suppression de la configuration corrompue...');
+                localStorage.removeItem('spriteImageConfig');
+                console.log('✅ Configuration corrompue supprimée, utilisation des valeurs par défaut');
+                
+                // Déclencher une notification
+                setTimeout(() => {
+                    const statusMsg = document.getElementById('statusMessage');
+                    if (statusMsg) {
+                        statusMsg.innerHTML = '🧹 Configuration d\'images nettoyée - Anciennes références supprimées';
+                        statusMsg.style.backgroundColor = '#fff3e0';
+                    }
+                }, 1000);
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors du nettoyage:', error);
+    }
+}
+
+// Exécuter le nettoyage au démarrage
+cleanupOldImageConfigurations();
 
 console.log('✅ Nouvelles fonctionnalités RepVal intégrées - Système orbital, niveaux et images');

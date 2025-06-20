@@ -226,6 +226,197 @@
             font-family: 'FreeMono', monospace;
             text-transform: uppercase;
         }
+
+        /* Styles pour l'upload d'images personnalisées */
+        .custom-upload-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #ff6b35;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .custom-upload-section h3 {
+            color: #ff6b35;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 0px black;
+        }
+
+        .upload-area {
+            border: 3px dashed #ff6b35;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(255, 107, 53, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 107, 53, 0.2);
+            border-color: #ff8c69;
+        }
+
+        .upload-area.dragover {
+            background: rgba(255, 107, 53, 0.3);
+            border-color: #ff4500;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ff6b35;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: white;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'FreeMono', monospace;
+            font-size: 12px;
+        }
+
+        .custom-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .custom-image-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            border: 2px solid #ff6b35;
+            transition: all 0.3s ease;
+        }
+
+        .custom-image-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .custom-image-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .custom-image-item .name {
+            font-size: 10px;
+            color: white;
+            text-align: center;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+            word-break: break-all;
+        }
+
+        .delete-custom-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .delete-custom-image:hover {
+            background: rgba(255, 0, 0, 1);
+            transform: scale(1.1);
+        }
+
+        .upload-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, #ff6b35, #ff8c69);
+            border: 2px solid #ff6b35;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-family: 'FreeMono', monospace;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .upload-btn.secondary {
+            background: linear-gradient(45deg, #666, #888);
+            border-color: #666;
+        }
+
+        .upload-btn.secondary:hover {
+            box-shadow: 0 5px 15px rgba(102, 102, 102, 0.4);
+        }
+
+        #customImageInput {
+            display: none;
+        }
+
+        .processing-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10000;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+
+        .processing-indicator .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -237,6 +428,34 @@
             <div class="selection-grid" id="currentSelection"></div>
         </div>
 
+        <!-- Section d'upload d'images personnalisées -->
+        <div class="custom-upload-section">
+            <h3>📤 Ajouter vos propres images</h3>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Cliquez ici ou glissez-déposez vos images</div>
+                <div class="upload-subtext">Formats supportés: PNG, JPG, JPEG, GIF, WEBP<br>
+                Conversion automatique en PNG 640x640</div>
+            </div>
+            
+            <div class="upload-controls">
+                <button class="upload-btn" onclick="selectCustomImages()">
+                    📂 Parcourir les fichiers
+                </button>
+                <button class="upload-btn secondary" onclick="clearAllCustomImages()">
+                    🗑️ Supprimer toutes les images personnalisées
+                </button>
+                <button class="upload-btn" onclick="toggleBackgroundRemoval()" id="bgRemovalToggle" style="background: linear-gradient(45deg, #9c27b0, #e91e63);">
+                    🎭 Suppression de fond: OFF
+                </button>
+            </div>
+            
+            <div class="custom-images-grid" id="customImagesGrid"></div>
+            
+            <input type="file" id="customImageInput" multiple accept="image/*">
+        </div>
+
         <h3>Images Disponibles</h3>
         <div class="available-images" id="availableImages"></div>
 
@@ -246,9 +465,17 @@
             <button class="btn" onclick="applyConfiguration()">Appliquer la Configuration</button>
             <button class="btn secondary" onclick="resetToDefault()">Réinitialiser</button>
             <button class="btn" onclick="applyToAll()" style="background: linear-gradient(45deg, #9c27b0, #e91e63);">🎯 Appliquer sur tout</button>
+            <button class="btn" onclick="randomizeAllLevels()" style="background: linear-gradient(45deg, #ff9800, #ffc107);">🎲 Aléatoire</button>
         </div>
 
         <input type="file" id="configFileInput" accept=".json" style="display: none;">
+    </div>
+
+    <!-- Indicateur de traitement -->
+    <div id="processingIndicator" class="processing-indicator" style="display: none;">
+        <div class="spinner"></div>
+        <div>Traitement de l'image...</div>
+        <div style="font-size: 12px; margin-top: 10px;">Conversion en PNG 640x640</div>
     </div>
 
     <script>
@@ -289,24 +516,57 @@
             "links.png"
         ];
 
+        // Images personnalisées stockées dans localStorage
+        let customImages = [];
+
         // Configuration actuelle
         let currentConfiguration = { ...defaultConfiguration };
 
-        // Charger la configuration sauvegardée
+        // Charger la configuration sauvegardée avec migration automatique
         function loadSavedConfiguration() {
             const saved = localStorage.getItem('spriteImageConfig');
             if (saved) {
                 try {
                     const loadedConfig = JSON.parse(saved);
+                    let needsMigration = false;
+                    
+                    // Migrer les anciennes configurations avec noms de fichiers vers data URLs
+                    for (let level = 1; level <= 13; level++) {
+                        const configValue = loadedConfig[level];
+                        
+                        if (configValue && configValue.startsWith('custom_') && !configValue.startsWith('data:')) {
+                            // C'est un ancien nom de fichier d'image personnalisée
+                            const customImage = customImages.find(img => img.name === configValue);
+                            if (customImage) {
+                                loadedConfig[level] = customImage.dataUrl;
+                                needsMigration = true;
+                                console.log(`🔄 Migration niveau ${level}: ${configValue} -> data URL`);
+                            } else {
+                                // Image personnalisée non trouvée, utiliser l'image par défaut
+                                loadedConfig[level] = defaultConfiguration[level];
+                                needsMigration = true;
+                                console.warn(`⚠️ Image personnalisée ${configValue} non trouvée pour le niveau ${level}, utilisation de l'image par défaut`);
+                            }
+                        }
+                    }
+                    
+                    // Sauvegarder la configuration migrée
+                    if (needsMigration) {
+                        localStorage.setItem('spriteImageConfig', JSON.stringify(loadedConfig));
+                        console.log('✅ Configuration migrée et sauvegardée');
+                    }
                     
                     // Valider et nettoyer la configuration
+                    const allImages = getAllAvailableImages();
                     for (let level = 1; level <= 13; level++) {
-                        if (loadedConfig[level] && availableImages.includes(loadedConfig[level])) {
-                            currentConfiguration[level] = loadedConfig[level];
+                        const configValue = loadedConfig[level];
+                        
+                        if (configValue && (configValue.startsWith('data:') || allImages.includes(configValue))) {
+                            currentConfiguration[level] = configValue;
                         } else {
                             // Si l'image n'est plus disponible, utiliser l'image par défaut
                             currentConfiguration[level] = defaultConfiguration[level];
-                            console.warn(`Image ${loadedConfig[level]} non disponible pour le niveau ${level}, utilisation de l'image par défaut`);
+                            console.warn(`Image ${configValue} non disponible pour le niveau ${level}, utilisation de l'image par défaut`);
                         }
                     }
                 } catch (e) {
@@ -320,12 +580,47 @@
             localStorage.setItem('spriteImageConfig', JSON.stringify(currentConfiguration));
         }
 
+        // Charger les images personnalisées depuis localStorage
+        function loadCustomImages() {
+            try {
+                const saved = localStorage.getItem('customImages');
+                if (saved) {
+                    customImages = JSON.parse(saved);
+                    console.log(`Chargé ${customImages.length} images personnalisées`);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des images personnalisées:', error);
+                customImages = [];
+            }
+        }
+
+        // Sauvegarder les images personnalisées dans localStorage
+        function saveCustomImages() {
+            try {
+                localStorage.setItem('customImages', JSON.stringify(customImages));
+                console.log(`Sauvegardé ${customImages.length} images personnalisées`);
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde des images personnalisées:', error);
+                if (error.name === 'QuotaExceededError') {
+                    alert('Espace de stockage insuffisant. Veuillez supprimer quelques images personnalisées.');
+                }
+            }
+        }
+
+        // Obtenir toutes les images disponibles (prédéfinies + personnalisées)
+        function getAllAvailableImages() {
+            return [...availableImages, ...customImages.map(img => img.name)];
+        }
+
         // Initialiser l'interface
         function initializeInterface() {
+            loadCustomImages();
             loadSavedConfiguration();
             createAvailableImagesDisplay();
+            createCustomImagesDisplay();
             createLevelSelectors();
             updateCurrentSelection();
+            setupUploadHandlers();
         }
 
         // Créer l'affichage des images disponibles
@@ -359,6 +654,44 @@
             });
         }
 
+        // Créer l'affichage des images personnalisées
+        function createCustomImagesDisplay() {
+            const container = document.getElementById('customImagesGrid');
+            container.innerHTML = '';
+
+            customImages.forEach((customImage, index) => {
+                const div = document.createElement('div');
+                div.className = 'custom-image-item';
+                
+                const img = document.createElement('img');
+                img.src = customImage.dataUrl;
+                img.alt = customImage.name;
+                img.onerror = function() {
+                    this.style.background = '#666';
+                    this.style.color = 'white';
+                    this.style.display = 'flex';
+                    this.style.alignItems = 'center';
+                    this.style.justifyContent = 'center';
+                    this.textContent = '?';
+                };
+
+                const name = document.createElement('div');
+                name.className = 'name';
+                name.textContent = customImage.originalName.replace(/\.[^/.]+$/, '');
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-custom-image';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.title = 'Supprimer cette image';
+                deleteBtn.onclick = () => deleteCustomImage(index);
+
+                div.appendChild(img);
+                div.appendChild(name);
+                div.appendChild(deleteBtn);
+                container.appendChild(div);
+            });
+        }
+
         // Créer les sélecteurs pour chaque niveau
         function createLevelSelectors() {
             const container = document.getElementById('levelGrid');
@@ -375,46 +708,15 @@
                 const selector = document.createElement('div');
                 selector.className = 'image-selector';
 
+                // Afficher les images prédéfinies
                 availableImages.forEach(imageName => {
-                    const option = document.createElement('div');
-                    option.className = 'image-option';
-                    if (currentConfiguration[level] === imageName) {
-                        option.classList.add('selected');
-                    }
+                    const option = createImageOption(imageName, imageName, level, selector);
+                    selector.appendChild(option);
+                });
 
-                    const img = document.createElement('img');
-                    img.src = imageName;
-                    img.alt = imageName;
-                    img.onerror = function() {
-                        this.style.background = '#666';
-                        this.style.color = 'white';
-                        this.style.display = 'flex';
-                        this.style.alignItems = 'center';
-                        this.style.justifyContent = 'center';
-                        this.textContent = '?';
-                    };
-
-                    const name = document.createElement('div');
-                    name.className = 'image-name';
-                    name.textContent = imageName.replace('.png', '');
-
-                    option.appendChild(img);
-                    option.appendChild(name);
-
-                    option.addEventListener('click', () => {
-                        // Désélectionner les autres options de ce niveau
-                        selector.querySelectorAll('.image-option').forEach(opt => {
-                            opt.classList.remove('selected');
-                        });
-                        
-                        // Sélectionner cette option
-                        option.classList.add('selected');
-                        currentConfiguration[level] = imageName;
-                        
-                        updateCurrentSelection();
-                        saveConfiguration();
-                    });
-
+                // Afficher les images personnalisées
+                customImages.forEach(customImage => {
+                    const option = createImageOption(customImage.name, customImage.dataUrl, level, selector, true);
                     selector.appendChild(option);
                 });
 
@@ -422,6 +724,88 @@
                 card.appendChild(selector);
                 container.appendChild(card);
             }
+        }
+
+        // Créer une option d'image (pour les images prédéfinies et personnalisées)
+        function createImageOption(imageName, imageSrc, level, selector, isCustom = false) {
+            const option = document.createElement('div');
+            option.className = 'image-option';
+            
+            // Vérifier si cette option est sélectionnée
+            let isSelected = false;
+            if (isCustom) {
+                // Pour les images personnalisées, vérifier si le data URL correspond
+                const customImage = customImages.find(img => img.name === imageName);
+                if (customImage && currentConfiguration[level] === customImage.dataUrl) {
+                    isSelected = true;
+                }
+            } else {
+                // Pour les images prédéfinies, vérifier le nom
+                if (currentConfiguration[level] === imageName) {
+                    isSelected = true;
+                }
+            }
+            
+            if (isSelected) {
+                option.classList.add('selected');
+            }
+
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            img.alt = imageName;
+            img.onerror = function() {
+                this.style.background = '#666';
+                this.style.color = 'white';
+                this.style.display = 'flex';
+                this.style.alignItems = 'center';
+                this.style.justifyContent = 'center';
+                this.textContent = '?';
+            };
+
+            const name = document.createElement('div');
+            name.className = 'image-name';
+            name.textContent = isCustom ? 
+                imageName.replace(/^custom_/, '').replace(/\.[^/.]+$/, '') : 
+                imageName.replace('.png', '');
+
+            // Ajouter un indicateur pour les images personnalisées
+            if (isCustom) {
+                name.style.color = '#ff6b35';
+                name.textContent = '★ ' + name.textContent;
+            }
+
+            option.appendChild(img);
+            option.appendChild(name);
+
+            option.addEventListener('click', () => {
+                // Désélectionner les autres options de ce niveau
+                selector.querySelectorAll('.image-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Sélectionner cette option
+                option.classList.add('selected');
+                
+                // Pour les images personnalisées, sauvegarder le data URL directement
+                if (isCustom) {
+                    const customImage = customImages.find(img => img.name === imageName);
+                    if (customImage) {
+                        currentConfiguration[level] = customImage.dataUrl;
+                        console.log(`🎨 Image personnalisée sélectionnée pour niveau ${level}: data URL sauvegardé`);
+                    } else {
+                        currentConfiguration[level] = imageName;
+                    }
+                } else {
+                    // Pour les images prédéfinies, sauvegarder le nom de fichier
+                    currentConfiguration[level] = imageName;
+                    console.log(`📁 Image prédéfinie sélectionnée pour niveau ${level}: ${imageName}`);
+                }
+                
+                updateCurrentSelection();
+                saveConfiguration();
+            });
+
+            return option;
         }
 
         // Mettre à jour l'affichage de la sélection actuelle
@@ -434,8 +818,33 @@
                 item.className = 'selection-item';
 
                 const img = document.createElement('img');
-                img.src = currentConfiguration[level];
-                img.alt = currentConfiguration[level];
+                const configValue = currentConfiguration[level];
+                
+                let imageSrc, displayName;
+                
+                // Vérifier si c'est un data URL (image personnalisée)
+                if (configValue && configValue.startsWith('data:')) {
+                    imageSrc = configValue;
+                    // Trouver l'image personnalisée correspondante pour le nom d'affichage
+                    const customImage = customImages.find(ci => ci.dataUrl === configValue);
+                    displayName = customImage ?
+                        '★ ' + customImage.originalName.replace(/\.[^/.]+$/, '') :
+                        '★ Image personnalisée';
+                } else {
+                    // Vérifier si c'est une image personnalisée par nom
+                    const customImage = customImages.find(ci => ci.name === configValue);
+                    if (customImage) {
+                        imageSrc = customImage.dataUrl;
+                        displayName = '★ ' + customImage.originalName.replace(/\.[^/.]+$/, '');
+                    } else {
+                        // Image prédéfinie
+                        imageSrc = configValue;
+                        displayName = configValue.replace('.png', '');
+                    }
+                }
+                
+                img.src = imageSrc;
+                img.alt = configValue;
                 img.onerror = function() {
                     this.style.background = '#666';
                     this.style.color = 'white';
@@ -446,7 +855,7 @@
                 };
 
                 const text = document.createElement('span');
-                text.textContent = `Niveau ${level}: ${currentConfiguration[level].replace('.png', '')}`;
+                text.textContent = `Niveau ${level}: ${displayName}`;
 
                 item.appendChild(img);
                 item.appendChild(text);
@@ -514,8 +923,9 @@
                         
                         // Valider la configuration importée
                         let valid = true;
+                        const allImages = getAllAvailableImages();
                         for (let level = 1; level <= 13; level++) {
-                            if (!imported[level] || !availableImages.includes(imported[level])) {
+                            if (!imported[level] || !allImages.includes(imported[level])) {
                                 valid = false;
                                 break;
                             }
@@ -564,10 +974,17 @@
 
         // Fonction pour appliquer une image à tous les niveaux
         function applyToAll() {
-            // Créer une liste d'options pour le sélecteur
+            // Créer une liste d'options pour le sélecteur (images prédéfinies + personnalisées)
             let options = '';
+            
+            // Images prédéfinies
             availableImages.forEach(imageName => {
                 options += `<option value="${imageName}">${imageName.replace('.png', '')}</option>`;
+            });
+            
+            // Images personnalisées
+            customImages.forEach(customImage => {
+                options += `<option value="${customImage.name}">★ ${customImage.originalName.replace(/\.[^/.]+$/, '')}</option>`;
             });
             
             // Créer le HTML du sélecteur
@@ -612,9 +1029,19 @@
         function confirmApplyToAll() {
             const selectedImage = document.getElementById('imageSelector').value;
             
-            // Appliquer l'image sélectionnée à tous les niveaux
+            // Déterminer la valeur à sauvegarder (data URL pour les images personnalisées)
+            let valueToSave = selectedImage;
+            const customImage = customImages.find(ci => ci.name === selectedImage);
+            if (customImage) {
+                valueToSave = customImage.dataUrl;
+                console.log(`🎯 Application d'une image personnalisée à tous les niveaux: data URL sauvegardé`);
+            } else {
+                console.log(`📁 Application d'une image prédéfinie à tous les niveaux: ${selectedImage}`);
+            }
+            
+            // Appliquer la valeur à tous les niveaux
             for (let level = 1; level <= 13; level++) {
-                currentConfiguration[level] = selectedImage;
+                currentConfiguration[level] = valueToSave;
             }
             
             // Sauvegarder et mettre à jour l'interface
@@ -625,7 +1052,8 @@
             // Fermer le modal
             cancelApplyToAll();
             
-            alert(`✅ Image "${selectedImage.replace('.png', '')}" appliquée à tous les niveaux !`);
+            const displayName = customImage?.originalName.replace(/\.[^/.]+$/, '') || selectedImage.replace('.png', '');
+            alert(`✅ Image "${displayName}" appliquée à tous les niveaux !`);
         }
         
         // Annuler l'application à tous les niveaux
@@ -636,10 +1064,674 @@
             }
         }
 
+        // Fonction pour randomiser toutes les images
+        function randomizeAllLevels() {
+            if (confirm('🎲 Voulez-vous vraiment appliquer des images aléatoires à tous les niveaux ?\n\nCela remplacera votre configuration actuelle.')) {
+                // Obtenir toutes les images disponibles (prédéfinies + personnalisées)
+                const allImages = [...availableImages];
+                
+                // Ajouter les images personnalisées avec leurs data URLs
+                customImages.forEach(customImage => {
+                    allImages.push({
+                        name: customImage.name,
+                        dataUrl: customImage.dataUrl,
+                        isCustom: true
+                    });
+                });
+                
+                if (allImages.length === 0) {
+                    alert('❌ Aucune image disponible pour la randomisation');
+                    return;
+                }
+                
+                let changedLevels = 0;
+                
+                // Appliquer une image aléatoire à chaque niveau
+                for (let level = 1; level <= 13; level++) {
+                    const randomIndex = Math.floor(Math.random() * allImages.length);
+                    const selectedImage = allImages[randomIndex];
+                    
+                    // Déterminer la valeur à sauvegarder
+                    let valueToSave;
+                    if (typeof selectedImage === 'string') {
+                        // Image prédéfinie
+                        valueToSave = selectedImage;
+                    } else if (selectedImage.isCustom) {
+                        // Image personnalisée - sauvegarder le data URL
+                        valueToSave = selectedImage.dataUrl;
+                    } else {
+                        valueToSave = selectedImage;
+                    }
+                    
+                    // Vérifier si c'est différent de la configuration actuelle
+                    if (currentConfiguration[level] !== valueToSave) {
+                        currentConfiguration[level] = valueToSave;
+                        changedLevels++;
+                    }
+                }
+                
+                // Sauvegarder et mettre à jour l'interface
+                saveConfiguration();
+                createLevelSelectors();
+                updateCurrentSelection();
+                
+                console.log(`🎲 Randomisation terminée: ${changedLevels} niveaux modifiés`);
+                alert(`🎲 Randomisation terminée !\n\n✨ ${changedLevels} niveaux ont été modifiés avec des images aléatoires\n📊 ${allImages.length} images étaient disponibles pour la sélection`);
+            }
+        }
+
+        // Fonctions pour la gestion des images personnalisées
+        function setupUploadHandlers() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('customImageInput');
+
+            // Gestionnaire de clic sur la zone d'upload
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Gestionnaire de changement de fichier
+            fileInput.addEventListener('change', (e) => {
+                handleFileSelection(e.target.files);
+            });
+
+            // Gestionnaires de drag & drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileSelection(e.dataTransfer.files);
+            });
+        }
+
+        function selectCustomImages() {
+            document.getElementById('customImageInput').click();
+        }
+
+        function handleFileSelection(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    addCustomImage(file);
+                } else {
+                    alert(`Le fichier "${file.name}" n'est pas une image valide`);
+                }
+            });
+        }
+
+        // Fonction pour convertir et redimensionner l'image en PNG 640x640
+        function processImageToPNG640(file) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Définir les dimensions du canvas à 640x640
+                    canvas.width = 640;
+                    canvas.height = 640;
+                    
+                    // Calculer les dimensions pour maintenir le ratio tout en remplissant le carré
+                    const sourceRatio = img.width / img.height;
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (sourceRatio > 1) {
+                        // Image plus large que haute
+                        drawHeight = 640;
+                        drawWidth = 640 * sourceRatio;
+                        offsetX = -(drawWidth - 640) / 2;
+                    } else {
+                        // Image plus haute que large
+                        drawWidth = 640;
+                        drawHeight = 640 / sourceRatio;
+                        offsetY = -(drawHeight - 640) / 2;
+                    }
+                    
+                    // Remplir le fond en blanc (optionnel)
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, 640, 640);
+                    
+                    // Dessiner l'image redimensionnée
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                    
+                    // Convertir en PNG et retourner le data URL
+                    const dataUrl = canvas.toDataURL('image/png', 1.0);
+                    resolve(dataUrl);
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('Impossible de charger l\'image'));
+                };
+                
+                // Charger l'image depuis le fichier
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() {
+                    reject(new Error('Impossible de lire le fichier'));
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showProcessingIndicator() {
+            document.getElementById('processingIndicator').style.display = 'block';
+        }
+
+        function hideProcessingIndicator() {
+            document.getElementById('processingIndicator').style.display = 'none';
+        }
+
+        async function addCustomImage(file) {
+            try {
+                showProcessingIndicator();
+                
+                // Traiter l'image pour la convertir en PNG 640x640
+                const processedDataUrl = await processImageToPNG640(file);
+                
+                const timestamp = Date.now();
+                const baseName = file.name.replace(/\.[^/.]+$/, ''); // Enlever l'extension
+                const customImage = {
+                    name: `custom_${timestamp}_${baseName}.png`,
+                    originalName: file.name,
+                    dataUrl: processedDataUrl,
+                    size: Math.round(processedDataUrl.length * 0.75), // Estimation de la taille
+                    type: 'image/png',
+                    timestamp: timestamp,
+                    dimensions: '640x640'
+                };
+
+                // Vérifier si l'image existe déjà (par nom original)
+                const exists = customImages.some(img =>
+                    img.originalName === file.name
+                );
+
+                if (exists) {
+                    hideProcessingIndicator();
+                    if (confirm(`L'image "${file.name}" existe déjà. Voulez-vous la remplacer ?`)) {
+                        // Supprimer l'ancienne version
+                        const existingIndex = customImages.findIndex(img => img.originalName === file.name);
+                        if (existingIndex !== -1) {
+                            customImages.splice(existingIndex, 1);
+                        }
+                    } else {
+                        return;
+                    }
+                }
+
+                customImages.push(customImage);
+                saveCustomImages();
+                createCustomImagesDisplay();
+                createLevelSelectors(); // Recréer les sélecteurs pour inclure la nouvelle image
+                
+                hideProcessingIndicator();
+                console.log(`Image personnalisée ajoutée: ${customImage.name} (640x640 PNG)`);
+                
+                // Notification de succès
+                alert(`✅ Image "${file.name}" convertie et ajoutée avec succès !\n📐 Dimensions: 640x640 pixels\n🖼️ Format: PNG`);
+                
+            } catch (error) {
+                hideProcessingIndicator();
+                console.error('Erreur lors du traitement de l\'image:', error);
+                alert(`❌ Erreur lors du traitement de l'image "${file.name}": ${error.message}`);
+            }
+        }
+
+        function deleteCustomImage(index) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette image ?')) {
+                const deletedImage = customImages[index];
+                
+                // Vérifier si cette image est utilisée dans la configuration
+                let isUsed = false;
+                for (let level = 1; level <= 13; level++) {
+                    if (currentConfiguration[level] === deletedImage.name) {
+                        currentConfiguration[level] = defaultConfiguration[level];
+                        isUsed = true;
+                    }
+                }
+
+                customImages.splice(index, 1);
+                saveCustomImages();
+                
+                if (isUsed) {
+                    saveConfiguration();
+                    alert('Image supprimée. Les niveaux qui l\'utilisaient ont été réinitialisés.');
+                }
+                
+                createCustomImagesDisplay();
+                createLevelSelectors();
+                updateCurrentSelection();
+                
+                console.log(`Image personnalisée supprimée: ${deletedImage.name}`);
+            }
+        }
+
+        function clearAllCustomImages() {
+            if (customImages.length === 0) {
+                alert('Aucune image personnalisée à supprimer');
+                return;
+            }
+
+            if (confirm(`Êtes-vous sûr de vouloir supprimer toutes les ${customImages.length} images personnalisées ?`)) {
+                // Réinitialiser la configuration pour les images personnalisées utilisées
+                let resetCount = 0;
+                for (let level = 1; level <= 13; level++) {
+                    const isCustomImage = customImages.some(img => img.name === currentConfiguration[level]);
+                    if (isCustomImage) {
+                        currentConfiguration[level] = defaultConfiguration[level];
+                        resetCount++;
+                    }
+                }
+
+                customImages = [];
+                saveCustomImages();
+                
+                if (resetCount > 0) {
+                    saveConfiguration();
+                    alert(`Toutes les images personnalisées ont été supprimées. ${resetCount} niveaux ont été réinitialisés.`);
+                } else {
+                    alert('Toutes les images personnalisées ont été supprimées.');
+                }
+                
+                createCustomImagesDisplay();
+                createLevelSelectors();
+                updateCurrentSelection();
+            }
+        }
+
+        // Fonction pour valider la configuration avec les images personnalisées
+        function validateConfiguration() {
+            const allImages = getAllAvailableImages();
+            let hasChanges = false;
+            
+            for (let level = 1; level <= 13; level++) {
+                if (!allImages.includes(currentConfiguration[level])) {
+                    console.warn(`Image ${currentConfiguration[level]} non disponible pour le niveau ${level}, réinitialisation`);
+                    currentConfiguration[level] = defaultConfiguration[level];
+                    hasChanges = true;
+                }
+            }
+            
+            if (hasChanges) {
+                saveConfiguration();
+                updateCurrentSelection();
+            }
+        }
+
         // Exposer la configuration pour l'application principale
         window.getImageConfiguration = function() {
             return currentConfiguration;
         };
+
+        // Exposer les images personnalisées pour l'application principale
+        window.getCustomImages = function() {
+            return customImages;
+        };
+
+// === FONCTIONNALITÉS DE SUPPRESSION DE FOND (JavaScript pur) ===
+
+// Variables pour la suppression de fond
+let backgroundRemovalEnabled = false;
+let backgroundRemovalMethod = 'smart';
+
+// Basculer la suppression de fond
+function toggleBackgroundRemoval() {
+    const button = document.getElementById('bgRemovalToggle');
+    
+    if (!backgroundRemovalEnabled) {
+        backgroundRemovalEnabled = true;
+        button.textContent = '🎭 Suppression de fond: ON';
+        button.style.background = 'linear-gradient(45deg, #4caf50, #8bc34a)';
+        alert('✅ Suppression de fond activée !\nLes nouvelles images uploadées auront leur fond supprimé automatiquement.\n\n🎯 Méthodes disponibles:\n• Détection de motifs quadrillés\n• Suppression de fonds uniformes\n• Analyse des couleurs de bord');
+    } else {
+        backgroundRemovalEnabled = false;
+        button.textContent = '🎭 Suppression de fond: OFF';
+        button.style.background = 'linear-gradient(45deg, #9c27b0, #e91e63)';
+        alert('🔄 Suppression de fond désactivée.');
+    }
+}
+
+// Supprimer le fond d'une image (JavaScript pur)
+function removeImageBackground(canvas) {
+    if (!backgroundRemovalEnabled) {
+        return canvas;
+    }
+    
+    console.log('🎨 Suppression du fond en cours (JavaScript)...');
+    
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Créer une copie pour le traitement
+    const processedData = new Uint8ClampedArray(data);
+    
+    // 1. Détecter et supprimer les motifs quadrillés
+    removeCheckeredPattern(processedData, width, height);
+    
+    // 2. Supprimer les fonds uniformes basés sur les bords
+    removeUniformBackground(processedData, width, height);
+    
+    // 3. Nettoyer les pixels isolés
+    cleanIsolatedPixels(processedData, width, height);
+    
+    // Appliquer les modifications
+    const newImageData = new ImageData(processedData, width, height);
+    ctx.putImageData(newImageData, 0, 0);
+    
+    console.log('✅ Fond supprimé avec succès (JavaScript)');
+    return canvas;
+}
+
+// Détecter et supprimer les motifs quadrillés
+function removeCheckeredPattern(data, width, height) {
+    const blockSize = 8; // Taille des blocs à analyser
+    const tolerance = 30; // Tolérance de couleur
+    
+    for (let y = 0; y < height - blockSize; y += blockSize) {
+        for (let x = 0; x < width - blockSize; x += blockSize) {
+            if (isCheckeredBlock(data, x, y, blockSize, width, tolerance)) {
+                // Marquer ce bloc comme transparent
+                for (let by = y; by < y + blockSize && by < height; by++) {
+                    for (let bx = x; bx < x + blockSize && bx < width; bx++) {
+                        const index = (by * width + bx) * 4;
+                        data[index + 3] = 0; // Alpha = 0 (transparent)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Vérifier si un bloc a un motif quadrillé
+function isCheckeredBlock(data, startX, startY, blockSize, width, tolerance) {
+    const colors = [];
+    const colorCounts = {};
+    
+    // Collecter les couleurs du bloc
+    for (let y = startY; y < startY + blockSize; y++) {
+        for (let x = startX; x < startX + blockSize; x++) {
+            if (x < width && y < width) {
+                const index = (y * width + x) * 4;
+                const color = `${data[index]},${data[index + 1]},${data[index + 2]}`;
+                colors.push(color);
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+            }
+        }
+    }
+    
+    // Un motif quadrillé a généralement 2 couleurs dominantes
+    const uniqueColors = Object.keys(colorCounts);
+    if (uniqueColors.length !== 2) {
+        return false;
+    }
+    
+    // Vérifier l'alternance des couleurs
+    const color1 = uniqueColors[0];
+    const color2 = uniqueColors[1];
+    let alternatingCount = 0;
+    let totalChecks = 0;
+    
+    for (let y = startY; y < startY + blockSize - 1; y++) {
+        for (let x = startX; x < startX + blockSize - 1; x++) {
+            if (x < width && y < width) {
+                const index1 = (y * width + x) * 4;
+                const index2 = ((y + 1) * width + (x + 1)) * 4;
+                
+                const currentColor = `${data[index1]},${data[index1 + 1]},${data[index1 + 2]}`;
+                const diagonalColor = `${data[index2]},${data[index2 + 1]},${data[index2 + 2]}`;
+                
+                if ((currentColor === color1 && diagonalColor === color2) ||
+                    (currentColor === color2 && diagonalColor === color1)) {
+                    alternatingCount++;
+                }
+                totalChecks++;
+            }
+        }
+    }
+    
+    // Si plus de 60% des vérifications montrent une alternance, c'est probablement un motif quadrillé
+    return totalChecks > 0 && (alternatingCount / totalChecks) > 0.6;
+}
+
+// Supprimer les fonds uniformes basés sur les couleurs de bord
+function removeUniformBackground(data, width, height) {
+    const tolerance = 25;
+    const borderColors = [];
+    
+    // Échantillonner les bords
+    for (let x = 0; x < width; x++) {
+        // Bord supérieur
+        let index = x * 4;
+        borderColors.push([data[index], data[index + 1], data[index + 2]]);
+        
+        // Bord inférieur
+        index = ((height - 1) * width + x) * 4;
+        borderColors.push([data[index], data[index + 1], data[index + 2]]);
+    }
+    
+    for (let y = 0; y < height; y++) {
+        // Bord gauche
+        let index = (y * width) * 4;
+        borderColors.push([data[index], data[index + 1], data[index + 2]]);
+        
+        // Bord droit
+        index = (y * width + (width - 1)) * 4;
+        borderColors.push([data[index], data[index + 1], data[index + 2]]);
+    }
+    
+    // Trouver la couleur la plus commune
+    const colorCounts = {};
+    borderColors.forEach(color => {
+        const key = `${color[0]},${color[1]},${color[2]}`;
+        colorCounts[key] = (colorCounts[key] || 0) + 1;
+    });
+    
+    const mostCommonColor = Object.keys(colorCounts).reduce((a, b) =>
+        colorCounts[a] > colorCounts[b] ? a : b
+    );
+    
+    const [bgR, bgG, bgB] = mostCommonColor.split(',').map(Number);
+    
+    // Supprimer cette couleur de fond
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        
+        if (Math.abs(r - bgR) <= tolerance &&
+            Math.abs(g - bgG) <= tolerance &&
+            Math.abs(b - bgB) <= tolerance) {
+            data[i + 3] = 0; // Rendre transparent
+        }
+    }
+}
+
+// Nettoyer les pixels isolés (anti-aliasing)
+function cleanIsolatedPixels(data, width, height) {
+    const newData = new Uint8ClampedArray(data);
+    
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+            const index = (y * width + x) * 4;
+            
+            if (data[index + 3] > 0) { // Si le pixel n'est pas transparent
+                // Vérifier les 8 pixels voisins
+                let transparentNeighbors = 0;
+                
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        
+                        const neighborIndex = ((y + dy) * width + (x + dx)) * 4;
+                        if (data[neighborIndex + 3] === 0) {
+                            transparentNeighbors++;
+                        }
+                    }
+                }
+                
+                // Si plus de 6 voisins sur 8 sont transparents, rendre ce pixel transparent aussi
+                if (transparentNeighbors >= 6) {
+                    newData[index + 3] = 0;
+                }
+            }
+        }
+    }
+    
+    // Copier les modifications
+    for (let i = 0; i < data.length; i++) {
+        data[i] = newData[i];
+    }
+}
+        
+        // Nouvelle fonction processImageToPNG640 avec suppression de fond intégrée
+        function processImageToPNG640WithBackgroundRemoval(file) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Définir les dimensions du canvas à 640x640
+                    canvas.width = 640;
+                    canvas.height = 640;
+                    
+                    // Calculer les dimensions pour maintenir le ratio tout en remplissant le carré
+                    const sourceRatio = img.width / img.height;
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (sourceRatio > 1) {
+                        // Image plus large que haute
+                        drawHeight = 640;
+                        drawWidth = 640 * sourceRatio;
+                        offsetX = -(drawWidth - 640) / 2;
+                    } else {
+                        // Image plus haute que large
+                        drawWidth = 640;
+                        drawHeight = 640 / sourceRatio;
+                        offsetY = -(drawHeight - 640) / 2;
+                    }
+                    
+                    // Remplir le fond en blanc (optionnel)
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, 640, 640);
+                    
+                    // Dessiner l'image redimensionnée
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                    
+                    // Supprimer le fond si activé
+                    if (backgroundRemovalEnabled) {
+                        console.log('🎨 Application de la suppression de fond...');
+                        removeImageBackground(canvas);
+                    }
+                    
+                    // Convertir en PNG et retourner le data URL
+                    const dataUrl = canvas.toDataURL('image/png', 1.0);
+                    resolve(dataUrl);
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('Impossible de charger l\'image'));
+                };
+                
+                // Charger l'image depuis le fichier
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() {
+                    reject(new Error('Impossible de lire le fichier'));
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Nouvelle version de addCustomImage avec suppression de fond JavaScript
+        async function addCustomImageWithBackgroundRemoval(file) {
+            try {
+                showProcessingIndicator();
+                
+                // Mettre à jour l'indicateur si la suppression de fond est activée
+                if (backgroundRemovalEnabled) {
+                    const processingDiv = document.getElementById('processingIndicator');
+                    if (processingDiv) {
+                        processingDiv.innerHTML = `
+                            <div class="spinner"></div>
+                            <div>Conversion et suppression de fond...</div>
+                            <div style="font-size: 12px; margin-top: 10px;">Détection de motifs quadrillés</div>
+                        `;
+                    }
+                }
+                
+                // Traiter l'image avec suppression de fond intégrée
+                const finalDataUrl = await processImageToPNG640WithBackgroundRemoval(file);
+                
+                const timestamp = Date.now();
+                const baseName = file.name.replace(/\.[^/.]+$/, ''); // Enlever l'extension
+                const customImage = {
+                    name: `custom_${timestamp}_${baseName}.png`,
+                    originalName: file.name,
+                    dataUrl: finalDataUrl,
+                    size: Math.round(finalDataUrl.length * 0.75), // Estimation de la taille
+                    type: 'image/png',
+                    timestamp: timestamp,
+                    dimensions: '640x640',
+                    backgroundRemoved: backgroundRemovalEnabled
+                };
+
+                // Vérifier si l'image existe déjà (par nom original)
+                const exists = customImages.some(img =>
+                    img.originalName === file.name
+                );
+
+                if (exists) {
+                    hideProcessingIndicator();
+                    if (confirm(`L'image "${file.name}" existe déjà. Voulez-vous la remplacer ?`)) {
+                        // Supprimer l'ancienne version
+                        const existingIndex = customImages.findIndex(img => img.originalName === file.name);
+                        if (existingIndex !== -1) {
+                            customImages.splice(existingIndex, 1);
+                        }
+                    } else {
+                        return;
+                    }
+                }
+
+                customImages.push(customImage);
+                saveCustomImages();
+                createCustomImagesDisplay();
+                createLevelSelectors(); // Recréer les sélecteurs pour inclure la nouvelle image
+                
+                hideProcessingIndicator();
+                console.log(`Image personnalisée ajoutée: ${customImage.name} (640x640 PNG, fond supprimé: ${backgroundRemovalEnabled})`);
+                
+                // Notification de succès
+                const bgStatus = backgroundRemovalEnabled ? '🎭 Fond supprimé (JavaScript)' : '🖼️ Fond conservé';
+                alert(`✅ Image "${file.name}" convertie et ajoutée avec succès !\n📐 Dimensions: 640x640 pixels\n🖼️ Format: PNG\n${bgStatus}`);
+                
+            } catch (error) {
+                hideProcessingIndicator();
+                console.error('Erreur lors du traitement de l\'image:', error);
+                alert(`❌ Erreur lors du traitement de l'image "${file.name}": ${error.message}`);
+            }
+        }
+        
+        // Remplacer la fonction addCustomImage originale
+        addCustomImage = addCustomImageWithBackgroundRemoval;
+        // Valider la configuration au chargement
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(validateConfiguration, 100);
+            console.log('✅ Suppression de fond JavaScript intégrée et prête');
+        });
     </script>
-</body>
-</html>
