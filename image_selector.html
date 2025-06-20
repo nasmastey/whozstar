@@ -34,11 +34,13 @@
             text-transform: uppercase;
         }
 
-        .level-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+        .level-carousel {
+            position: relative;
             margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
         }
 
         .level-card {
@@ -47,11 +49,73 @@
             padding: 20px;
             border: 2px solid cyan;
             transition: all 0.3s ease;
+            width: 100%;
+            max-width: 600px;
+            min-height: 300px;
         }
 
         .level-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-arrow {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            border: 2px solid cyan;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            user-select: none;
+        }
+
+        .carousel-arrow:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .carousel-arrow:active {
+            transform: scale(0.95);
+        }
+
+        .carousel-arrow.disabled {
+            background: linear-gradient(45deg, #666, #888);
+            border-color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .carousel-arrow.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .level-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 0px black;
+            font-family: 'FreeMono', monospace;
+            text-transform: uppercase;
+        }
+
+        .level-counter {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid cyan;
+            display: inline-block;
         }
 
         .level-title {
@@ -460,7 +524,17 @@
         <h3>Images Disponibles</h3>
         <div class="available-images" id="availableImages"></div>
 
-        <div class="level-grid" id="levelGrid"></div>
+        <div class="level-indicator">
+            <div class="level-counter" id="levelCounter">Niveau 1 / 13</div>
+        </div>
+
+        <div class="level-carousel">
+            <button class="carousel-arrow" id="prevArrow" onclick="previousLevel()">◀</button>
+            <div class="level-card" id="currentLevelCard">
+                <!-- Le contenu du niveau actuel sera inséré ici -->
+            </div>
+            <button class="carousel-arrow" id="nextArrow" onclick="nextLevel()">▶</button>
+        </div>
 
         <div class="controls">
             <button class="btn" onclick="applyConfiguration()">Appliquer la Configuration</button>
@@ -522,7 +596,6 @@
             "akkodis_logo.png",
             "aubay_logo.png",
             "ayming_logo.png",
-            "consortgroups_logo.png",
             "devoteam_logo.png",
             "econocom_logo.png",
             "egis_logo.png",
@@ -530,7 +603,6 @@
             "mc2i_logo.png",
             "open_logo.png",
             "orange_logo.png",
-            "sm4rt4_logo.png",
             "sqli_logo.png"
         ];
 
@@ -539,6 +611,9 @@
 
         // Configuration actuelle
         let currentConfiguration = { ...defaultConfiguration };
+
+        // Niveau actuellement affiché dans le carousel
+        let currentLevel = 1;
 
         // Charger la configuration sauvegardée avec migration automatique
         function loadSavedConfiguration() {
@@ -636,7 +711,7 @@
             loadSavedConfiguration();
             createAvailableImagesDisplay();
             createCustomImagesDisplay();
-            createLevelSelectors();
+            createCurrentLevelSelector();
             updateCurrentSelection();
             setupUploadHandlers();
         }
@@ -710,37 +785,85 @@
             });
         }
 
-        // Créer les sélecteurs pour chaque niveau
-        function createLevelSelectors() {
-            const container = document.getElementById('levelGrid');
+        // Créer le sélecteur pour le niveau actuel
+        function createCurrentLevelSelector() {
+            const container = document.getElementById('currentLevelCard');
             container.innerHTML = '';
 
-            for (let level = 1; level <= 13; level++) {
-                const card = document.createElement('div');
-                card.className = 'level-card';
+            const title = document.createElement('div');
+            title.className = 'level-title';
+            title.textContent = `Niveau ${currentLevel}`;
 
-                const title = document.createElement('div');
-                title.className = 'level-title';
-                title.textContent = `Niveau ${level}`;
+            const selector = document.createElement('div');
+            selector.className = 'image-selector';
 
-                const selector = document.createElement('div');
-                selector.className = 'image-selector';
+            // Afficher les images prédéfinies
+            availableImages.forEach(imageName => {
+                const option = createImageOption(imageName, imageName, currentLevel, selector);
+                selector.appendChild(option);
+            });
 
-                // Afficher les images prédéfinies
-                availableImages.forEach(imageName => {
-                    const option = createImageOption(imageName, imageName, level, selector);
-                    selector.appendChild(option);
-                });
+            // Afficher les images personnalisées
+            customImages.forEach(customImage => {
+                const option = createImageOption(customImage.name, customImage.dataUrl, currentLevel, selector, true);
+                selector.appendChild(option);
+            });
 
-                // Afficher les images personnalisées
-                customImages.forEach(customImage => {
-                    const option = createImageOption(customImage.name, customImage.dataUrl, level, selector, true);
-                    selector.appendChild(option);
-                });
+            container.appendChild(title);
+            container.appendChild(selector);
+            
+            // Mettre à jour le compteur et les boutons
+            updateLevelIndicator();
+            updateCarouselButtons();
+        }
 
-                card.appendChild(title);
-                card.appendChild(selector);
-                container.appendChild(card);
+        // Mettre à jour l'indicateur de niveau
+        function updateLevelIndicator() {
+            const counter = document.getElementById('levelCounter');
+            counter.textContent = `Niveau ${currentLevel} / 13`;
+        }
+
+        // Mettre à jour l'état des boutons du carousel
+        function updateCarouselButtons() {
+            const prevButton = document.getElementById('prevArrow');
+            const nextButton = document.getElementById('nextArrow');
+            
+            // Désactiver le bouton précédent si on est au niveau 1
+            if (currentLevel === 1) {
+                prevButton.classList.add('disabled');
+            } else {
+                prevButton.classList.remove('disabled');
+            }
+            
+            // Désactiver le bouton suivant si on est au niveau 13
+            if (currentLevel === 13) {
+                nextButton.classList.add('disabled');
+            } else {
+                nextButton.classList.remove('disabled');
+            }
+        }
+
+        // Aller au niveau précédent
+        function previousLevel() {
+            if (currentLevel > 1) {
+                currentLevel--;
+                createCurrentLevelSelector();
+            }
+        }
+
+        // Aller au niveau suivant
+        function nextLevel() {
+            if (currentLevel < 13) {
+                currentLevel++;
+                createCurrentLevelSelector();
+            }
+        }
+
+        // Aller à un niveau spécifique
+        function goToLevel(level) {
+            if (level >= 1 && level <= 13) {
+                currentLevel = level;
+                createCurrentLevelSelector();
             }
         }
 
@@ -909,7 +1032,7 @@
             if (confirm('Êtes-vous sûr de vouloir réinitialiser à la configuration par défaut ?')) {
                 currentConfiguration = { ...defaultConfiguration };
                 saveConfiguration();
-                createLevelSelectors();
+                createCurrentLevelSelector();
                 updateCurrentSelection();
             }
         }
@@ -952,7 +1075,7 @@
                         if (valid) {
                             currentConfiguration = imported;
                             saveConfiguration();
-                            createLevelSelectors();
+                            createCurrentLevelSelector();
                             updateCurrentSelection();
                             alert('Configuration importée avec succès !');
                         } else {
@@ -1064,7 +1187,7 @@
             
             // Sauvegarder et mettre à jour l'interface
             saveConfiguration();
-            createLevelSelectors();
+            createCurrentLevelSelector();
             updateCurrentSelection();
             
             // Fermer le modal
@@ -1130,7 +1253,7 @@
                 
                 // Sauvegarder et mettre à jour l'interface
                 saveConfiguration();
-                createLevelSelectors();
+                createCurrentLevelSelector();
                 updateCurrentSelection();
                 
                 console.log(`🎲 Randomisation terminée: ${changedLevels} niveaux modifiés`);
@@ -1289,7 +1412,7 @@
                 customImages.push(customImage);
                 saveCustomImages();
                 createCustomImagesDisplay();
-                createLevelSelectors(); // Recréer les sélecteurs pour inclure la nouvelle image
+                createCurrentLevelSelector(); // Recréer le sélecteur pour inclure la nouvelle image
                 
                 hideProcessingIndicator();
                 console.log(`Image personnalisée ajoutée: ${customImage.name} (640x640 PNG)`);
@@ -1326,7 +1449,7 @@
                 }
                 
                 createCustomImagesDisplay();
-                createLevelSelectors();
+                createCurrentLevelSelector();
                 updateCurrentSelection();
                 
                 console.log(`Image personnalisée supprimée: ${deletedImage.name}`);
@@ -1361,7 +1484,7 @@
                 }
                 
                 createCustomImagesDisplay();
-                createLevelSelectors();
+                createCurrentLevelSelector();
                 updateCurrentSelection();
             }
         }
@@ -1729,7 +1852,7 @@ function cleanIsolatedPixels(data, width, height) {
                 customImages.push(customImage);
                 saveCustomImages();
                 createCustomImagesDisplay();
-                createLevelSelectors(); // Recréer les sélecteurs pour inclure la nouvelle image
+                createCurrentLevelSelector(); // Recréer le sélecteur pour inclure la nouvelle image
                 
                 hideProcessingIndicator();
                 console.log(`Image personnalisée ajoutée: ${customImage.name} (640x640 PNG, fond supprimé: ${backgroundRemovalEnabled})`);
